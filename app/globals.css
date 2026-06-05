@@ -2,26 +2,237 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * KalamKids Dashboard Color Palette
+ * Synced with mobile-app/src/theme/colors.ts
+ *
+ * Primary (Sky Blue): #4A90D9
+ * Secondary (Mint Green): #34D399
+ * Accent Purple: #7B68C4
+ * Accent Yellow: #F5C542
+ * Accent Teal: #2A9D8F
+ * Accent Pink: #E07A9A
+ */
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Background & Foreground */
+    --background: 0 0% 100%;
+    --foreground: 220 13% 18%;
+
+    /* Card & Popover */
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
+
+    /* Primary - Sky Blue (#4A90D9) */
+    --primary: 211 65% 57%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Mint Green (#34D399) */
+    --secondary: 160 64% 52%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted */
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 14% 45%;
+
+    /* Accent - Purple (#7B68C4) */
+    --accent: 252 39% 59%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive - Error Red (#E85A5A) */
+    --destructive: 0 75% 63%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 211 65% 57%;
+    --radius: 0.5rem;
+
+    /* Feedback Colors */
+    --success: 140 42% 49%;
+    --success-foreground: 0 0% 100%;
+    --warning: 37 91% 55%;
+    --warning-foreground: 0 0% 0%;
+    --info: 211 65% 69%;
+    --info-foreground: 220 13% 18%;
+
+    /* Environment colors */
+    --env-dev: 45 93% 47%;
+    --env-dev-foreground: 0 0% 100%;
+    --env-prod: 0 72% 51%;
+    --env-prod-foreground: 0 0% 100%;
+
+    /* Sidebar */
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 220 13% 18%;
+    --sidebar-primary: 211 65% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 94%;
+    --sidebar-accent-foreground: 220 13% 18%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 211 65% 57%;
+
+    /* Activity Colors (for builder) */
+    --activity-intro: 211 65% 57%;
+    --activity-practice: 160 64% 52%;
+    --activity-assessment: 252 39% 59%;
+    --activity-break: 45 91% 61%;
+
+    /* Gamification */
+    --star: 45 91% 61%;
+    --progress-track: 220 13% 90%;
+    --progress-fill: 211 65% 57%;
+    --progress-complete: 160 64% 52%;
+  }
+
+  .dark {
+    /* Background & Foreground */
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+
+    /* Card & Popover */
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary - Sky Blue (adjusted for dark) */
+    --primary: 211 65% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Mint Green */
+    --secondary: 160 64% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted */
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent - Purple */
+    --accent: 252 39% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 211 65% 52%;
+
+    /* Feedback Colors - dark mode */
+    --success: 140 42% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 37 91% 50%;
+    --warning-foreground: 0 0% 0%;
+    --info: 211 65% 60%;
+    --info-foreground: 0 0% 100%;
+
+    /* Environment colors - dark mode */
+    --env-dev: 45 93% 47%;
+    --env-dev-foreground: 0 0% 0%;
+    --env-prod: 0 72% 51%;
+    --env-prod-foreground: 0 0% 100%;
+
+    /* Sidebar - dark mode */
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 211 65% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 18%;
+    --sidebar-ring: 211 65% 52%;
+
+    /* Activity Colors (for builder) - dark mode */
+    --activity-intro: 211 65% 52%;
+    --activity-practice: 160 64% 45%;
+    --activity-assessment: 252 39% 55%;
+    --activity-break: 45 91% 55%;
+
+    /* Gamification - dark mode */
+    --star: 45 91% 55%;
+    --progress-track: 217 33% 18%;
+    --progress-fill: 211 65% 52%;
+    --progress-complete: 160 64% 45%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Arabic font support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+.font-arabic {
+  font-family: "Noto Sans Arabic", "Arial", sans-serif;
+}
+
+/* RTL support */
+[dir="rtl"] {
+  text-align: right;
+}
+
+/* Scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Activity type colors */
+.activity-intro {
+  color: hsl(var(--activity-intro));
+}
+
+.activity-practice {
+  color: hsl(var(--activity-practice));
+}
+
+.activity-assessment {
+  color: hsl(var(--activity-assessment));
+}
+
+.activity-break {
+  color: hsl(var(--activity-break));
+}
+
+/* Tree node type colors - matching mobile app */
+.tree-topic {
+  color: #4A90D9; /* primary.default */
+}
+
+.tree-node {
+  color: #F5A623; /* feedback.warning.default - amber */
+}
+
+.tree-activity {
+  color: #34D399; /* secondary.default - mint green */
 }

@@ -1,0 +1,43 @@
+{
+  "name": "@kalam/curriculum-schemas",
+  "version": "1.0.0",
+  "description": "Unified Zod schemas for Kalam Kids curriculum activities - single source of truth across dashboard, backend, and mobile app",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./activities": {
+      "import": "./dist/activities/index.js",
+      "types": "./dist/activities/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "curriculum",
+    "schemas",
+    "zod",
+    "validation",
+    "arabic",
+    "education"
+  ],
+  "author": "Kalam Kids",
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

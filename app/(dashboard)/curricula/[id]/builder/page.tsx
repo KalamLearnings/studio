@@ -37,9 +37,9 @@ import {
 import type { Letter } from "@/lib/hooks/useLetters";
 
 import { useCurriculum } from "@/lib/hooks/useCurriculum";
-import { useTopics, useCreateTopic, useUpdateTopic } from "@/lib/hooks/useTopics";
-import { useAllNodes, useCreateNode, useUpdateNode } from "@/lib/hooks/useNodes";
-import { useAllActivities, useCreateActivity, useUpdateActivity } from "@/lib/hooks/useActivities";
+import { useTopics, useCreateTopic, useUpdateTopic, useDeleteTopic } from "@/lib/hooks/useTopics";
+import { useAllNodes, useCreateNode, useUpdateNode, useDeleteNode } from "@/lib/hooks/useNodes";
+import { useAllActivities, useCreateActivity, useUpdateActivity, useDeleteActivity } from "@/lib/hooks/useActivities";
 import { useInstantiateTemplate } from "@/lib/hooks/useTemplates";
 import type { Topic, Node, Article, ActivityTemplate } from "@/lib/schemas/curriculum";
 
@@ -64,19 +64,58 @@ export default function BuilderPage() {
   // Mutations
   const createTopic = useCreateTopic();
   const updateTopic = useUpdateTopic();
+  const deleteTopic = useDeleteTopic();
   const createNode = useCreateNode();
   const updateNode = useUpdateNode();
+  const deleteNode = useDeleteNode();
   const createActivity = useCreateActivity();
   const updateActivity = useUpdateActivity();
+  const deleteActivity = useDeleteActivity();
   const instantiateTemplate = useInstantiateTemplate();
 
   const [selectedNode, setSelectedNode] = React.useState<TreeNode | null>(null);
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const [activityPickerOpen, setActivityPickerOpen] = React.useState(false);
   const [letterSelectorOpen, setLetterSelectorOpen] = React.useState(false);
   const [pendingParentId, setPendingParentId] = React.useState<string | null>(null);
   const [pendingTopicId, setPendingTopicId] = React.useState<string | null>(null);
   const [treeWidth, setTreeWidth] = React.useState(DEFAULT_TREE_WIDTH);
   const [isResizing, setIsResizing] = React.useState(false);
+
+  // Toggle expansion of a tree node
+  const handleToggleExpand = React.useCallback((nodeId: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Check if all expandable items are expanded
+  const isAllExpanded = React.useMemo(() => {
+    if (!topics?.length) return false;
+    const allExpandableIds = [
+      ...(topics?.map(t => t.id) || []),
+      ...(nodes?.map(n => n.id) || []),
+    ];
+    return allExpandableIds.length > 0 && allExpandableIds.every(id => expandedIds.has(id));
+  }, [topics, nodes, expandedIds]);
+
+  // Toggle expand/collapse all
+  const handleToggleExpandAll = React.useCallback(() => {
+    if (isAllExpanded) {
+      setExpandedIds(new Set());
+    } else {
+      const allIds = new Set<string>();
+      topics?.forEach(t => allIds.add(t.id));
+      nodes?.forEach(n => allIds.add(n.id));
+      setExpandedIds(allIds);
+    }
+  }, [isAllExpanded, topics, nodes]);
 
   // New activity state - when user selects a type but hasn't saved yet
   const [newActivity, setNewActivity] = React.useState<{
@@ -324,6 +363,34 @@ export default function BuilderPage() {
     }
   };
 
+  const handleDelete = (targetNode: TreeNode) => {
+    const confirmMessage = `Are you sure you want to delete this ${targetNode.type}?${
+      targetNode.type === "topic" ? " This will also delete all nodes and activities within it." :
+      targetNode.type === "node" ? " This will also delete all activities within it." : ""
+    }`;
+
+    if (!confirm(confirmMessage)) return;
+
+    if (targetNode.type === "topic") {
+      deleteTopic.mutate({ curriculumId, topicId: targetNode.id });
+    } else if (targetNode.type === "node") {
+      const node = nodes?.find(n => n.id === targetNode.id);
+      if (node) {
+        deleteNode.mutate({ curriculumId, topicId: node.topic_id, nodeId: node.id });
+      }
+    } else if (targetNode.type === "activity") {
+      const activity = activities?.find(a => a.id === targetNode.id);
+      if (activity) {
+        deleteActivity.mutate({ curriculumId, nodeId: activity.node_id, activityId: activity.id });
+      }
+    }
+
+    // Clear selection if we deleted the selected node
+    if (selectedNode?.id === targetNode.id) {
+      setSelectedNode(null);
+    }
+  };
+
   const isLoading = curriculumLoading || topicsLoading || nodesLoading || activitiesLoading;
 
   return (
@@ -390,11 +457,16 @@ export default function BuilderPage() {
             <CurriculumTree
               nodes={tree}
               selectedId={selectedNode?.id}
+              expandedIds={expandedIds}
+              isAllExpanded={isAllExpanded}
               onSelect={setSelectedNode}
+              onToggleExpand={handleToggleExpand}
+              onToggleExpandAll={handleToggleExpandAll}
               onAddTopic={handleAddTopic}
               onAddNode={handleAddNode}
               onAddActivity={handleAddActivity}
               onTogglePublish={handleTogglePublish}
+              onDelete={handleDelete}
             />
           )}
           {/* Resize Handle */}

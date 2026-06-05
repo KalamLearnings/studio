@@ -18,6 +18,8 @@ import {
   MoreHorizontal,
   Trash2,
   Copy,
+  ChevronsUpDown,
+  ChevronsDownUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -102,6 +104,8 @@ interface CurriculumTreeProps {
   onReorderTopics?: (activeId: string, overId: string) => void;
   onReorderActivities?: (nodeId: string, activeId: string, overId: string) => void;
   onMoveActivity?: (activityId: string, sourceNodeId: string, targetNodeId: string) => void;
+  onToggleExpandAll?: () => void;
+  isAllExpanded?: boolean;
 }
 
 // Draggable Topic Component
@@ -507,6 +511,8 @@ export function CurriculumTree({
   onReorderTopics,
   onReorderActivities,
   onMoveActivity,
+  onToggleExpandAll,
+  isAllExpanded = false,
 }: CurriculumTreeProps) {
   const [draggingNode, setDraggingNode] = React.useState<TreeNode | null>(null);
 
@@ -585,10 +591,32 @@ export function CurriculumTree({
       {/* Header */}
       <div className="flex items-center justify-between border-b p-3">
         <h3 className="font-semibold text-sm">Curriculum Structure</h3>
-        <Button size="sm" variant="outline" onClick={onAddTopic}>
-          <Plus className="h-4 w-4 mr-1" />
-          Topic
-        </Button>
+        <div className="flex items-center gap-2">
+          {onToggleExpandAll && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={onToggleExpandAll}
+            >
+              {isAllExpanded ? (
+                <>
+                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                  Collapse
+                </>
+              ) : (
+                <>
+                  <ChevronsDownUp className="h-3 w-3 mr-1" />
+                  Expand
+                </>
+              )}
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={onAddTopic}>
+            <Plus className="h-4 w-4 mr-1" />
+            Topic
+          </Button>
+        </div>
       </div>
 
       {/* Tree with DnD Context */}

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { ActivityTypePicker } from "@/components/builder/activity-type-picker";
 import { LetterSelectorModal } from "@/components/builder/letter-selector-modal";
 import {
@@ -77,6 +79,43 @@ export default function BuilderPage() {
     setNewActivity,
   });
 
+  // Open an activity in the form pane by pasting its ID (Phase 1: current curriculum).
+  const [activitySearchId, setActivitySearchId] = useState("");
+
+  const handleOpenActivityById = () => {
+    const id = activitySearchId.trim();
+    if (!id) return;
+
+    const activity = activities?.find((a) => a.id === id);
+    if (!activity) {
+      toast.error("Activity not found in this curriculum");
+      return;
+    }
+
+    // Activity carries node_id; derive the topic that owns that node.
+    const topicId = nodes?.find((n) => n.id === activity.node_id)?.topic_id ?? null;
+    if (!topicId) {
+      toast.error("Could not locate the topic for this activity");
+      return;
+    }
+
+    // Reuse the existing selection flow: select the activity's tree node and
+    // expand its ancestors so it's visible in the tree.
+    const treeNode = tree
+      .flatMap((topic) => topic.children ?? [])
+      .flatMap((node) => node.children ?? [])
+      .find((a) => a.id === activity.id);
+    if (!treeNode) {
+      toast.error("Activity not found in this curriculum");
+      return;
+    }
+
+    setSelectedNode(treeNode);
+    if (!expandedIds.has(topicId)) handleToggleExpand(topicId);
+    if (!expandedIds.has(activity.node_id)) handleToggleExpand(activity.node_id);
+    setActivitySearchId("");
+  };
+
   // Determine what to show in the form panel
   const formActivityType = newActivity
     ? newActivity.type
@@ -90,6 +129,9 @@ export default function BuilderPage() {
         title={curriculum?.title?.en || "Loading..."}
         topicCount={topics?.length || 0}
         activityCount={activities?.length || 0}
+        activitySearchId={activitySearchId}
+        onActivitySearchIdChange={setActivitySearchId}
+        onOpenActivityById={handleOpenActivityById}
       />
 
       <div className="flex flex-1 overflow-hidden">

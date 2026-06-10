@@ -125,9 +125,16 @@ export interface WriteActivityConfig extends ActivityConfig {
 }
 
 // Tap letter in word config
+// Matching is position-based: `targetIndices` lists the logical letter positions
+// the child must tap (each uniquely pins letter + haraka + form + occurrence).
+// `targetLetter` is retained for display/audio; `targetLetterIndex` is a legacy
+// single-index hint, superseded by `targetIndices`.
 export interface TapActivityConfig extends ActivityConfig {
   targetWord?: string;
   targetLetter?: string | LetterReference;
+  targetIndices?: number[];
+  /** @deprecated legacy single-index UI hint; use targetIndices */
+  targetLetterIndex?: number;
   targetCount?: number;
   wordMeaning?: string;
 }

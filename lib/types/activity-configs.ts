@@ -6,6 +6,7 @@
  */
 
 import type { ArticleType } from '@/lib/schemas/curriculum';
+import type { LetterReference as LetterRef } from '@/lib/utils/letterReference';
 
 // Base types
 export type ContentType = 'letter' | 'word';
@@ -33,11 +34,20 @@ export interface ShowLetterOrWordConfig {
 
 /**
  * Tap Letter in Word Activity Config
+ *
+ * Matching is position-based: `targetIndices` lists the logical letter positions
+ * the child must tap (each uniquely pins letter + haraka + form + occurrence).
+ * `targetLetter` is retained for display/audio and may be a raw character (legacy)
+ * or a LetterReference object (current). `targetLetterIndex` is a legacy single-index
+ * hint, superseded by `targetIndices`.
  */
 export interface TapLetterInWordConfig {
   targetWord: string;
-  targetLetter: string;
-  targetCount: number;
+  targetLetter?: string | LetterRef;
+  targetIndices?: number[];
+  /** @deprecated legacy single-index UI hint; use targetIndices */
+  targetLetterIndex?: number;
+  targetCount?: number;
   showHighlight?: boolean;
   highlightColor?: string;
   provideFeedback?: boolean;

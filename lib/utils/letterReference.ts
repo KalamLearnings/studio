@@ -245,6 +245,41 @@ export function resolveLetterWithHaraka(
 }
 
 /**
+ * Arabic Tatweel (Kashida) character - used for text justification/elongation
+ * This character should be stripped when storing isolated letters
+ */
+export const ARABIC_TATWEEL = 'ـ';
+
+/**
+ * Normalize Arabic text by removing tatweel (kashida) characters
+ *
+ * Tatweel is used for connecting letters or text justification but
+ * should not be included when storing isolated letter forms.
+ *
+ * @param text - Arabic text that may contain tatweel
+ * @returns Text with tatweel characters removed
+ */
+export function stripTatweel(text: string): string {
+  return text.replace(/ـ/g, '');
+}
+
+/**
+ * Normalize Arabic text for storage
+ *
+ * Removes tatweel and other formatting characters that shouldn't be stored.
+ * Use this when saving user-entered Arabic text to ensure clean storage.
+ *
+ * @param text - Arabic text to normalize
+ * @returns Normalized text safe for storage
+ */
+export function normalizeArabicText(text: string): string {
+  if (!text) return text;
+  // Strip tatweel (kashida) - U+0640
+  // Keep harakat (diacritics) as they're meaningful
+  return stripTatweel(text);
+}
+
+/**
  * Normalize a value to a LetterReference if possible
  *
  * @param value - LetterReference object, letter ID string, or letter character

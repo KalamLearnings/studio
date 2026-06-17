@@ -6,7 +6,7 @@
 
 export type AssetCategory =
   | 'letters'
-  | 'words'
+  | 'books'
   | 'fruits'
   | 'animals'
   | 'shapes'
@@ -39,7 +39,7 @@ export interface AssetUploadData {
 
 export const ASSET_CATEGORIES: Record<AssetCategory, { label: string; icon: string }> = {
   letters: { label: 'Letters', icon: '🔤' },
-  words: { label: 'Words', icon: '📝' },
+  books: { label: 'Books', icon: '📚' },
   fruits: { label: 'Fruits', icon: '🍎' },
   animals: { label: 'Animals', icon: '🐘' },
   shapes: { label: 'Shapes', icon: '⬛' },

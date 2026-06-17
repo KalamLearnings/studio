@@ -47,7 +47,7 @@ export async function getAssets(filters?: AssetFilters): Promise<Asset[]> {
   } else {
     // No category selected - fetch from all categories
     const categories: AssetCategory[] = [
-      'letters', 'words', 'fruits', 'animals',
+      'letters', 'books', 'fruits', 'animals',
       'shapes', 'colors', 'numbers', 'misc'
     ];
 
@@ -199,19 +199,103 @@ export async function deleteAsset(assetId: string): Promise<void> {
 }
 
 /**
- * Updates asset metadata (rename, retag)
- * Note: Supabase Storage doesn't support metadata updates directly,
- * so this would require re-uploading with new filename
+ * Updates an asset (rename, change category, update tags, replace image)
+ * Since Supabase Storage doesn't support metadata updates,
+ * we re-upload with new filename/path if needed
  */
-export async function updateAssetTags(
-  asset: Asset,
-  newTags: string[]
+export async function updateAsset(
+  oldAsset: Asset,
+  updates: {
+    displayName?: string;
+    category?: AssetCategory;
+    tags?: string[];
+    file?: File;
+  }
 ): Promise<Asset> {
-  // For now, we'll just return the asset with updated tags
-  // In a full implementation, you might want to re-upload with new filename
+  const supabase = createClient();
+
+  const newDisplayName = updates.displayName || oldAsset.displayName;
+  const newCategory = updates.category || oldAsset.category;
+  const newTags = updates.tags || oldAsset.tags;
+
+  // If there's a new file or the category changed, we need to re-upload
+  const needsReupload = updates.file || updates.category !== oldAsset.category || updates.displayName !== oldAsset.displayName;
+
+  if (!needsReupload) {
+    // No structural changes - just return updated local state
+    // Note: Tags are stored in filename, so changing just tags would also need re-upload
+    // For simplicity, we'll still re-upload if tags changed
+    if (JSON.stringify(newTags) !== JSON.stringify(oldAsset.tags)) {
+      // Re-upload with new tags
+    } else {
+      return {
+        ...oldAsset,
+        displayName: newDisplayName,
+        tags: newTags,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+  }
+
+  // Get the file to upload (either new file or download existing)
+  let fileToUpload: File | Blob;
+  let extension: string;
+
+  if (updates.file) {
+    fileToUpload = await compressImage(updates.file);
+    extension = updates.file.name.split('.').pop() || 'png';
+  } else {
+    // Download existing file
+    const response = await fetch(oldAsset.url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch existing asset');
+    }
+    fileToUpload = await response.blob();
+    extension = oldAsset.name.split('.').pop() || 'png';
+  }
+
+  // Generate new filename
+  const sanitizedDisplayName = newDisplayName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
+  const timestamp = Date.now();
+  const filename = `${sanitizedDisplayName}__${timestamp}.${extension}`;
+  const newFilePath = `${ASSETS_FOLDER}/${newCategory}/${filename}`;
+
+  // Upload new file
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(newFilePath, fileToUpload, {
+      cacheControl: '31536000',
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error('Error uploading updated asset:', uploadError);
+    throw new Error(`Failed to update asset: ${uploadError.message}`);
+  }
+
+  // Delete old file
+  const { error: deleteError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .remove([oldAsset.id]);
+
+  if (deleteError) {
+    console.warn('Failed to delete old asset file:', deleteError);
+    // Don't throw - the new file is already uploaded
+  }
+
+  // Get public URL for new file
+  const { data: { publicUrl } } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(newFilePath);
+
   return {
-    ...asset,
+    id: uploadData.path,
+    name: filename,
+    displayName: newDisplayName,
+    url: publicUrl,
+    category: newCategory,
     tags: newTags,
+    createdAt: oldAsset.createdAt,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -224,7 +308,7 @@ function extractCategoryFromPath(path: string): AssetCategory {
   const categoryPart = parts[parts.length - 2];
 
   const validCategories: AssetCategory[] = [
-    'letters', 'words', 'fruits', 'animals',
+    'letters', 'books', 'fruits', 'animals',
     'shapes', 'colors', 'numbers', 'misc'
   ];
 

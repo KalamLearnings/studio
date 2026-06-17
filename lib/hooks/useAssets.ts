@@ -12,6 +12,7 @@ import type { Asset, AssetCategory, AssetUploadData } from '@/lib/types/assets';
 import {
   getAssets,
   uploadAsset,
+  updateAsset,
   deleteAsset,
   type AssetFilters,
 } from '@/lib/services/assetService';
@@ -19,6 +20,13 @@ import {
 interface UseAssetsOptions {
   initialCategory?: AssetCategory;
   autoLoad?: boolean;
+}
+
+interface AssetUpdateData {
+  displayName?: string;
+  category?: AssetCategory;
+  tags?: string[];
+  file?: File;
 }
 
 interface UseAssetsReturn {
@@ -31,6 +39,7 @@ interface UseAssetsReturn {
   // Actions
   loadAssets: () => Promise<void>;
   uploadNewAsset: (data: AssetUploadData) => Promise<Asset>;
+  updateExistingAsset: (assetId: string, data: AssetUpdateData) => Promise<Asset>;
   removeAsset: (assetId: string) => Promise<void>;
   setCategory: (category: AssetCategory | undefined) => void;
   setSearchQuery: (query: string) => void;
@@ -97,6 +106,39 @@ export function useAssets(options: UseAssetsOptions = {}): UseAssetsReturn {
   }, [selectedCategory]);
 
   /**
+   * Update an existing asset
+   */
+  const updateExistingAsset = useCallback(async (assetId: string, data: AssetUpdateData): Promise<Asset> => {
+    setError(null);
+
+    // Find the existing asset
+    const existingAsset = assets.find(a => a.id === assetId);
+    if (!existingAsset) {
+      throw new Error('Asset not found');
+    }
+
+    try {
+      const updatedAsset = await updateAsset(existingAsset, data);
+
+      // Update local state
+      setAssets(prev => {
+        // If category changed and we're filtering by category, remove from list
+        if (selectedCategory && data.category && data.category !== selectedCategory) {
+          return prev.filter(asset => asset.id !== assetId);
+        }
+        // Otherwise, update in place
+        return prev.map(asset => asset.id === assetId ? updatedAsset : asset);
+      });
+
+      return updatedAsset;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update asset';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [assets, selectedCategory]);
+
+  /**
    * Delete an asset
    */
   const removeAsset = useCallback(async (assetId: string): Promise<void> => {
@@ -141,6 +183,7 @@ export function useAssets(options: UseAssetsOptions = {}): UseAssetsReturn {
     searchQuery,
     loadAssets,
     uploadNewAsset,
+    updateExistingAsset,
     removeAsset,
     setCategory,
     setSearchQuery,

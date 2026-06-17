@@ -222,7 +222,7 @@ export function PageEditorDialog({
                 variant="outline"
                 size="sm"
                 onClick={handleGenerate}
-                disabled={isGenerating || !values.text.trim()}
+                disabled={isGenerating || !values.text?.trim()}
               >
                 {isGenerating ? (
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -250,7 +250,7 @@ export function PageEditorDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSaving || !values.background_image_url || !values.text.trim()}
+            disabled={isSaving || !values.background_image_url || !values.text?.trim()}
           >
             {isSaving ? (
               <>

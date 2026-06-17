@@ -64,7 +64,6 @@ export default function BuilderPage() {
     handleAddNode,
     handleAddActivity,
     handleSelectActivityType,
-    handleSelectTemplate,
     handleSaveNewActivity,
     handleCancelNewActivity,
     handleTogglePublish,
@@ -123,15 +122,18 @@ export default function BuilderPage() {
     ? selectedNode.activityType
     : undefined;
 
+  // The currently selected activity, used for the Reference IDs in the preview.
+  const selectedActivity =
+    selectedNode?.type === "activity"
+      ? activities?.find((a) => a.id === selectedNode.id)
+      : undefined;
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col -m-6">
       <BuilderHeader
         title={curriculum?.title?.en || "Loading..."}
         topicCount={topics?.length || 0}
         activityCount={activities?.length || 0}
-        selectedActivityId={
-          selectedNode?.type === "activity" ? selectedNode.id : undefined
-        }
         activitySearchId={activitySearchId}
         onActivitySearchIdChange={setActivitySearchId}
         onOpenActivityById={handleOpenActivityById}
@@ -172,6 +174,9 @@ export default function BuilderPage() {
         <PreviewPanel
           activityType={selectedNode?.type === "activity" ? selectedNode.activityType : undefined}
           title={selectedNode?.type === "activity" ? selectedNode.title : undefined}
+          topicId={selectedActivity ? currentTopic?.id : undefined}
+          nodeId={selectedActivity?.node_id}
+          activityId={selectedActivity?.id}
         />
       </div>
 
@@ -179,7 +184,6 @@ export default function BuilderPage() {
         open={activityPickerOpen}
         onOpenChange={setActivityPickerOpen}
         onSelect={handleSelectActivityType}
-        onSelectTemplate={handleSelectTemplate}
       />
 
       <LetterSelectorModal

@@ -29,7 +29,7 @@ interface SoundBlendConfig {
 const DURATION_LABELS: Record<SoundDuration, { label: string; icon: string; color: string }> = {
   1: { label: "Stop", icon: "●", color: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700" },
   2: { label: "Short", icon: "▬", color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700" },
-  3: { label: "Long", icon: "▬▬", color: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700" },
+  3: { label: "Long", icon: "▬▬", color: "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700" },
 };
 
 type ReadingMode = "segmented" | "blended" | "fluent";
@@ -274,7 +274,7 @@ export function SoundBlendActivityForm({
                 <span className="text-blue-600 dark:text-blue-400">▬</span> Short (voweled)
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-purple-600 dark:text-purple-400">▬▬</span> Long (madd)
+                <span className="text-amber-600 dark:text-amber-400">▬▬</span> Long (madd)
               </div>
             </div>
           </div>

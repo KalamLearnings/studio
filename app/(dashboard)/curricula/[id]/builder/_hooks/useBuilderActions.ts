@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { TreeNode } from "@/components/builder/curriculum-tree";
 import type { Letter } from "@/lib/hooks/useLetters";
-import type { LetterForm, TopicType } from "@/components/builder/letter-selector-modal";
+import type { LetterForm, TopicType, Haraka } from "@/components/builder/letter-selector-modal";
 import type { Topic, Node, Article, ActivityTemplate } from "@/lib/schemas/curriculum";
 import {
   useCreateTopic,
@@ -66,7 +66,13 @@ export function useBuilderActions({
   }, []);
 
   const handleLetterSelect = React.useCallback(
-    (letter: Letter | null, form: LetterForm, topicType: TopicType, topicName?: string) => {
+    (
+      letter: Letter | null,
+      form: LetterForm,
+      topicType: TopicType,
+      topicName?: string,
+      haraka?: Haraka,
+    ) => {
       const title = letter
         ? `Letter ${letter.name_english} (${letter.letter})`
         : topicName || `New ${topicType.charAt(0).toUpperCase() + topicType.slice(1)}`;
@@ -79,6 +85,8 @@ export function useBuilderActions({
           title: { en: title },
           letter_id: letter?.id,
           letter_form: letter ? form : undefined,
+          letter_haraka:
+            letter && haraka && haraka !== "none" ? haraka : undefined,
           type: topicType,
           sequence_number: nextSequence,
         },

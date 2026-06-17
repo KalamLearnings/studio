@@ -13,21 +13,28 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import { useLetters, type Letter } from "@/lib/hooks/useLetters";
+import {
+  useLetters,
+  applyHaraka,
+  type Letter,
+} from "@/lib/hooks/useLetters";
+import { LetterFormHarakaPicker } from "@/components/builder/letter-picker";
+import type { LetterReference, HarakaType } from "@/components/builder/forms/types";
 
 export type LetterForm = "isolated" | "initial" | "medial" | "final";
 export type TopicType = "lesson" | "review" | "quiz" | "assessment";
-
-export interface LetterReference {
-  letterId: string;
-  form: LetterForm;
-}
+export type Haraka = "none" | HarakaType;
 
 interface LetterSelectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (letter: Letter | null, form: LetterForm, topicType: TopicType, topicName?: string) => void;
+  onSelect: (
+    letter: Letter | null,
+    form: LetterForm,
+    topicType: TopicType,
+    topicName?: string,
+    haraka?: Haraka,
+  ) => void;
   title?: string;
   showFormSelector?: boolean;
 }
@@ -53,47 +60,50 @@ export function LetterSelectorModal({
   title = "Select Letter for New Topic",
   showFormSelector = true,
 }: LetterSelectorModalProps) {
-  const { letters, loading } = useLetters();
+  const { getLetter } = useLetters();
   const [selectFromLetters, setSelectFromLetters] = React.useState(true);
-  const [selectedLetter, setSelectedLetter] = React.useState<Letter | null>(null);
-  const [selectedForm, setSelectedForm] = React.useState<LetterForm>("isolated");
-  const [selectedTopicType, setSelectedTopicType] = React.useState<TopicType>("lesson");
+  // The picker is the source of truth for letter + form + haraka (single ref).
+  const [selection, setSelection] = React.useState<LetterReference[]>([]);
+  const [selectedTopicType, setSelectedTopicType] =
+    React.useState<TopicType>("lesson");
   const [topicName, setTopicName] = React.useState("");
 
   // Reset state when modal opens
   React.useEffect(() => {
     if (open) {
       setSelectFromLetters(true);
-      setSelectedLetter(null);
-      setSelectedForm("isolated");
+      setSelection([]);
       setSelectedTopicType("lesson");
       setTopicName("");
     }
   }, [open]);
 
-  const handleLetterClick = React.useCallback((letter: Letter) => {
-    setSelectedLetter(letter);
-  }, []);
-
-  const handleFormClick = React.useCallback((form: LetterForm) => {
-    setSelectedForm(form);
-  }, []);
-
-  const handleTopicTypeClick = React.useCallback((type: TopicType) => {
-    setSelectedTopicType(type);
-  }, []);
+  const selectedRef = selection[0] ?? null;
+  const selectedLetter = selectedRef ? getLetter(selectedRef.letterId) : null;
+  const selectedForm: LetterForm = (selectedRef?.form as LetterForm) ?? "isolated";
+  const selectedHaraka: Haraka = (selectedRef?.haraka as Haraka) ?? "none";
 
   const handleSelect = React.useCallback(() => {
     if (selectFromLetters && !selectedLetter) return;
     if (!selectFromLetters && !topicName.trim()) return;
     onSelect(
-      selectFromLetters ? selectedLetter : null,
+      selectFromLetters ? selectedLetter ?? null : null,
       selectedForm,
       selectedTopicType,
-      selectFromLetters ? undefined : topicName.trim()
+      selectFromLetters ? undefined : topicName.trim(),
+      selectFromLetters ? selectedHaraka : undefined,
     );
     onOpenChange(false);
-  }, [selectFromLetters, selectedLetter, selectedForm, selectedTopicType, topicName, onSelect, onOpenChange]);
+  }, [
+    selectFromLetters,
+    selectedLetter,
+    selectedForm,
+    selectedHaraka,
+    selectedTopicType,
+    topicName,
+    onSelect,
+    onOpenChange,
+  ]);
 
   const canCreate = selectFromLetters ? !!selectedLetter : !!topicName.trim();
 
@@ -104,7 +114,7 @@ export function LetterSelectorModal({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="py-3 space-y-4">
+        <div className="space-y-4 py-3">
           {/* Select from Letters Toggle */}
           <div className="flex items-center justify-between">
             <Label htmlFor="select-from-letters" className="text-sm font-medium">
@@ -119,10 +129,8 @@ export function LetterSelectorModal({
 
           {/* Topic Type Selector */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Topic Type
-            </label>
-            <p className="text-xs text-muted-foreground mb-2">
+            <label className="mb-1 block text-sm font-medium">Topic Type</label>
+            <p className="mb-2 text-xs text-muted-foreground">
               Optionally mark this topic as a review, quiz, or assessment
             </p>
             <div className="grid grid-cols-4 gap-2">
@@ -132,13 +140,13 @@ export function LetterSelectorModal({
                   <button
                     key={type.id}
                     type="button"
-                    onClick={() => handleTopicTypeClick(type.id)}
+                    onClick={() => setSelectedTopicType(type.id)}
                     className={cn(
-                      "px-3 py-2 rounded-md border transition-all text-sm font-medium",
+                      "rounded-md border px-3 py-2 text-sm font-medium transition-all",
                       "hover:border-primary/50 hover:bg-primary/5",
                       isSelected
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card"
+                        : "border-border bg-card",
                     )}
                   >
                     {type.label}
@@ -164,101 +172,35 @@ export function LetterSelectorModal({
             </div>
           )}
 
-          {/* Letter Grid - Only shown when selectFromLetters is true */}
+          {/* Shared letter + form + haraka picker (single-select) */}
           {selectFromLetters && (
             <>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Select an Arabic Letter <span className="text-destructive">*</span>
-                  </label>
-                  <div className="grid grid-cols-10 gap-1.5">
-                    {letters.map((letter) => {
-                      const isSelected = selectedLetter?.id === letter.id;
-
-                      return (
-                        <button
-                          key={letter.id}
-                          type="button"
-                          onClick={() => handleLetterClick(letter)}
-                          className={cn(
-                            "h-12 w-12 rounded-md border transition-all",
-                            "flex flex-col items-center justify-center",
-                            "hover:border-primary/50 hover:bg-primary/5",
-                            isSelected
-                              ? "border-primary bg-primary/10 ring-1 ring-primary"
-                              : "border-border bg-card"
-                          )}
-                        >
-                          <div className="text-lg font-arabic leading-none">
-                            {letter.letter}
-                          </div>
-                          <div className="text-[8px] text-muted-foreground leading-none mt-0.5">
-                            {letter.name_english}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Form Selector */}
-              {showFormSelector && selectedLetter && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Select Letter Form for &ldquo;{selectedLetter.name_english}&rdquo;
-                  </label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {(["isolated", "initial", "medial", "final"] as LetterForm[]).map(
-                      (form) => {
-                        const isSelected = selectedForm === form;
-                        const formChar =
-                          selectedLetter.forms?.[form] || selectedLetter.letter;
-
-                        return (
-                          <button
-                            key={form}
-                            type="button"
-                            onClick={() => handleFormClick(form)}
-                            className={cn(
-                              "px-3 py-2 rounded-md border transition-all",
-                              "flex flex-col items-center justify-center",
-                              "hover:border-primary/50 hover:bg-primary/5",
-                              isSelected
-                                ? "border-primary bg-primary/10 ring-1 ring-primary"
-                                : "border-border bg-card"
-                            )}
-                          >
-                            <div className="text-xl font-arabic">
-                              {formChar}
-                            </div>
-                            <div className="text-[10px] text-muted-foreground">
-                              {formLabels[form]}
-                            </div>
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-              )}
+              <LetterFormHarakaPicker
+                value={selection}
+                onChange={setSelection}
+                showFormSelector={showFormSelector}
+              />
 
               {/* Selected Letter Preview */}
               {selectedLetter && (
-                <div className="p-3 rounded-md bg-muted/50 border">
+                <div className="rounded-md border bg-muted/50 p-3">
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl font-arabic">
-                      {selectedLetter.forms?.[selectedForm] || selectedLetter.letter}
+                    <div className="font-arabic text-3xl">
+                      {applyHaraka(
+                        selectedLetter.forms?.[selectedForm] ||
+                          selectedLetter.letter,
+                        selectedHaraka === "none" ? undefined : selectedHaraka,
+                      )}
                     </div>
                     <div>
-                      <div className="font-medium text-sm">{selectedLetter.name_english}</div>
+                      <div className="text-sm font-medium">
+                        {selectedLetter.name_english}
+                      </div>
                       <div className="text-xs text-muted-foreground">
-                        {selectedLetter.name_arabic} · {formLabels[selectedForm]} form
+                        {selectedLetter.name_arabic} · {formLabels[selectedForm]}{" "}
+                        form
+                        {selectedHaraka !== "none" &&
+                          ` · ${selectedHaraka.charAt(0).toUpperCase() + selectedHaraka.slice(1)}`}
                       </div>
                     </div>
                   </div>

@@ -75,9 +75,12 @@ export const TopicTypeSchema = z.enum(['lesson', 'review', 'quiz', 'assessment']
 
 export const LetterFormSchema = z.enum(['isolated', 'initial', 'medial', 'final']);
 
+export const LetterHarakaSchema = z.enum(['fatha', 'damma', 'kasra', 'sukoon', 'shadda']);
+
 export const CreateTopicSchema = z.object({
   letter_id: z.string().optional(), // Letter ID reference (e.g., "jeem", "alif")
   letter_form: LetterFormSchema.optional(), // Which form of the letter (isolated, initial, medial, final)
+  letter_haraka: LetterHarakaSchema.optional(), // Optional diacritic for the topic letter
   sequence_number: z.number().int().positive().default(1),
   title: LocalizedTextSchema,
   description: LocalizedTextSchema.optional(),

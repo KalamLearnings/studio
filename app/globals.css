@@ -38,8 +38,8 @@
     --muted: 210 20% 96%;
     --muted-foreground: 215 14% 45%;
 
-    /* Accent - Purple (#7B68C4) */
-    --accent: 252 39% 59%;
+    /* Accent - Teal */
+    --accent: 178 50% 48%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive - Error Red (#E85A5A) */
@@ -112,8 +112,8 @@
     --muted: 217 33% 15%;
     --muted-foreground: 215 20% 65%;
 
-    /* Accent - Purple */
-    --accent: 252 39% 55%;
+    /* Accent - Teal */
+    --accent: 178 50% 44%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */

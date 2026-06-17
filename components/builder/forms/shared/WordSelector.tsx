@@ -9,6 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, Image, Volume2 } from "lucide-react";
 import { useWords, type Word } from "@/lib/hooks/useWords";
 
+// Words are loaded into the dropdown a page at a time; scrolling near the
+// bottom reveals the next page (client-side, the full list is already in memory).
+const PAGE_SIZE = 50;
+
 interface WordSelectorProps {
   value: string;
   onChange: (word: string, wordData?: Word) => void;
@@ -36,13 +40,15 @@ export function WordSelector({
   const [inputValue, setInputValue] = useState(value || "");
   const [showDropdown, setShowDropdown] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Find if the current value matches an existing word
   const selectedWord = words.find((w) => w.arabic === value);
 
-  // Filter words based on input
+  // Filter words based on input. With an empty field, show the full library
+  // so the field acts as a browsable dropdown of all words.
   const filteredWords = inputValue.trim()
     ? words.filter(
         (word) =>
@@ -50,7 +56,7 @@ export function WordSelector({
           word.english?.toLowerCase().includes(inputValue.toLowerCase()) ||
           word.transliteration?.toLowerCase().includes(inputValue.toLowerCase())
       )
-    : [];
+    : words;
 
   // Check if input exactly matches an existing word
   const exactMatch = words.find((w) => w.arabic === inputValue);
@@ -59,6 +65,22 @@ export function WordSelector({
   useEffect(() => {
     setInputValue(value || "");
   }, [value]);
+
+  // Reset to the first page whenever the result set changes or the dropdown
+  // (re)opens, so a fresh search always starts at the top.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [inputValue, showDropdown]);
+
+  // Reveal the next page when the dropdown is scrolled near the bottom.
+  const handleDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 80) {
+      setVisibleCount((prev) =>
+        prev < filteredWords.length ? prev + PAGE_SIZE : prev
+      );
+    }
+  };
 
   const handleInputChange = (text: string) => {
     setInputValue(text);
@@ -89,12 +111,18 @@ export function WordSelector({
     if (!showDropdown || filteredWords.length === 0) return;
 
     switch (e.key) {
-      case "ArrowDown":
+      case "ArrowDown": {
         e.preventDefault();
+        // Reveal the next page when arrowing to the edge of the visible window.
+        const lastVisible = Math.min(visibleCount, filteredWords.length) - 1;
+        if (focusedIndex >= lastVisible && visibleCount < filteredWords.length) {
+          setVisibleCount((prev) => prev + PAGE_SIZE);
+        }
         setFocusedIndex((prev) =>
           prev < filteredWords.length - 1 ? prev + 1 : prev
         );
         break;
+      }
       case "ArrowUp":
         e.preventDefault();
         setFocusedIndex((prev) => (prev > 0 ? prev - 1 : -1));
@@ -166,9 +194,10 @@ export function WordSelector({
         {showDropdown && filteredWords.length > 0 && (
           <div
             ref={dropdownRef}
+            onScroll={handleDropdownScroll}
             className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto"
           >
-            {filteredWords.slice(0, 10).map((word, index) => (
+            {filteredWords.slice(0, visibleCount).map((word, index) => (
               <button
                 key={word.id}
                 type="button"
@@ -209,9 +238,9 @@ export function WordSelector({
                 </div>
               </button>
             ))}
-            {filteredWords.length > 10 && (
-              <div className="px-3 py-2 text-xs text-muted-foreground border-t">
-                +{filteredWords.length - 10} more results...
+            {visibleCount < filteredWords.length && (
+              <div className="px-3 py-2 text-xs text-muted-foreground border-t text-center">
+                Showing {visibleCount} of {filteredWords.length} — scroll for more…
               </div>
             )}
           </div>
@@ -219,10 +248,10 @@ export function WordSelector({
 
         {/* Hint Text */}
         <p className="mt-1 text-xs text-muted-foreground">
-          {filteredWords.length > 0
-            ? `${filteredWords.length} word${filteredWords.length === 1 ? "" : "s"} found`
-            : inputValue.trim()
-            ? "New word - will be added to library when saved"
+          {inputValue.trim()
+            ? filteredWords.length > 0
+              ? `${filteredWords.length} word${filteredWords.length === 1 ? "" : "s"} found`
+              : "New word - will be added to library when saved"
             : `${words.length} words in library`}
         </p>
       </div>

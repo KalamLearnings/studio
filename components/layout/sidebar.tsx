@@ -10,7 +10,6 @@ import {
   Type,
   BookMarked,
   Gamepad2,
-  LayoutTemplate,
   Ticket,
   Settings,
   LogOut,
@@ -32,7 +31,6 @@ const navItems: NavItem[] = [
   { title: "Words", href: "/words", icon: Type },
   { title: "Books", href: "/books", icon: BookMarked },
   { title: "Games", href: "/games", icon: Gamepad2 },
-  { title: "Templates", href: "/templates", icon: LayoutTemplate },
   { title: "Promos", href: "/promo-codes", icon: Ticket },
 ];
 

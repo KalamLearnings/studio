@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, FileText } from "lucide-react";
+import { Search, X, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,15 +12,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ACTIVITY_TYPES,
   ACTIVITY_CATEGORIES,
@@ -29,8 +20,7 @@ import {
   getActivityIcon,
   type ActivityCategory,
 } from "@/lib/constants/curriculum";
-import { useActivityTemplates } from "@/lib/hooks/useTemplates";
-import type { ActivityTemplate } from "@/lib/schemas/curriculum";
+
 // Local storage key for recent activities
 const RECENT_ACTIVITIES_KEY = "kalam-recent-activities";
 const MAX_RECENT_ACTIVITIES = 4;
@@ -107,67 +97,26 @@ interface ActivityTypePickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (type: { id: string; name: string }) => void;
-  onSelectTemplate?: (template: ActivityTemplate, variables: Record<string, string>) => void;
 }
 
 export function ActivityTypePicker({
   open,
   onOpenChange,
   onSelect,
-  onSelectTemplate,
 }: ActivityTypePickerProps) {
   const [search, setSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] =
     React.useState<ActivityCategory>("all");
   const [recentActivities, setRecentActivities] = React.useState<string[]>([]);
 
-  // Template state
-  const [useTemplate, setUseTemplate] = React.useState(false);
-  const [selectedTemplate, setSelectedTemplate] = React.useState<ActivityTemplate | null>(null);
-  const [templateVariables, setTemplateVariables] = React.useState<Record<string, string>>({});
-
-  // Fetch templates
-  const { data: templates, isLoading: isLoadingTemplates } = useActivityTemplates();
-
-  // Load recent activities on mount
+  // Reset state each time the dialog opens
   React.useEffect(() => {
     if (open) {
       setRecentActivities(getRecentActivities());
       setSearch("");
       setSelectedCategory("all");
-      setUseTemplate(false);
-      setSelectedTemplate(null);
-      setTemplateVariables({});
     }
   }, [open]);
-
-  // Reset template variables when template changes
-  React.useEffect(() => {
-    if (selectedTemplate) {
-      const initialVariables: Record<string, string> = {};
-      selectedTemplate.required_fields.forEach(field => {
-        initialVariables[field] = "";
-      });
-      setTemplateVariables(initialVariables);
-    }
-  }, [selectedTemplate]);
-
-  // Handle template submission
-  const handleTemplateSubmit = () => {
-    if (!selectedTemplate || !onSelectTemplate) return;
-
-    // Check all required fields are filled
-    const allFilled = selectedTemplate.required_fields.every(
-      field => templateVariables[field]?.trim()
-    );
-    if (!allFilled) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    onSelectTemplate(selectedTemplate, templateVariables);
-    onOpenChange(false);
-  };
 
   // Build activity list with metadata
   const activityTypes = React.useMemo(() => {
@@ -184,13 +133,11 @@ export function ActivityTypePicker({
   const filteredActivities = React.useMemo(() => {
     let filtered = activityTypes;
 
-    // Filter by category
     if (selectedCategory !== "all") {
       const categoryTypes = getActivitiesByCategory(selectedCategory);
       filtered = filtered.filter((a) => categoryTypes.includes(a.type));
     }
 
-    // Filter by search query
     if (search.trim()) {
       const query = search.toLowerCase();
       filtered = filtered.filter(
@@ -200,7 +147,11 @@ export function ActivityTypePicker({
       );
     }
 
-    return filtered;
+    // Implemented first, then alphabetical within each group.
+    return [...filtered].sort((a, b) => {
+      if (a.implemented !== b.implemented) return a.implemented ? -1 : 1;
+      return a.label.localeCompare(b.label);
+    });
   }, [activityTypes, selectedCategory, search]);
 
   // Get recent activities with metadata
@@ -228,242 +179,171 @@ export function ActivityTypePicker({
     ).length;
   };
 
+  const implementedCount = activityTypes.filter((a) => a.implemented).length;
+  const filteredImplementedCount = filteredActivities.filter(
+    (a) => a.implemented
+  ).length;
+  const showRecent = recentActivityItems.length > 0 && !search;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-3xl h-[80vh] overflow-hidden flex flex-col gap-0 p-0">
+        <DialogHeader className="flex-shrink-0 border-b px-5 py-4">
           <DialogTitle>Select Activity Type</DialogTitle>
         </DialogHeader>
 
-        {/* Template Toggle */}
-        {onSelectTemplate && (
-          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md flex-shrink-0">
-            <Checkbox
-              id="use-template"
-              checked={useTemplate}
-              onCheckedChange={(checked) => {
-                setUseTemplate(checked === true);
-                if (!checked) {
-                  setSelectedTemplate(null);
-                  setTemplateVariables({});
-                }
-              }}
+        {/* Search */}
+        <div className="flex-shrink-0 px-5 py-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search activities..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-10"
+              autoFocus
             />
-            <Label htmlFor="use-template" className="text-sm font-medium cursor-pointer">
-              Create from template
-            </Label>
-          </div>
-        )}
-
-        {/* Template Selection Mode */}
-        {useTemplate ? (
-          <div className="flex-1 overflow-y-auto space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Select Template *</Label>
-              {isLoadingTemplates ? (
-                <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
-              ) : (
-                <Select
-                  value={selectedTemplate?.id || ""}
-                  onValueChange={(value) => {
-                    const template = templates?.find(t => t.id === value);
-                    setSelectedTemplate(template || null);
-                  }}
-                >
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="-- Select a template --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates?.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          <span>{template.name.en}</span>
-                          <span className="text-muted-foreground">({template.type})</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {/* Template Variables */}
-            {selectedTemplate && (
-              <div className="space-y-3 p-4 bg-blue-50 rounded-md border border-blue-200">
-                <h4 className="text-sm font-medium text-blue-900">Template Variables</h4>
-                {selectedTemplate.required_fields.map((field) => (
-                  <div key={field}>
-                    <Label className="text-sm font-medium">{field} *</Label>
-                    <Input
-                      value={templateVariables[field] || ""}
-                      onChange={(e) =>
-                        setTemplateVariables({
-                          ...templateVariables,
-                          [field]: e.target.value,
-                        })
-                      }
-                      className="mt-1"
-                      placeholder={`Enter ${field}`}
-                    />
-                  </div>
-                ))}
-              </div>
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
           </div>
-        ) : (
-          <>
-            {/* Search Bar */}
-            <div className="relative flex-shrink-0">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search activities..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-10"
-                autoFocus
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Category Tabs */}
-        <div className="flex flex-wrap gap-2 flex-shrink-0">
-          {ACTIVITY_CATEGORIES.map((category) => {
-            const count = getCategoryCount(category.id);
-            const isSelected = selectedCategory === category.id;
-            return (
-              <Button
-                key={category.id}
-                variant={isSelected ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category.id)}
-                className="gap-2"
-              >
-                <span>{category.icon}</span>
-                <span>{category.label}</span>
-                <span
-                  className={cn(
-                    "text-xs px-1.5 py-0.5 rounded-full font-semibold",
-                    isSelected
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {count}
-                </span>
-              </Button>
-            );
-          })}
         </div>
 
-        {/* Recent Activities */}
-        {recentActivityItems.length > 0 &&
-          !search &&
-          selectedCategory === "all" && (
-            <div className="flex-shrink-0">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Recently Used
-              </h3>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+        {/* Two-pane: category sidebar + activity list */}
+        <div className="flex min-h-0 flex-1 border-t">
+          {/* Sidebar */}
+          <nav className="w-44 flex-shrink-0 overflow-y-auto border-r py-2">
+            {ACTIVITY_CATEGORIES.map((category) => {
+              const count = getCategoryCount(category.id);
+              const isSelected = selectedCategory === category.id;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors",
+                    isSelected
+                      ? "bg-primary/10 font-medium text-primary"
+                      : "text-foreground hover:bg-muted"
+                  )}
+                >
+                  <span className="text-base">{category.icon}</span>
+                  <span className="flex-1 text-left">{category.label}</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 text-xs font-semibold",
+                      isSelected
+                        ? "bg-primary/15 text-primary"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* List */}
+          <div className="min-w-0 flex-1 overflow-y-auto">
+            {showRecent && (
+              <div className="px-3 pt-3">
+                <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Recently Used
+                </h3>
                 {recentActivityItems.map((activity) => (
-                  <button
-                    key={activity.type}
+                  <ActivityRow
+                    key={`recent-${activity.type}`}
+                    icon={activity.icon}
+                    label={activity.label}
                     onClick={() =>
                       handleSelectType(activity.type, activity.label)
                     }
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all whitespace-nowrap"
-                  >
-                    <span className="text-xl">{activity.icon}</span>
-                    <span className="text-sm font-medium text-primary">
-                      {activity.label}
-                    </span>
-                  </button>
+                  />
+                ))}
+                <div className="mx-2 my-2 border-t" />
+              </div>
+            )}
+
+            {filteredActivities.length > 0 ? (
+              <div className="px-3 pb-3">
+                {filteredActivities.map((activity) => (
+                  <ActivityRow
+                    key={activity.type}
+                    icon={activity.icon}
+                    label={activity.label}
+                    disabled={!activity.implemented}
+                    onClick={() =>
+                      handleSelectType(activity.type, activity.label)
+                    }
+                  />
                 ))}
               </div>
-            </div>
-          )}
-
-            {/* Activity Grid - Scrollable */}
-            <div className="flex-1 overflow-y-auto min-h-0">
-              {filteredActivities.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2 pr-2">
-                  {filteredActivities.map((activity) => (
-                    <button
-                      key={activity.type}
-                      onClick={() =>
-                        handleSelectType(activity.type, activity.label)
-                      }
-                      disabled={!activity.implemented}
-                      className={cn(
-                        "p-3 rounded-lg border-2 transition-all text-left",
-                        activity.implemented
-                          ? "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
-                          : "border-border/50 bg-muted/50 cursor-not-allowed opacity-50"
-                      )}
-                    >
-                      <div className="text-2xl mb-1">{activity.icon}</div>
-                      <div className="text-xs font-medium leading-tight">
-                        {activity.label}
-                      </div>
-                      {!activity.implemented && (
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          Coming soon
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <p className="text-sm">No activities found</p>
-                  <p className="text-xs mt-1">
-                    Try a different search or category
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <p className="text-sm">No activities found</p>
+                <p className="mt-1 text-xs">
+                  Try a different search or category
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Footer */}
-        <DialogFooter className="flex-row justify-between sm:justify-between flex-shrink-0">
-          {useTemplate ? (
-            <>
-              <span className="text-xs text-muted-foreground">
-                {selectedTemplate ? `Template: ${selectedTemplate.name.en}` : "Select a template"}
-              </span>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleTemplateSubmit}
-                  disabled={!selectedTemplate}
-                >
-                  Create from Template
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <span className="text-xs text-muted-foreground">
-                {filteredActivities.filter((a) => a.implemented).length} of{" "}
-                {activityTypes.filter((a) => a.implemented).length} activities
-              </span>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-            </>
-          )}
+        <DialogFooter className="flex-shrink-0 flex-row items-center justify-between border-t px-5 py-3 sm:justify-between">
+          <span className="text-xs text-muted-foreground">
+            {filteredImplementedCount} of {implementedCount} activities
+          </span>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** A single activity row in the list pane. */
+function ActivityRow({
+  icon,
+  label,
+  disabled = false,
+  onClick,
+}: {
+  icon: string;
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "group flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors",
+        disabled ? "cursor-not-allowed opacity-50" : "hover:bg-primary/5"
+      )}
+    >
+      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted text-lg">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+        {label}
+      </span>
+      {disabled ? (
+        <span className="flex-shrink-0 text-xs text-muted-foreground">
+          Coming soon
+        </span>
+      ) : (
+        <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground" />
+      )}
+    </button>
   );
 }

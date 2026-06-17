@@ -3,16 +3,69 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+// Intrinsic footprint of the phone frame (body + 12px border on each side).
+const PHONE_WIDTH = 280 + 24;
+const PHONE_HEIGHT = 600 + 24;
+
 interface PhonePreviewProps {
   children?: React.ReactNode;
   className?: string;
+  /** When set, the phone fills/fits its container while keeping aspect ratio. */
+  fit?: boolean;
 }
 
-export function PhonePreview({ children, className }: PhonePreviewProps) {
+export function PhonePreview({ children, className, fit = false }: PhonePreviewProps) {
+  const [scale, setScale] = React.useState(1);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Scale the phone down so the whole device fits the available space.
+  React.useLayoutEffect(() => {
+    if (!fit) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (!width || !height) return;
+      // Leave a little breathing room so the frame never touches the edges.
+      const next = Math.min(width / PHONE_WIDTH, height / PHONE_HEIGHT, 1) * 0.96;
+      setScale(next > 0 ? next : 1);
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [fit]);
+
+  if (fit) {
+    return (
+      <div
+        ref={containerRef}
+        className={cn("flex h-full w-full items-center justify-center overflow-hidden p-2", className)}
+      >
+        {/* Reserve the scaled footprint so flex centering stays correct. */}
+        <div style={{ width: PHONE_WIDTH * scale, height: PHONE_HEIGHT * scale }}>
+          <div
+            style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}
+          >
+            <PhoneFrame>{children}</PhoneFrame>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex items-center justify-center p-4", className)}>
-      {/* Phone Frame */}
-      <div className="relative">
+      <PhoneFrame>{children}</PhoneFrame>
+    </div>
+  );
+}
+
+function PhoneFrame({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="relative">
         {/* Phone Body */}
         <div className="relative h-[600px] w-[280px] rounded-[40px] border-[12px] border-gray-800 bg-gray-800 shadow-xl dark:border-gray-700">
           {/* Notch */}
@@ -76,7 +129,6 @@ export function PhonePreview({ children, className }: PhonePreviewProps) {
         <div className="absolute -left-[2px] top-32 h-12 w-[3px] rounded-l bg-gray-800 dark:bg-gray-700" />
         <div className="absolute -left-[2px] top-48 h-12 w-[3px] rounded-l bg-gray-800 dark:bg-gray-700" />
       </div>
-    </div>
   );
 }
 

@@ -4,16 +4,16 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FormField, TextInput, LetterSelector, Checkbox, WordSelector } from "./shared";
 import { useLetters } from "@/lib/hooks/useLetters";
+import { applyHaraka } from "@/lib/utils/letterReference";
+import {
+  autoDetectSegments,
+  type SoundDuration,
+  type SoundSegment,
+} from "@/lib/utils/soundBlend";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
-type SoundDuration = 1 | 2 | 3;
-type BlendSpeed = "none" | "slow" | "fast";
+type BlendSpeed = "none" | "slow" | "fast" | "segmented" | "blended" | "fluent";
 type BlendContentType = "letter" | "word";
-
-interface SoundSegment {
-  sound: string;
-  duration: SoundDuration;
-}
 
 interface SoundBlendConfig {
   contentType?: BlendContentType;
@@ -26,102 +26,26 @@ interface SoundBlendConfig {
   meaning?: string;
 }
 
-const HARAKAT = new Set([
-  "ً", "ٌ", "ٍ", "َ", "ُ", "ِ",
-  "ّ", "ْ", "ٓ", "ٔ", "ٕ", "ٰ",
-]);
-
-const FATHA = "َ";
-const DAMMA = "ُ";
-const KASRA = "ِ";
-const SUKUN = "ْ";
-const ALEF = "ا";
-const WAW = "و";
-const YA = "ي";
-
-const ISOLATED_FORMS: Record<string, string> = {
-  "ا": "ﺍ", "أ": "ﺃ", "إ": "ﺇ", "آ": "ﺁ", "ب": "ﺏ", "ت": "ﺕ",
-  "ث": "ﺙ", "ج": "ﺝ", "ح": "ﺡ", "خ": "ﺥ", "د": "ﺩ", "ذ": "ﺫ",
-  "ر": "ﺭ", "ز": "ﺯ", "س": "ﺱ", "ش": "ﺵ", "ص": "ﺹ", "ض": "ﺽ",
-  "ط": "ﻁ", "ظ": "ﻅ", "ع": "ﻉ", "غ": "ﻍ", "ف": "ﻑ", "ق": "ﻕ",
-  "ك": "ﻙ", "ل": "ﻝ", "م": "ﻡ", "ن": "ﻥ", "ه": "ﻩ", "و": "ﻭ",
-  "ي": "ﻱ", "ى": "ﻯ", "ة": "ﺓ", "ء": "ء", "ئ": "ﺉ", "ؤ": "ﺅ",
-};
-
-function toIsolatedForm(letter: string): string {
-  return ISOLATED_FORMS[letter] || letter;
-}
-
-function parseWordIntoSegments(word: string): { baseLetter: string; harakat: string }[] {
-  const segments: { baseLetter: string; harakat: string }[] = [];
-  const chars = Array.from(word);
-  let i = 0;
-
-  while (i < chars.length) {
-    const char = chars[i];
-    if (HARAKAT.has(char)) {
-      i++;
-      continue;
-    }
-
-    let harakat = "";
-    let j = i + 1;
-    while (j < chars.length && HARAKAT.has(chars[j])) {
-      harakat += chars[j];
-      j++;
-    }
-
-    segments.push({ baseLetter: char, harakat });
-    i = j;
-  }
-
-  return segments;
-}
-
-function detectDuration(
-  segment: { baseLetter: string; harakat: string },
-  isLast: boolean,
-  nextSegment?: { baseLetter: string; harakat: string }
-): SoundDuration {
-  const { harakat } = segment;
-
-  if (harakat.includes(SUKUN)) return 1;
-  if (isLast && !harakat) return 1;
-
-  if (nextSegment) {
-    const nextLetter = nextSegment.baseLetter;
-    if (harakat.includes(FATHA) && nextLetter === ALEF) return 3;
-    if (harakat.includes(DAMMA) && nextLetter === WAW) return 3;
-    if (harakat.includes(KASRA) && nextLetter === YA) return 3;
-  }
-
-  return 2;
-}
-
-function autoDetectSegments(word: string, useIsolated: boolean = false): SoundSegment[] {
-  if (!word) return [];
-
-  const parsed = parseWordIntoSegments(word);
-  const segments: SoundSegment[] = [];
-
-  for (let i = 0; i < parsed.length; i++) {
-    const segment = parsed[i];
-    const isLast = i === parsed.length - 1;
-    const nextSegment = i < parsed.length - 1 ? parsed[i + 1] : undefined;
-    const duration = detectDuration(segment, isLast, nextSegment);
-    const letter = useIsolated ? toIsolatedForm(segment.baseLetter) : segment.baseLetter;
-    const sound = letter + segment.harakat;
-    segments.push({ sound, duration });
-  }
-
-  return segments;
-}
-
 const DURATION_LABELS: Record<SoundDuration, { label: string; icon: string; color: string }> = {
   1: { label: "Stop", icon: "●", color: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700" },
   2: { label: "Short", icon: "▬", color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700" },
   3: { label: "Long", icon: "▬▬", color: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700" },
 };
+
+type ReadingMode = "segmented" | "blended" | "fluent";
+
+const READING_MODES: { mode: ReadingMode; emoji: string; label: string; sub: string }[] = [
+  { mode: "segmented", emoji: "🐢", label: "Segmented", sub: "Isolated letters" },
+  { mode: "blended", emoji: "🐇", label: "Blended", sub: "Contextual letters" },
+  { mode: "fluent", emoji: "📖", label: "Fluent", sub: "Connected word" },
+];
+
+/** Normalize legacy speed values to the segmented/blended/fluent vocabulary. */
+function normalizeSpeed(speed: BlendSpeed): ReadingMode {
+  if (speed === "slow" || speed === "none") return "segmented";
+  if (speed === "fast") return "blended";
+  return speed;
+}
 
 export function SoundBlendActivityForm({
   config,
@@ -133,8 +57,12 @@ export function SoundBlendActivityForm({
   const contentType: BlendContentType = config?.contentType || "word";
   const word = config?.word || "";
   const segments = config?.segments || [];
-  const speed: BlendSpeed = config?.speed || (contentType === "letter" ? "none" : "slow");
-  const requiredSlides = config?.requiredSlides || 2;
+  const speed: BlendSpeed = config?.speed || (contentType === "letter" ? "none" : "segmented");
+  // Treat legacy values as their modern equivalents for the picker UI.
+  const normalizedSpeed = normalizeSpeed(speed);
+  // Segmented mode shows letters in isolated forms; blended/fluent keep the
+  // connected/contextual word.
+  const useIsolatedForms = normalizedSpeed === "segmented";
   const showBothSpeeds = config?.showBothSpeeds || false;
   const transliteration = config?.transliteration || "";
   const meaning = config?.meaning || "";
@@ -148,21 +76,21 @@ export function SoundBlendActivityForm({
 
   React.useEffect(() => {
     if (word && segments.length === 0 && contentType === "word") {
-      const useIsolated = speed === "slow";
-      const detected = autoDetectSegments(word, useIsolated);
+      const detected = autoDetectSegments(word, useIsolatedForms);
       if (detected.length > 0) {
         updateConfig({ segments: detected });
       }
     }
-  }, [word]);
+    // Auto-detect only when the word itself changes.
+  }, [word]); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
-    if (word && segments.length > 0 && contentType === "word" && speed !== "none") {
-      const useIsolated = speed === "slow";
-      const detected = autoDetectSegments(word, useIsolated);
+    if (word && segments.length > 0 && contentType === "word") {
+      const detected = autoDetectSegments(word, useIsolatedForms);
       updateConfig({ segments: detected });
     }
-  }, [speed]);
+    // Re-detect only when the reading mode changes (isolated vs connected forms).
+  }, [speed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleContentTypeChange = (newContentType: BlendContentType) => {
     if (newContentType === "letter") {
@@ -173,18 +101,18 @@ export function SoundBlendActivityForm({
         speed: "none",
       });
     } else {
+      // Switch to word mode: default to the first blending stage (segmented).
       updateConfig({
         contentType: newContentType,
         word: "",
         segments: [],
-        speed: "slow",
+        speed: "segmented",
       });
     }
   };
 
   const handleWordChange = (newWord: string) => {
-    const useIsolated = speed === "slow";
-    const detected = autoDetectSegments(newWord, useIsolated);
+    const detected = autoDetectSegments(newWord, useIsolatedForms);
     updateConfig({ word: newWord, segments: detected });
   };
 
@@ -194,7 +122,12 @@ export function SoundBlendActivityForm({
     const letterData = letters.find((l) => l.id === ref.letterId);
     if (!letterData) return;
 
-    const letterChar = letterData.forms?.[ref.form] || letterData.letter;
+    // Get the letter form, then bake in the selected haraka. The sound_blend
+    // schema stores the diacritic directly in the sound/word strings (e.g.
+    // "عُ"), so the haraka from the picker MUST be applied here - otherwise the
+    // letter renders bare in the app.
+    const baseChar = letterData.forms?.[ref.form] || letterData.letter;
+    const letterChar = applyHaraka(baseChar, ref.haraka);
     const segment: SoundSegment = { sound: letterChar, duration: 2 };
 
     updateConfig({
@@ -210,21 +143,20 @@ export function SoundBlendActivityForm({
   };
 
   const handleRedetect = () => {
-    const useIsolated = speed === "slow";
-    const detected = autoDetectSegments(word, useIsolated);
+    const detected = autoDetectSegments(word, useIsolatedForms);
     updateConfig({ segments: detected });
   };
 
   const getSpeedHint = () => {
-    switch (speed) {
-      case "slow":
-        return "Slow: Turtle slider for beginners";
-      case "fast":
-        return "Fast: Rabbit slider for advanced readers";
-      case "none":
-        return "No speed indicator (square slider)";
+    switch (normalizedSpeed) {
+      case "segmented":
+        return "Segmented: isolated letters, turtle slider (sound out each letter)";
+      case "blended":
+        return "Blended: contextual letter forms, rabbit slider";
+      case "fluent":
+        return "Fluent: connected whole word with a single filling bar";
       default:
-        return "Select a speed mode";
+        return "Select a reading mode";
     }
   };
 
@@ -349,82 +281,62 @@ export function SoundBlendActivityForm({
         </FormField>
       )}
 
-      <FormField label="Reading Speed" hint={getSpeedHint()}>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => updateConfig({ speed: "none" })}
-            className={cn(
-              "flex flex-col items-center gap-1 px-4 py-3 rounded-lg border-2 transition-all min-w-[100px]",
-              speed === "none"
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50"
-            )}
-          >
-            <span>None</span>
-            <span className="text-xs text-muted-foreground">Square slider</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => updateConfig({ speed: "slow" })}
-            className={cn(
-              "flex flex-col items-center gap-1 px-4 py-3 rounded-lg border-2 transition-all min-w-[100px]",
-              speed === "slow"
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50"
-            )}
-          >
-            <span>Slow</span>
-            <span className="text-xs text-muted-foreground">Turtle slider</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => updateConfig({ speed: "fast" })}
-            className={cn(
-              "flex flex-col items-center gap-1 px-4 py-3 rounded-lg border-2 transition-all min-w-[100px]",
-              speed === "fast"
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50"
-            )}
-          >
-            <span>Fast</span>
-            <span className="text-xs text-muted-foreground">Rabbit slider</span>
-          </button>
-        </div>
-      </FormField>
-
-      <FormField label="Required Slides" hint="How many times must the child slide to complete">
-        <div className="flex items-center gap-2">
-          <input
-            type="range"
-            min={1}
-            max={5}
-            value={requiredSlides}
-            onChange={(e) => updateConfig({ requiredSlides: parseInt(e.target.value) })}
-            className="flex-1"
-          />
-          <span className="w-8 text-center font-medium">{requiredSlides}</span>
-        </div>
-      </FormField>
-
-      <FormField
-        label="Display Mode"
-        hint="Show both turtle (slow) and rabbit (fast) sliders side by side"
-      >
-        <Checkbox
-          checked={showBothSpeeds}
-          onChange={(checked) => updateConfig({ showBothSpeeds: checked })}
-          label="Show both speeds side by side"
-        />
-        {showBothSpeeds && (
-          <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <p className="text-sm">
-              <strong>Preview:</strong> Both sliders will be shown - on tablets they
-              appear side by side, on phones they stack vertically.
-            </p>
+      {/* Reading Mode — words only (letters always use the square slider). */}
+      {contentType === "word" && (
+        <FormField label="Reading Mode" hint={getSpeedHint()}>
+          <div className="flex gap-3">
+            {READING_MODES.map(({ mode, emoji, label, sub }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => updateConfig({ speed: mode })}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-4 py-3 rounded-lg border-2 transition-all min-w-[100px]",
+                  normalizedSpeed === mode
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span>{emoji}</span>
+                  <span className="font-medium">{label}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">{sub}</span>
+              </button>
+            ))}
           </div>
-        )}
-      </FormField>
+        </FormField>
+      )}
+
+      {/* Progression toggle — words only. */}
+      {contentType === "word" && (
+        <FormField
+          label="Display Mode"
+          hint="Show the full blending progression (segmented → blended → fluent) in sequence"
+        >
+          <Checkbox
+            checked={showBothSpeeds}
+            onChange={(checked) => updateConfig({ showBothSpeeds: checked })}
+            label="Show the full progression (segmented → blended → fluent)"
+          />
+          {showBothSpeeds && (
+            <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-sm">
+                <strong>Preview:</strong> The child progresses through all three stages -
+                on tablets they appear side by side, on phones they sequence as pages.
+              </p>
+              <div className="flex gap-4 mt-2 justify-center">
+                {READING_MODES.map(({ mode, emoji, label }) => (
+                  <div key={mode} className="flex flex-col items-center gap-1">
+                    <span className="text-2xl">{emoji}</span>
+                    <span className="text-xs">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </FormField>
+      )}
 
       <div className="border-t pt-4 space-y-4">
         <h4 className="text-sm font-medium">Optional</h4>

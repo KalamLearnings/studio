@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Save,
@@ -8,6 +9,7 @@ import {
   Settings,
   MoreVertical,
   Search,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ interface BuilderHeaderProps {
   title: string;
   topicCount: number;
   activityCount: number;
+  selectedActivityId?: string;
   activitySearchId: string;
   onActivitySearchIdChange: (value: string) => void;
   onOpenActivityById: () => void;
@@ -32,6 +35,7 @@ export function BuilderHeader({
   title,
   topicCount,
   activityCount,
+  selectedActivityId,
   activitySearchId,
   onActivitySearchIdChange,
   onOpenActivityById,
@@ -50,6 +54,22 @@ export function BuilderHeader({
             {topicCount} topics · {activityCount} activities
           </p>
         </div>
+
+        {/* Selected activity ID — click to copy */}
+        {selectedActivityId && (
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(selectedActivityId);
+              toast.success("Activity ID copied");
+            }}
+            title="Click to copy activity ID"
+            className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/70"
+          >
+            <span className="max-w-[220px] truncate">{selectedActivityId}</span>
+            <Copy className="h-3 w-3 shrink-0" />
+          </button>
+        )}
 
         {/* Open an activity directly by pasting its ID */}
         <div className="relative">

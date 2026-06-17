@@ -129,6 +129,9 @@ export default function BuilderPage() {
         title={curriculum?.title?.en || "Loading..."}
         topicCount={topics?.length || 0}
         activityCount={activities?.length || 0}
+        selectedActivityId={
+          selectedNode?.type === "activity" ? selectedNode.id : undefined
+        }
         activitySearchId={activitySearchId}
         onActivitySearchIdChange={setActivitySearchId}
         onOpenActivityById={handleOpenActivityById}

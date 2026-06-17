@@ -44,14 +44,23 @@ export const BlendContentTypeSchema = z
 export type BlendContentType = z.infer<typeof BlendContentTypeSchema>;
 
 /**
- * Speed option for blending
- * - none: No speed mode (used for single letters)
- * - slow: Letters shown in isolated forms (for beginners)
- * - fast: Letters shown in connected word form (for advanced)
+ * Reading mode for word blending (phonics progression). Newer values:
+ * - segmented: isolated letters (sound out each letter)
+ * - blended:   contextual letter forms (blend in word context)
+ * - fluent:    connected whole word (read fluently)
+ *
+ * Legacy values are still accepted and normalized for back-compat:
+ * - 'none' / 'slow' → 'segmented'
+ * - 'fast'          → 'blended'
  */
 export const BlendSpeedSchema = z
-  .enum(['none', 'slow', 'fast'])
-  .describe('Reading speed: none for letters, slow for learning, fast for fluency');
+  .enum(['none', 'slow', 'fast', 'segmented', 'blended', 'fluent'])
+  .transform((v) => {
+    if (v === 'fast') return 'blended' as const;
+    if (v === 'none' || v === 'slow') return 'segmented' as const;
+    return v;
+  })
+  .describe('Reading mode: segmented, blended, or fluent (legacy none/slow/fast accepted)');
 
 export type BlendSpeed = z.infer<typeof BlendSpeedSchema>;
 
@@ -71,8 +80,8 @@ export const SoundBlendConfigSchema = z.object({
     .describe('Sound segments with duration for each letter/sound unit'),
 
   speed: BlendSpeedSchema
-    .default('slow')
-    .describe('Reading speed mode'),
+    .default('segmented')
+    .describe('Reading mode: segmented, blended, or fluent'),
 
   requiredSlides: z.number()
     .int()
@@ -80,6 +89,10 @@ export const SoundBlendConfigSchema = z.object({
     .max(5)
     .default(2)
     .describe('Number of successful slides required to complete'),
+
+  showBothSpeeds: z.boolean()
+    .default(false)
+    .describe('Show the blending progression (segmented → blended → fluent) in sequence'),
 
   transliteration: z.string()
     .optional()

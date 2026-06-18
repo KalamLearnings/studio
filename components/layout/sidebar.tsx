@@ -13,6 +13,7 @@ import {
   Gamepad2,
   Ticket,
   Settings,
+  ExternalLink,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -113,6 +114,20 @@ export function Sidebar({ onSignOut }: SidebarProps) {
               </Link>
             );
           })}
+
+          {/* Cross-link to the old v1 dashboard */}
+          <a
+            href="https://dashboard.kalamkidslearning.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open the old dashboard"
+            className="flex w-full flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <ExternalLink className="h-6 w-6 shrink-0" />
+            <span className="text-[10px] font-medium leading-tight">
+              Old Dashboard
+            </span>
+          </a>
 
           {/* Sign Out */}
           <Button

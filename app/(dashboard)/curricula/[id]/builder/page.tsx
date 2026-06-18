@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -10,12 +11,14 @@ import {
   useTreeState,
   useBuilderActions,
   useResizablePanel,
+  useActivitiesByType,
 } from "./_hooks";
 import {
   BuilderHeader,
   TreePanel,
   FormPanel,
   PreviewPanel,
+  type BuilderViewMode,
 } from "./_components";
 
 const TREE_WIDTH_KEY = "kalam-builder-tree-width";
@@ -80,39 +83,51 @@ export default function BuilderPage() {
 
   // Open an activity in the form pane by pasting its ID (Phase 1: current curriculum).
   const [activitySearchId, setActivitySearchId] = useState("");
+  const [viewMode, setViewMode] = useState<BuilderViewMode>("lesson");
+
+  // Activities grouped by type for the "By Type" view (client-side derivation).
+  const activityGroups = useActivitiesByType(activities, nodes, topics);
+
+  // Select an activity by id: open it in the form and expand its ancestors in
+  // the tree. Shared by the "open by ID" search and the By-Type view.
+  const selectActivityById = React.useCallback(
+    (id: string): boolean => {
+      const activity = activities?.find((a) => a.id === id);
+      if (!activity) {
+        toast.error("Activity not found in this curriculum");
+        return false;
+      }
+
+      // Activity carries node_id; derive the topic that owns that node.
+      const topicId =
+        nodes?.find((n) => n.id === activity.node_id)?.topic_id ?? null;
+      if (!topicId) {
+        toast.error("Could not locate the topic for this activity");
+        return false;
+      }
+
+      const treeNode = tree
+        .flatMap((topic) => topic.children ?? [])
+        .flatMap((node) => node.children ?? [])
+        .find((a) => a.id === activity.id);
+      if (!treeNode) {
+        toast.error("Activity not found in this curriculum");
+        return false;
+      }
+
+      setSelectedNode(treeNode);
+      if (!expandedIds.has(topicId)) handleToggleExpand(topicId);
+      if (!expandedIds.has(activity.node_id))
+        handleToggleExpand(activity.node_id);
+      return true;
+    },
+    [activities, nodes, tree, expandedIds, setSelectedNode, handleToggleExpand],
+  );
 
   const handleOpenActivityById = () => {
     const id = activitySearchId.trim();
     if (!id) return;
-
-    const activity = activities?.find((a) => a.id === id);
-    if (!activity) {
-      toast.error("Activity not found in this curriculum");
-      return;
-    }
-
-    // Activity carries node_id; derive the topic that owns that node.
-    const topicId = nodes?.find((n) => n.id === activity.node_id)?.topic_id ?? null;
-    if (!topicId) {
-      toast.error("Could not locate the topic for this activity");
-      return;
-    }
-
-    // Reuse the existing selection flow: select the activity's tree node and
-    // expand its ancestors so it's visible in the tree.
-    const treeNode = tree
-      .flatMap((topic) => topic.children ?? [])
-      .flatMap((node) => node.children ?? [])
-      .find((a) => a.id === activity.id);
-    if (!treeNode) {
-      toast.error("Activity not found in this curriculum");
-      return;
-    }
-
-    setSelectedNode(treeNode);
-    if (!expandedIds.has(topicId)) handleToggleExpand(topicId);
-    if (!expandedIds.has(activity.node_id)) handleToggleExpand(activity.node_id);
-    setActivitySearchId("");
+    if (selectActivityById(id)) setActivitySearchId("");
   };
 
   // Determine what to show in the form panel
@@ -148,6 +163,10 @@ export default function BuilderPage() {
           selectedId={selectedNode?.id}
           expandedIds={expandedIds}
           isAllExpanded={isAllExpanded}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          activityGroups={activityGroups}
+          onActivitySelect={selectActivityById}
           onMouseDown={handleMouseDown}
           onSelect={setSelectedNode}
           onToggleExpand={handleToggleExpand}

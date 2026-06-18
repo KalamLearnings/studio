@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FormField, TextInput, LetterSelector, Checkbox, WordSelector } from "./shared";
-import { useLetters } from "@/lib/hooks/useLetters";
+import { useLetters, resolveLetterReference } from "@/lib/hooks/useLetters";
 import { applyHaraka } from "@/lib/utils/letterReference";
 import {
   autoDetectSegments,
@@ -57,6 +57,15 @@ export function SoundBlendActivityForm({
   const contentType: BlendContentType = config?.contentType || "word";
   const word = config?.word || "";
   const segments = config?.segments || [];
+
+  // In letter mode the picked letter is stored only as the `word` glyph (e.g.
+  // "مَ"). Resolve it back to a LetterReference so the picker pre-selects when
+  // editing. Strip diacritics first since the letters table keys on bare glyphs.
+  const letterValue = React.useMemo<LetterReference | null>(() => {
+    if (contentType !== "letter" || !word) return null;
+    const bareGlyph = word.replace(/[ً-ْٰ]/g, "");
+    return resolveLetterReference(bareGlyph, letters) as LetterReference | null;
+  }, [contentType, word, letters]);
   const speed: BlendSpeed = config?.speed || (contentType === "letter" ? "none" : "segmented");
   // Treat legacy values as their modern equivalents for the picker UI.
   const normalizedSpeed = normalizeSpeed(speed);
@@ -202,7 +211,7 @@ export function SoundBlendActivityForm({
           <LetterSelector
             topic={topic}
             showFormSelector
-            value={null}
+            value={letterValue}
             onChange={handleLetterSelect}
           />
         </FormField>

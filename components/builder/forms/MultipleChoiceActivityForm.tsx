@@ -65,7 +65,10 @@ export function MultipleChoiceActivityForm({
   const [wordModalOpen, setWordModalOpen] = React.useState(false);
   const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<number | null>(null);
 
-  const initialOptions: MultipleChoiceOption[] =
+  // Options are derived from config (single source of truth) so editing an
+  // existing activity pre-populates and stays in sync — no duplicate local
+  // state to drift out of date.
+  const options: MultipleChoiceOption[] =
     config?.options && config.options.length > 0
       ? config.options
       : [
@@ -74,8 +77,6 @@ export function MultipleChoiceActivityForm({
           { id: generateOptionId(2), text: { en: "", ar: "" }, isCorrect: false },
           { id: generateOptionId(3), text: { en: "", ar: "" }, isCorrect: false },
         ];
-
-  const [options, setOptions] = React.useState<MultipleChoiceOption[]>(initialOptions);
 
   const updateConfig = (updates: Partial<MultipleChoiceConfig>) => {
     onChange({ ...config, ...updates });
@@ -105,7 +106,6 @@ export function MultipleChoiceActivityForm({
     } else if (field === "letter") {
       newOptions[index].letter = value as LetterReference;
     }
-    setOptions(newOptions);
     updateConfig({ options: newOptions });
   };
 

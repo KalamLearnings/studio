@@ -292,40 +292,32 @@ export function MatchPairsActivityForm({
   config,
   onChange,
 }: BaseActivityFormProps<MatchPairsConfig>) {
-  const initialPairs: MatchPair[] =
+  // Pairs are derived from config (single source of truth) so editing an
+  // existing activity pre-populates and stays in sync — no duplicate local
+  // state or sync effect to drift out of date.
+  const pairs: MatchPair[] =
     config?.pairs?.length ? config.pairs : [createEmptyPair(), createEmptyPair()];
-
-  const [pairs, setPairs] = React.useState<MatchPair[]>(initialPairs);
   const shuffleItems = config?.shuffleItems ?? true;
 
-  React.useEffect(() => {
-    if (config?.pairs && JSON.stringify(config.pairs) !== JSON.stringify(pairs)) {
-      setPairs(config.pairs);
-    }
-  }, [config?.pairs]);
-
   const updateConfig = (updates: Partial<MatchPairsConfig>) => {
-    onChange({ ...config, pairs, ...updates });
+    onChange({ ...config, ...updates });
   };
 
   const handlePairChange = (index: number, updatedPair: MatchPair) => {
     const newPairs = [...pairs];
     newPairs[index] = updatedPair;
-    setPairs(newPairs);
     updateConfig({ pairs: newPairs });
   };
 
   const handleAddPair = () => {
     if (pairs.length >= 4) return;
     const newPairs = [...pairs, createEmptyPair()];
-    setPairs(newPairs);
     updateConfig({ pairs: newPairs });
   };
 
   const handleRemovePair = (index: number) => {
     if (pairs.length <= 2) return;
     const newPairs = pairs.filter((_, i) => i !== index);
-    setPairs(newPairs);
     updateConfig({ pairs: newPairs });
   };
 

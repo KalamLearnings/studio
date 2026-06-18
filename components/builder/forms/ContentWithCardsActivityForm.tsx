@@ -10,6 +10,12 @@ import {
   OptionData,
   WordSelector,
 } from "./shared";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useLetters, getLetterDisplayChar } from "@/lib/hooks/useLetters";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
@@ -50,16 +56,21 @@ export function ContentWithCardsActivityForm({
   const interactive = config?.interactive ?? true;
 
   const [showImageLibrary, setShowImageLibrary] = React.useState(false);
+  // Per-card letter picker.
+  const [letterModalOpen, setLetterModalOpen] = React.useState(false);
+  const [editingCardIndex, setEditingCardIndex] = React.useState<number | null>(
+    null,
+  );
 
-  const initialCards: ContentWithCardsOption[] =
-    config?.cards?.length
-      ? config.cards
-      : [
-          { id: generateOptionId(0), text: "", isCorrect: false },
-          { id: generateOptionId(1), text: "", isCorrect: false },
-        ];
-
-  const [cards, setCards] = React.useState<ContentWithCardsOption[]>(initialCards);
+  // Cards are derived from config (single source of truth) so editing an
+  // existing activity pre-populates and stays in sync — no duplicate local
+  // state to drift out of date.
+  const cards: ContentWithCardsOption[] = config?.cards?.length
+    ? config.cards
+    : [
+        { id: generateOptionId(0), text: "", isCorrect: false },
+        { id: generateOptionId(1), text: "", isCorrect: false },
+      ];
 
   const updateConfig = (updates: Partial<ContentWithCardsConfig>) => {
     onChange({ ...config, ...updates });
@@ -91,7 +102,6 @@ export function ContentWithCardsActivityForm({
     } else if (field === "letter") {
       newCards[index].letter = value as LetterReference;
     }
-    setCards(newCards);
     updateConfig({ cards: newCards });
   };
 
@@ -101,15 +111,28 @@ export function ContentWithCardsActivityForm({
       ...cards,
       { id: generateOptionId(cards.length), text: "", isCorrect: false },
     ];
-    setCards(newCards);
     updateConfig({ cards: newCards });
   };
 
   const handleRemoveCard = (index: number) => {
     if (cards.length <= 1) return;
     const newCards = cards.filter((_, i) => i !== index);
-    setCards(newCards);
     updateConfig({ cards: newCards });
+  };
+
+  const handleOpenLetterPicker = (index: number) => {
+    setEditingCardIndex(index);
+    setLetterModalOpen(true);
+  };
+
+  const handleCardLetterSelect = (
+    selected: LetterReference | LetterReference[] | null,
+  ) => {
+    if (editingCardIndex !== null && selected) {
+      const ref = Array.isArray(selected) ? selected[0] : selected;
+      handleUpdateCard(editingCardIndex, "letter", ref);
+    }
+    setLetterModalOpen(false);
   };
 
   const optionData: OptionData[] = cards.map((card) => ({
@@ -351,6 +374,7 @@ export function ContentWithCardsActivityForm({
         options={optionData}
         mode={cardMode}
         onUpdateOption={handleUpdateCard}
+        onOpenLetterPicker={handleOpenLetterPicker}
         title={`Cards (${cards.length}/4)`}
         showCorrectCheckbox={interactive}
         columns={getColumns()}
@@ -360,6 +384,28 @@ export function ContentWithCardsActivityForm({
         minOptions={1}
         maxOptions={4}
       />
+
+      {/* Per-card Letter Selector Modal */}
+      {letterModalOpen && (
+        <Dialog open={letterModalOpen} onOpenChange={setLetterModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Select Letter</DialogTitle>
+            </DialogHeader>
+            <LetterSelector
+              value={
+                editingCardIndex !== null
+                  ? cards[editingCardIndex]?.letter || null
+                  : null
+              }
+              onChange={handleCardLetterSelect}
+              topic={topic}
+              showFormSelector
+              showHarakaSelector
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       <p className="text-xs text-muted-foreground">
         {interactive

@@ -79,7 +79,7 @@ export function AudioPicker({
           />
         </div>
 
-        <ScrollArea className="max-h-[400px] min-h-[300px] flex-1">
+        <ScrollArea className="h-[400px]">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

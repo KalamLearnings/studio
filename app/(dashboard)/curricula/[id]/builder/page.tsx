@@ -68,6 +68,7 @@ export default function BuilderPage() {
     handleAddActivity,
     handleSelectActivityType,
     handleSaveNewActivity,
+    handleSaveActivity,
     handleCancelNewActivity,
     handleTogglePublish,
     handleDelete,
@@ -179,12 +180,17 @@ export default function BuilderPage() {
         />
 
         <FormPanel
+          formKey={newActivity ? "new-activity" : selectedActivity?.id}
           activityType={formActivityType}
+          config={newActivity ? undefined : (selectedActivity?.config as Record<string, unknown> | undefined)}
+          instruction={newActivity ? undefined : selectedActivity?.instruction?.en}
           topic={currentTopic}
           isNew={!!newActivity}
           onSave={
             newActivity
               ? (data) => handleSaveNewActivity(newActivity, data)
+              : selectedActivity
+              ? (data) => handleSaveActivity(selectedActivity.id, data)
               : undefined
           }
           onCancel={newActivity ? handleCancelNewActivity : undefined}

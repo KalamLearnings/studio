@@ -15,6 +15,7 @@ import {
 interface ActivityFormProps {
   activityType?: string;
   config?: ActivityConfig;
+  instruction?: string;
   topic?: TopicContext | null;
   isNew?: boolean;
   onSave?: (data: Record<string, unknown>) => void;
@@ -27,6 +28,7 @@ interface ActivityFormProps {
 export function ActivityForm({
   activityType,
   config = {},
+  instruction: initialInstruction = "",
   topic,
   isNew = false,
   onSave,
@@ -36,7 +38,7 @@ export function ActivityForm({
   onConfigChange,
 }: ActivityFormProps) {
   const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(config);
-  const [instruction, setInstruction] = React.useState("");
+  const [instruction, setInstruction] = React.useState(initialInstruction);
   const [selectedVoice, setSelectedVoice] = React.useState<string | undefined>(undefined);
   const [generatedAudio, setGeneratedAudio] = React.useState<{
     blob: Blob;
@@ -44,19 +46,13 @@ export function ActivityForm({
     filePath: string;
   } | null>(null);
   const [existingAudioUrl, setExistingAudioUrl] = React.useState<string | null>(null);
-  const configInitialized = React.useRef(false);
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
 
-  // Update local config when prop changes
-  React.useEffect(() => {
-    const hasConfig = Object.keys(config).length > 0;
-    if (hasConfig || !configInitialized.current) {
-      configInitialized.current = true;
-      setLocalConfig(config);
-    }
-  }, [activityType]);
+  // Note: state initializes from props on mount. The parent passes a stable
+  // `key` per edited activity, so the form remounts (and re-reads config /
+  // instruction) whenever the selected activity changes — no sync effect needed.
 
   // Get the form component for this activity type
   const FormComponent = activityType

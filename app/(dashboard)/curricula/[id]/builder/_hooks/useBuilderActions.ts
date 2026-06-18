@@ -184,6 +184,28 @@ export function useBuilderActions({
     setNewActivity(null);
   }, [setNewActivity]);
 
+  // Save edits to an existing activity.
+  const handleSaveActivity = React.useCallback(
+    (activityId: string, data: Record<string, unknown>) => {
+      const activity = activities?.find((a) => a.id === activityId);
+      if (!activity) return;
+
+      updateActivity.mutate({
+        curriculumId,
+        nodeId: activity.node_id,
+        activityId: activity.id,
+        data: {
+          type: activity.type,
+          instruction: data.instruction
+            ? { en: data.instruction as string }
+            : activity.instruction,
+          config: (data.config || {}) as any,
+        },
+      });
+    },
+    [curriculumId, activities, updateActivity]
+  );
+
   // Publish toggle
   const handleTogglePublish = React.useCallback(
     (targetNode: TreeNode) => {
@@ -284,6 +306,7 @@ export function useBuilderActions({
     handleSelectActivityType,
     handleSelectTemplate,
     handleSaveNewActivity,
+    handleSaveActivity,
     handleCancelNewActivity,
     handleTogglePublish,
     handleDelete,

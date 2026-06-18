@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import NextImage from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
@@ -49,9 +50,14 @@ export function Sidebar({ onSignOut }: SidebarProps) {
     <aside className="flex h-full w-20 flex-col border-r bg-sidebar text-sidebar-foreground">
       {/* Logo / Brand */}
       <div className="flex h-16 items-center justify-center border-b">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-          K
-        </div>
+        <NextImage
+          src="/logo.png"
+          alt="Studio"
+          width={40}
+          height={40}
+          className="rounded-lg"
+          priority
+        />
       </div>
 
       {/* Navigation */}

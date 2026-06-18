@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createEnvironmentClient } from "@/lib/supabase/client";
 import { useEnvironmentStore } from "@/lib/stores/environmentStore";
@@ -236,10 +237,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-xl font-bold text-primary-foreground">
-            K
-          </div>
-          <CardTitle className="text-2xl">Kalam Dashboard</CardTitle>
+          <Image
+            src="/logo.png"
+            alt="Studio"
+            width={56}
+            height={56}
+            className="mx-auto mb-4 rounded-xl"
+            priority
+          />
+          <CardTitle className="text-2xl">Studio</CardTitle>
           <CardDescription>Sign in to manage curriculum</CardDescription>
         </CardHeader>
         <CardContent>

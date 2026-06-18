@@ -16,8 +16,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Kalam Kids - Curriculum Dashboard",
-  description: "Internal tool for authoring Arabic learning curriculum",
+  title: "Studio",
+  description: "Authoring tool for Kalam Readers curriculum and content",
 };
 
 export default function RootLayout({

@@ -11,6 +11,7 @@ import {
   type ActivityConfig,
   type TopicContext,
 } from "./forms";
+import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
 
 interface ActivityFormProps {
   activityType?: string;
@@ -37,7 +38,9 @@ export function ActivityForm({
   onDuplicate,
   onConfigChange,
 }: ActivityFormProps) {
-  const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(config);
+  const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(() =>
+    normalizeActivityConfig(activityType, config),
+  );
   const [instruction, setInstruction] = React.useState(initialInstruction);
   const [selectedVoice, setSelectedVoice] = React.useState<string | undefined>(undefined);
   const [generatedAudio, setGeneratedAudio] = React.useState<{

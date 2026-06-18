@@ -106,6 +106,59 @@ export function getLetterDisplayChar(
   return applyHaraka(baseChar, ref.haraka);
 }
 
+type LooseLetterReference = {
+  letterId?: string;
+  form?: string;
+  haraka?: string;
+};
+
+/**
+ * Resolve a possibly-legacy letter value into a normalized LetterReference.
+ *
+ * Accepts:
+ *  - a proper LetterReference object `{ letterId, form, haraka? }` (passed through)
+ *  - a raw Arabic glyph string (e.g. "ذ" or a per-form glyph) — matched back to
+ *    its letter id + form via the letters table (legacy `letterForm` configs)
+ *
+ * Returns null when it can't be resolved. Used so letter pickers tolerate old
+ * stored shapes without every form having to know about them.
+ */
+export function resolveLetterReference(
+  value: unknown,
+  letters: Letter[]
+): { letterId: string; form: keyof LetterForm; haraka?: string } | null {
+  if (!value) return null;
+
+  // Already a reference-like object.
+  if (typeof value === "object") {
+    const ref = value as LooseLetterReference;
+    if (typeof ref.letterId === "string") {
+      return {
+        letterId: ref.letterId,
+        form: (ref.form as keyof LetterForm) || "isolated",
+        ...(ref.haraka ? { haraka: ref.haraka } : {}),
+      };
+    }
+    return null;
+  }
+
+  // Legacy: a raw glyph string. Find the letter whose base or any form glyph
+  // matches, and report the matching form.
+  if (typeof value === "string") {
+    const glyph = value.trim();
+    if (!glyph) return null;
+    const forms: (keyof LetterForm)[] = ["isolated", "initial", "medial", "final"];
+    for (const letter of letters) {
+      if (letter.letter === glyph) return { letterId: letter.id, form: "isolated" };
+      for (const form of forms) {
+        if (letter.forms?.[form] === glyph) return { letterId: letter.id, form };
+      }
+    }
+  }
+
+  return null;
+}
+
 /**
  * Letter filter functions for common use cases
  */

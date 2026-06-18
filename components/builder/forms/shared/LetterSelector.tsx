@@ -15,6 +15,7 @@ import {
   useLetters,
   type Letter,
   getLetterDisplayChar,
+  resolveLetterReference,
 } from "@/lib/hooks/useLetters";
 import { LetterFormHarakaPicker } from "@/components/builder/letter-picker";
 import { HARAKA_META } from "@kalam/curriculum-schemas";
@@ -60,12 +61,20 @@ interface MultiSelectProps extends LetterSelectorBaseProps {
 
 type LetterSelectorProps = SingleSelectProps | MultiSelectProps;
 
-/** Normalize this component's polymorphic `value` into an array of refs. */
+/**
+ * Normalize this component's polymorphic `value` into an array of refs,
+ * tolerating legacy shapes (raw glyph strings, loose objects) by resolving them
+ * against the letters table. Already-modern refs pass through unchanged.
+ */
 function toRefs(
-  value: LetterReference | LetterReference[] | null,
+  value: unknown,
+  letters: Letter[],
 ): LetterReference[] {
   if (!value) return [];
-  return Array.isArray(value) ? value : [value];
+  const raw = Array.isArray(value) ? value : [value];
+  return raw
+    .map((v) => resolveLetterReference(v, letters) as LetterReference | null)
+    .filter((r): r is LetterReference => r !== null);
 }
 
 /**
@@ -88,7 +97,7 @@ export function LetterSelector(props: LetterSelectorProps) {
     letterFilter,
   } = props;
 
-  const { getLetter } = useLetters();
+  const { letters, getLetter } = useLetters();
   const [showModal, setShowModal] = useState(false);
   // Draft edited inside the modal; committed to the consumer on confirm.
   const [draft, setDraft] = useState<LetterReference[]>([]);
@@ -101,7 +110,7 @@ export function LetterSelector(props: LetterSelectorProps) {
   useEffect(() => {
     if (hasAutoPopulated.current) return;
     if (!isMultiSelect && topic?.letter?.id) {
-      const hasValue = toRefs(props.value).length > 0;
+      const hasValue = toRefs(props.value, letters).length > 0;
       if (!hasValue) {
         hasAutoPopulated.current = true;
         (props as SingleSelectProps).onChange({
@@ -114,7 +123,7 @@ export function LetterSelector(props: LetterSelectorProps) {
   }, [topic?.letter?.id, isMultiSelect]);
 
   const openModal = () => {
-    setDraft(toRefs(props.value));
+    setDraft(toRefs(props.value, letters));
     setShowModal(true);
   };
 
@@ -134,7 +143,7 @@ export function LetterSelector(props: LetterSelectorProps) {
   // ---- inline field display ----
 
   const renderDisplay = () => {
-    const refs = toRefs(props.value);
+    const refs = toRefs(props.value, letters);
     if (refs.length === 0) {
       return (
         <div className="text-sm text-muted-foreground">

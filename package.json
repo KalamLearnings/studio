@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:schemas": "npm --prefix packages/curriculum-schemas run build",
+    "prebuild": "npm run build:schemas",
     "start": "next start",
     "lint": "next lint"
   },

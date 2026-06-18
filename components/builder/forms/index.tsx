@@ -63,6 +63,7 @@ interface TargetLetterActivityConfig {
   targetLetterMultiSelect?: boolean;
   showSpeedConfig?: boolean;
   speedField?: string;
+  showTargetAudio?: boolean;
 }
 
 const targetLetterActivityConfigs: Partial<
@@ -95,6 +96,7 @@ const targetLetterActivityConfigs: Partial<
   audio_letter_match: {
     targetLetterHint: "The letter matching the audio",
     targetCountHint: "Number of correct matches",
+    showTargetAudio: true,
   },
   letter_discrimination: {
     targetLetterHint: "The correct letter to identify",
@@ -231,6 +233,7 @@ function createTargetLetterForm(
         targetLetterMultiSelect={formConfig.targetLetterMultiSelect}
         showSpeedConfig={formConfig.showSpeedConfig}
         speedField={formConfig.speedField}
+        showTargetAudio={formConfig.showTargetAudio}
       />
     );
   };

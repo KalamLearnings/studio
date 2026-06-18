@@ -188,6 +188,8 @@ export interface LetterRainConfig {
 export interface AudioLetterMatchConfig {
   targetLetter: string;
   distractorLetters: string[];
+  targetLetterAudioUrl?: string;
+  targetLetterAudioId?: string;
   playAudioOnStart?: boolean;
   allowReplay?: boolean;
   showLetterNames?: boolean;

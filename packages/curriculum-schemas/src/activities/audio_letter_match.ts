@@ -5,6 +5,8 @@ import { BaseActivityConfigSchema } from '../base';
 export const AudioLetterMatchConfigSchema = BaseActivityConfigSchema.extend({
     targetLetter: z.string(),
     distractorLetters: z.array(z.string()),
+    targetLetterAudioUrl: z.string().optional(),
+    targetLetterAudioId: z.string().optional(),
     playAudioOnStart: z.boolean().optional(),
     allowReplay: z.boolean().optional(),
     showLetterNames: z.boolean().optional(),

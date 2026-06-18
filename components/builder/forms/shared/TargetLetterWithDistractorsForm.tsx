@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { FormField, NumberInput } from "../FormField";
 import { LetterSelector } from "./LetterSelector";
 import { GameSpeedSelector } from "./GameSpeedSelector";
+import { AudioPickerField } from "./AudioPickerField";
 import type {
   BaseActivityFormProps,
   LetterReference,
@@ -37,6 +38,8 @@ interface TargetLetterWithDistractorsFormProps
   showSpeedConfig?: boolean;
   /** Field name for speed in config (default: 'speed') */
   speedField?: string;
+  /** Whether to show an audio picker for the target letter's sound */
+  showTargetAudio?: boolean;
 }
 
 /**
@@ -56,6 +59,7 @@ export function TargetLetterWithDistractorsForm({
   targetLetterMultiSelect = false,
   showSpeedConfig = false,
   speedField = "speed",
+  showTargetAudio = false,
 }: TargetLetterWithDistractorsFormProps) {
   const targetLetter: LetterReference | LetterReference[] | null =
     (config?.[targetLetterField] as LetterReference | LetterReference[] | null) || null;
@@ -66,6 +70,10 @@ export function TargetLetterWithDistractorsForm({
   const letterPositions: LetterPosition[] =
     (config?.letterPositions as LetterPosition[]) || ["isolated"];
   const speed = (config?.[speedField] as number) ?? 1.0;
+  const targetLetterAudioUrl =
+    (config?.targetLetterAudioUrl as string | undefined) || undefined;
+  const targetLetterAudioId =
+    (config?.targetLetterAudioId as string | undefined) || undefined;
 
   const updateConfig = (updates: Record<string, unknown>) => {
     onChange({ ...config, ...updates } as TargetLetterConfig);
@@ -115,6 +123,21 @@ export function TargetLetterWithDistractorsForm({
           />
         )}
       </FormField>
+
+      {showTargetAudio && (
+        <AudioPickerField
+          label="Target Letter Audio"
+          hint="The sound played for the target letter (learners match this audio)"
+          value={targetLetterAudioUrl}
+          audioId={targetLetterAudioId}
+          onChange={(url, id) =>
+            updateConfig({
+              targetLetterAudioUrl: url,
+              targetLetterAudioId: id,
+            })
+          }
+        />
+      )}
 
       <FormField
         label="Distractor Letters"

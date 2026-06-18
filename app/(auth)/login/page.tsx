@@ -32,6 +32,14 @@ export default function LoginPage() {
   const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
   const { environment, setEnvironment } = useEnvironmentStore();
 
+  // If already authenticated, skip the login screen.
+  React.useEffect(() => {
+    const supabase = createEnvironmentClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace("/curricula");
+    });
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

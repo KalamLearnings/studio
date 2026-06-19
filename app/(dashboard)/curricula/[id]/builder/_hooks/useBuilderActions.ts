@@ -19,8 +19,13 @@ import {
   useCreateActivity,
   useUpdateActivity,
   useDeleteActivity,
+  useMoveActivity,
 } from "@/lib/hooks/useActivities";
+import { useReorderTopics } from "@/lib/hooks/useTopics";
+import { reorderArticles } from "@/lib/api/curricula";
 import { useInstantiateTemplate } from "@/lib/hooks/useTemplates";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { NewActivityState } from "./useTreeState";
 
 interface UseBuilderActionsOptions {
@@ -52,7 +57,10 @@ export function useBuilderActions({
   const createActivity = useCreateActivity();
   const updateActivity = useUpdateActivity();
   const deleteActivity = useDeleteActivity();
+  const moveActivity = useMoveActivity();
+  const reorderTopics = useReorderTopics();
   const instantiateTemplate = useInstantiateTemplate();
+  const queryClient = useQueryClient();
 
   // Modal state
   const [activityPickerOpen, setActivityPickerOpen] = React.useState(false);
@@ -292,6 +300,67 @@ export function useBuilderActions({
     ]
   );
 
+  // Reorder topics (drag-drop in the tree).
+  const handleReorderTopics = React.useCallback(
+    (activeId: string, overId: string) => {
+      reorderTopics.mutate({ curriculumId, activeId, overId });
+    },
+    [curriculumId, reorderTopics]
+  );
+
+  // Reorder activities within a node (drag-drop in the tree).
+  //
+  // The builder loads activities via `useAllActivities` (cache key
+  // `all-activities`), so the per-node `activities` cache that
+  // `useReorderActivities` relies on is empty here. We compute the new
+  // sequence numbers directly from the loaded `activities` array instead.
+  const handleReorderActivities = React.useCallback(
+    async (nodeId: string, activeId: string, overId: string) => {
+      const nodeActivities = (activities || [])
+        .filter((a) => a.node_id === nodeId)
+        .sort((a, b) => a.sequence_number - b.sequence_number);
+
+      const oldIndex = nodeActivities.findIndex((a) => a.id === activeId);
+      const newIndex = nodeActivities.findIndex((a) => a.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = [...nodeActivities];
+      const [moved] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, moved);
+
+      const changes = reordered
+        .map((activity, index) => ({ id: activity.id, sequence_number: index + 1 }))
+        .filter((item, index) => nodeActivities[index].id !== item.id);
+
+      if (changes.length === 0) return;
+
+      try {
+        await reorderArticles(curriculumId, nodeId, { items: changes });
+        queryClient.invalidateQueries({ queryKey: ["all-activities", curriculumId] });
+        queryClient.invalidateQueries({ queryKey: ["activities", curriculumId, nodeId] });
+        toast.success("Activities reordered");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to reorder activities"
+        );
+      }
+    },
+    [curriculumId, activities, queryClient]
+  );
+
+  // Move an activity to a different node (drag-drop in the tree).
+  const handleMoveActivity = React.useCallback(
+    (activityId: string, sourceNodeId: string, targetNodeId: string) => {
+      moveActivity.mutate({
+        curriculumId,
+        activityId,
+        sourceNodeId,
+        targetNodeId,
+      });
+    },
+    [curriculumId, moveActivity]
+  );
+
   return {
     // Modal state
     activityPickerOpen,
@@ -310,5 +379,8 @@ export function useBuilderActions({
     handleCancelNewActivity,
     handleTogglePublish,
     handleDelete,
+    handleReorderTopics,
+    handleReorderActivities,
+    handleMoveActivity,
   };
 }

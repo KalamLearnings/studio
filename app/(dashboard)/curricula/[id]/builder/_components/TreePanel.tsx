@@ -30,6 +30,9 @@ interface TreePanelProps {
   onAddActivity: (parentId: string) => void;
   onTogglePublish: (node: TreeNode) => void;
   onDelete: (node: TreeNode) => void;
+  onReorderTopics: (activeId: string, overId: string) => void;
+  onReorderActivities: (nodeId: string, activeId: string, overId: string) => void;
+  onMoveActivity: (activityId: string, sourceNodeId: string, targetNodeId: string) => void;
 }
 
 export function TreePanel({
@@ -53,6 +56,9 @@ export function TreePanel({
   onAddActivity,
   onTogglePublish,
   onDelete,
+  onReorderTopics,
+  onReorderActivities,
+  onMoveActivity,
 }: TreePanelProps) {
   return (
     <div
@@ -94,6 +100,9 @@ export function TreePanel({
             onAddActivity={onAddActivity}
             onTogglePublish={onTogglePublish}
             onDelete={onDelete}
+            onReorderTopics={onReorderTopics}
+            onReorderActivities={onReorderActivities}
+            onMoveActivity={onMoveActivity}
           />
         ) : (
           <ActivitiesByTypeView

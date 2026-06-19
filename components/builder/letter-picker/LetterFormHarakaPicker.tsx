@@ -144,15 +144,20 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
 
   const selectLetter = (letter: Letter) => {
     if (disabledLetterIds.includes(letter.id)) return;
-    setActiveLetterId(letter.id);
     setExpandedForm(null);
 
     if (isMulti) {
       const exists = value.some((r) => r.letterId === letter.id);
-      if (!exists) {
+      if (exists) {
+        // Toggle off: remove all refs for this letter.
+        onChange(value.filter((r) => r.letterId !== letter.id));
+        setActiveLetterId((prev) => (prev === letter.id ? null : prev));
+      } else {
+        setActiveLetterId(letter.id);
         onChange([...value, { letterId: letter.id, form: "isolated" }]);
       }
     } else {
+      setActiveLetterId(letter.id);
       // Single letter: replace selection, reset to isolated/no-haraka.
       onChange([{ letterId: letter.id, form: "isolated" }]);
     }

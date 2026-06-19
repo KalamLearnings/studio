@@ -22,9 +22,9 @@ import {
 } from "./_components";
 
 const TREE_WIDTH_KEY = "kalam-builder-tree-width";
-const DEFAULT_TREE_WIDTH = 280;
-const MIN_TREE_WIDTH = 200;
-const MAX_TREE_WIDTH = 500;
+const DEFAULT_TREE_WIDTH = 360;
+const MIN_TREE_WIDTH = 280;
+const MAX_TREE_WIDTH = 560;
 
 export default function BuilderPage() {
   const params = useParams();
@@ -72,6 +72,9 @@ export default function BuilderPage() {
     handleCancelNewActivity,
     handleTogglePublish,
     handleDelete,
+    handleReorderTopics,
+    handleReorderActivities,
+    handleMoveActivity,
   } = useBuilderActions({
     curriculumId,
     topics,
@@ -177,6 +180,9 @@ export default function BuilderPage() {
           onAddActivity={handleAddActivity}
           onTogglePublish={handleTogglePublish}
           onDelete={handleDelete}
+          onReorderTopics={handleReorderTopics}
+          onReorderActivities={handleReorderActivities}
+          onMoveActivity={handleMoveActivity}
         />
 
         <FormPanel

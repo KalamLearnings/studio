@@ -46,6 +46,18 @@ export function DragHarakaToLetterForm({
     onChange({ ...config, ...updates });
   };
 
+  // The Haraka Type selector shows 'fatha' pre-selected by default (above), but
+  // that default is display-only — it isn't written to the config until the
+  // author clicks a haraka. Persist it on mount so saving without an explicit
+  // click still captures harakaType. Only writes when it's actually missing, so
+  // existing activities and author selections are never overwritten.
+  React.useEffect(() => {
+    if (!config?.harakaType) {
+      updateConfig({ harakaType });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const getLetterDisplay = (ref: LetterReference | null): string => {
     return getLetterDisplayChar(ref, getLetter);
   };

@@ -172,13 +172,17 @@ export function useBuilderActions({
   const handleSaveNewActivity = React.useCallback(
     (newActivity: NewActivityState, data: Record<string, unknown>) => {
       const audioUrl = data.audioUrl as string | undefined;
+      // Instruction text is optional. Save exactly what was typed (trimmed);
+      // do NOT fall back to the activity type's name — that previously injected
+      // labels like "Sound Blending" into blank instructions.
+      const instructionText = (data.instruction as string | undefined)?.trim();
       createActivity.mutate({
         curriculumId,
         nodeId: newActivity.nodeId,
         data: {
           type: newActivity.type as any,
           instruction: {
-            en: (data.instruction as string) || newActivity.name,
+            ...(instructionText ? { en: instructionText } : {}),
             // The form generates+uploads instruction audio and returns its URL
             // as a top-level `audioUrl`; merge it into the instruction so it is
             // actually persisted (otherwise the generated audio is dropped).

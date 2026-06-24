@@ -149,6 +149,7 @@ export function ActivityForm({
           );
           const { filePath } = await generateInstructionAudio({
             text,
+            letter: letterData,
             voiceId: selectedVoice,
             activityId,
           });

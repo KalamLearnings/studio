@@ -9,9 +9,48 @@
 
 const BUCKET_NAME = "curriculum-audio";
 
+/**
+ * Letter fields used to resolve instruction template placeholders. Matches the
+ * topic letter shape the builder form has on hand (note: the phonetic value is
+ * `letter_sound` here, unlike the `transliteration` field on the API Letter
+ * type used elsewhere).
+ */
+export interface TemplateLetter {
+  letter?: string;
+  name_arabic?: string;
+  name_english?: string;
+  letter_sound?: string;
+}
+
+/**
+ * Resolve instruction template placeholders against the topic letter, matching
+ * the v1 dashboard:
+ *   {{letter}}       -> the Arabic character
+ *   {{letter_name}}  -> Arabic name (falls back to English)
+ *   {{letter_sound}} -> phonetic sound
+ * Resolution happens at TTS time only — the stored instruction text keeps the
+ * raw template. Unknown/missing values leave the placeholder untouched.
+ */
+export function resolveInstructionTemplates(
+  text: string,
+  letter: TemplateLetter | null | undefined,
+): string {
+  if (!letter || !text) return text;
+  let out = text;
+  if (letter.letter) out = out.replace(/\{\{letter\}\}/g, letter.letter);
+  const name = letter.name_arabic || letter.name_english;
+  if (name) out = out.replace(/\{\{letter_name\}\}/g, name);
+  if (letter.letter_sound) {
+    out = out.replace(/\{\{letter_sound\}\}/g, letter.letter_sound);
+  }
+  return out;
+}
+
 export interface GenerateInstructionAudioParams {
-  /** Instruction text to voice. */
+  /** Instruction text to voice (may contain {{...}} placeholders). */
   text: string;
+  /** Topic letter used to resolve placeholders before TTS. */
+  letter?: TemplateLetter | null;
   /** ElevenLabs voice id. Falls back to the backend default when omitted. */
   voiceId?: string;
   /** Activity id, embedded in the stored filename when present. */
@@ -47,7 +86,11 @@ function base64ToBlob(base64: string, contentType = "audio/mpeg"): Blob {
 export async function generateInstructionAudio(
   params: GenerateInstructionAudioParams,
 ): Promise<GeneratedInstructionAudio> {
-  const { text, voiceId, activityId } = params;
+  const { text, letter, voiceId, activityId } = params;
+
+  // Resolve {{...}} placeholders so the audio voices the real values, not the
+  // literal template. The stored instruction text keeps the raw template.
+  const resolvedText = resolveInstructionTemplates(text, letter);
 
   const { createClient, getEnvironmentBaseUrl, getEdgeFunctionAuthHeaders } =
     await import("@/lib/supabase/client");
@@ -64,7 +107,7 @@ export async function generateInstructionAudio(
       ...getEdgeFunctionAuthHeaders(session.access_token),
     },
     body: JSON.stringify({
-      text,
+      text: resolvedText,
       language: "en",
       ...(voiceId ? { voice_id: voiceId } : {}),
       ...(activityId ? { activity_id: activityId } : {}),

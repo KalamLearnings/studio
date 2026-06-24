@@ -314,6 +314,16 @@ export function AudioInputField({
         throw new Error("Not authenticated. Please log in.");
       }
 
+      // Resolve {{...}} placeholders (instruction mode) so the audio voices the
+      // real letter values, not the literal template. Library mode has no letter
+      // context, so its text is sent as-is.
+      const { resolveInstructionTemplates } = await import(
+        "@/lib/audio/generateInstructionAudio"
+      );
+      const textToSpeak = isLibraryMode
+        ? ttsText
+        : resolveInstructionTemplates(ttsText, letterData);
+
       const response = await fetch(
         `${getEnvironmentBaseUrl()}/functions/v1/tts`,
         {
@@ -323,7 +333,7 @@ export function AudioInputField({
             ...getEdgeFunctionAuthHeaders(session.access_token),
           },
           body: JSON.stringify({
-            text: ttsText,
+            text: textToSpeak,
             language: isLibraryMode ? "ar" : "en",
             voice_id: voice,
           }),

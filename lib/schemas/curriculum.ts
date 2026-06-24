@@ -18,9 +18,20 @@ import {
 // BASE SCHEMAS
 // ============================================================================
 
-// Localized text schema - Arabic text is optional, only English required
+// Localized text schema - Arabic text is optional, only English required.
+// Used for titles/names where text is always required.
 export const LocalizedTextSchema = z.object({
   en: z.string().min(1, 'English text required'),
+  ar: z.string().optional(),
+  audio_url: z.string().optional(),
+});
+
+// Instruction schema - like LocalizedText but the English text is OPTIONAL.
+// Not every activity needs a spoken instruction; making it required previously
+// forced creators to type placeholder text just to save. When `en` is present,
+// audio can be auto-generated on save.
+export const InstructionSchema = z.object({
+  en: z.string().optional(),
   ar: z.string().optional(),
   audio_url: z.string().optional(),
 });
@@ -193,7 +204,7 @@ export const ArticleSchema = z.object({
   node_id: z.string().uuid(),
   sequence_number: z.number().int().positive(),
   type: ArticleTypeSchema,
-  instruction: LocalizedTextSchema,
+  instruction: InstructionSchema,
   config: ArticleConfigSchema,
   is_published: z.boolean().default(true),
   template_id: z.string().optional(),
@@ -203,7 +214,7 @@ export const ArticleSchema = z.object({
 
 export const CreateArticleSchema = z.object({
   type: ArticleTypeSchema,
-  instruction: LocalizedTextSchema,
+  instruction: InstructionSchema,
   config: ArticleConfigSchema,
   template_id: z.string().optional(),
   sequence_number: z.number().int().positive().optional(),

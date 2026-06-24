@@ -17,6 +17,10 @@ interface ActivityFormProps {
   activityType?: string;
   config?: ActivityConfig;
   instruction?: string;
+  /** Saved instruction audio URL — shows the play button and lets save reuse it. */
+  instructionAudioUrl?: string | null;
+  /** Activity id (edit mode) — embedded in auto-generated audio filenames. */
+  activityId?: string;
   topic?: TopicContext | null;
   isNew?: boolean;
   onSave?: (data: Record<string, unknown>) => void;
@@ -30,6 +34,8 @@ export function ActivityForm({
   activityType,
   config = {},
   instruction: initialInstruction = "",
+  instructionAudioUrl = null,
+  activityId,
   topic,
   isNew = false,
   onSave,
@@ -42,13 +48,22 @@ export function ActivityForm({
     normalizeActivityConfig(activityType, config),
   );
   const [instruction, setInstruction] = React.useState(initialInstruction);
+  // Original instruction text at mount — used to detect whether the text changed
+  // (so we can auto-regenerate audio to match it on save).
+  const originalInstruction = React.useRef(initialInstruction);
   const [selectedVoice, setSelectedVoice] = React.useState<string | undefined>(undefined);
   const [generatedAudio, setGeneratedAudio] = React.useState<{
     blob: Blob;
     blobUrl: string;
     filePath: string;
   } | null>(null);
-  const [existingAudioUrl, setExistingAudioUrl] = React.useState<string | null>(null);
+  // Initialize from the saved activity's audio so the play button shows on
+  // reopen and save can reuse it when nothing changed.
+  const [existingAudioUrl, setExistingAudioUrl] = React.useState<string | null>(
+    instructionAudioUrl,
+  );
+  // Blocks the Save/Create button while instruction audio is generated/uploaded.
+  const [isSaving, setIsSaving] = React.useState(false);
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
@@ -92,36 +107,71 @@ export function ActivityForm({
     setExistingAudioUrl(null);
   };
 
-  // Handle save
+  // Handle save.
+  //
+  // Instruction audio is auto-generated on save so creators don't have to do it
+  // as a separate step. Decision table for what audio_url to persist:
+  //   - no instruction text                  -> no audio
+  //   - manual audio generated in this form  -> upload + use it
+  //   - text present, no existing audio       -> auto-generate
+  //   - text changed vs. original             -> auto-regenerate to match
+  //   - text unchanged, audio exists          -> reuse existing (no TTS call)
+  // The save is blocked (isSaving) while any TTS/upload runs.
   const handleSave = async () => {
-    // Upload audio if generated
-    let audioUrl = existingAudioUrl;
-    if (generatedAudio) {
-      try {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const text = instruction.trim();
+      let audioUrl = existingAudioUrl;
+
+      if (!text) {
+        // No instruction text -> no audio.
+        audioUrl = null;
+      } else if (generatedAudio) {
+        // Creator generated audio manually in this form; upload that exact blob.
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
-
         const { error } = await supabase.storage
           .from("curriculum-audio")
           .upload(generatedAudio.filePath, generatedAudio.blob, {
             contentType: "audio/mpeg",
             cacheControl: "31536000",
-            upsert: false,
+            upsert: true,
           });
-
         if (error) throw error;
         audioUrl = generatedAudio.filePath;
-      } catch (error) {
-        console.error("Error uploading audio:", error);
+      } else {
+        const textChanged = text !== originalInstruction.current.trim();
+        if (!existingAudioUrl || textChanged) {
+          // Auto-generate (no audio yet) or auto-regenerate (text changed).
+          const { generateInstructionAudio } = await import(
+            "@/lib/audio/generateInstructionAudio"
+          );
+          const { filePath } = await generateInstructionAudio({
+            text,
+            voiceId: selectedVoice,
+            activityId,
+          });
+          audioUrl = filePath;
+        }
+        // else: text unchanged and audio exists -> reuse existingAudioUrl as-is.
       }
-    }
 
-    onSave?.({
-      config: localConfig,
-      instruction,
-      audioUrl,
-      voiceId: selectedVoice,
-    });
+      onSave?.({
+        config: localConfig,
+        instruction,
+        audioUrl,
+        voiceId: selectedVoice,
+      });
+    } catch (error) {
+      console.error("Error saving activity / generating instruction audio:", error);
+      // Surface the failure so the creator can retry rather than silently
+      // saving without audio.
+      const message = error instanceof Error ? error.message : "Failed to save";
+      window.alert(`Could not generate instruction audio: ${message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!activityType) {
@@ -165,27 +215,27 @@ export function ActivityForm({
         <div className="flex items-center gap-2">
           {isNew ? (
             <>
-              <Button variant="outline" size="sm" onClick={onCancel}>
+              <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-1" />
-                Create Activity
+                {isSaving ? "Saving…" : "Create Activity"}
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" onClick={onDuplicate}>
+              <Button variant="outline" size="sm" onClick={onDuplicate} disabled={isSaving}>
                 <Copy className="h-4 w-4 mr-1" />
                 Duplicate
               </Button>
-              <Button variant="outline" size="sm" onClick={onDelete}>
+              <Button variant="outline" size="sm" onClick={onDelete} disabled={isSaving}>
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-1" />
-                Save
+                {isSaving ? "Saving…" : "Save"}
               </Button>
             </>
           )}
@@ -202,6 +252,7 @@ export function ActivityForm({
               value={instruction}
               onChange={setInstruction}
               letterData={letterData}
+              required={false}
               existingAudioUrl={existingAudioUrl}
               onAudioGenerated={handleAudioGenerated}
               selectedVoice={selectedVoice}

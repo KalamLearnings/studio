@@ -171,14 +171,19 @@ export function useBuilderActions({
 
   const handleSaveNewActivity = React.useCallback(
     (newActivity: NewActivityState, data: Record<string, unknown>) => {
+      const audioUrl = data.audioUrl as string | undefined;
       createActivity.mutate({
         curriculumId,
         nodeId: newActivity.nodeId,
         data: {
           type: newActivity.type as any,
-          instruction: data.instruction
-            ? { en: data.instruction as string }
-            : { en: newActivity.name },
+          instruction: {
+            en: (data.instruction as string) || newActivity.name,
+            // The form generates+uploads instruction audio and returns its URL
+            // as a top-level `audioUrl`; merge it into the instruction so it is
+            // actually persisted (otherwise the generated audio is dropped).
+            ...(audioUrl ? { audio_url: audioUrl } : {}),
+          },
           config: (data.config || {}) as any,
         },
       });
@@ -198,6 +203,14 @@ export function useBuilderActions({
       const activity = activities?.find((a) => a.id === activityId);
       if (!activity) return;
 
+      // Newly generated instruction audio arrives as a top-level `audioUrl`.
+      // Use it when present; otherwise keep whatever audio_url the activity
+      // already had so editing the text doesn't wipe existing audio.
+      const newAudioUrl = data.audioUrl as string | undefined;
+      const existingAudioUrl = (activity.instruction as { audio_url?: string } | undefined)
+        ?.audio_url;
+      const audioUrl = newAudioUrl ?? existingAudioUrl;
+
       updateActivity.mutate({
         curriculumId,
         nodeId: activity.node_id,
@@ -205,7 +218,10 @@ export function useBuilderActions({
         data: {
           type: activity.type,
           instruction: data.instruction
-            ? { en: data.instruction as string }
+            ? {
+                en: data.instruction as string,
+                ...(audioUrl ? { audio_url: audioUrl } : {}),
+              }
             : activity.instruction,
           config: (data.config || {}) as any,
         },

@@ -23,7 +23,7 @@ interface ActivityFormProps {
   activityId?: string;
   topic?: TopicContext | null;
   isNew?: boolean;
-  onSave?: (data: Record<string, unknown>) => void;
+  onSave?: (data: Record<string, unknown>) => void | Promise<void>;
   onCancel?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
@@ -157,7 +157,9 @@ export function ActivityForm({
         // else: text unchanged and audio exists -> reuse existingAudioUrl as-is.
       }
 
-      onSave?.({
+      // Await the parent's save (create/update + post-save selection) so the
+      // form keeps its loading state until the whole flow finishes.
+      await onSave?.({
         config: localConfig,
         instruction,
         audioUrl,
@@ -168,7 +170,7 @@ export function ActivityForm({
       // Surface the failure so the creator can retry rather than silently
       // saving without audio.
       const message = error instanceof Error ? error.message : "Failed to save";
-      window.alert(`Could not generate instruction audio: ${message}`);
+      window.alert(`Could not save activity: ${message}`);
     } finally {
       setIsSaving(false);
     }

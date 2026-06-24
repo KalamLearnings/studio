@@ -21,6 +21,13 @@ export function useTreeState({ topics, nodes, activities }: UseTreeStateOptions)
   const [selectedNode, setSelectedNode] = React.useState<TreeNode | null>(null);
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const [newActivity, setNewActivity] = React.useState<NewActivityState | null>(null);
+  // Id of a just-created activity to select once it appears in the refetched
+  // data. Selection is deferred (rather than done inline after the mutation)
+  // because the activities/tree caches only contain the new row after the
+  // create's query invalidation resolves.
+  const [pendingSelectActivityId, setPendingSelectActivityId] = React.useState<
+    string | null
+  >(null);
 
   // Toggle expansion of a single node
   const handleToggleExpand = React.useCallback((nodeId: string) => {
@@ -110,6 +117,38 @@ export function useTreeState({ topics, nodes, activities }: UseTreeStateOptions)
     });
   }, [topics, nodes, activities]);
 
+  // Select a newly created activity once it lands in the refetched tree, and
+  // expand its topic + node so it's visible. Runs when the pending id is set or
+  // when the data updates; clears the pending id once selected.
+  React.useEffect(() => {
+    if (!pendingSelectActivityId) return;
+
+    const activity = activities?.find((a) => a.id === pendingSelectActivityId);
+    if (!activity) return; // not in the refetched data yet; wait for next update
+
+    const treeNode = tree
+      .flatMap((topic) => topic.children ?? [])
+      .flatMap((node) => node.children ?? [])
+      .find((a) => a.id === activity.id);
+    if (!treeNode) return; // tree not rebuilt with the new row yet
+
+    const topicId = nodes?.find((n) => n.id === activity.node_id)?.topic_id;
+
+    setSelectedNode(treeNode);
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (topicId) next.add(topicId);
+      next.add(activity.node_id);
+      return next;
+    });
+    setPendingSelectActivityId(null);
+  }, [pendingSelectActivityId, activities, nodes, tree]);
+
+  // Request that a just-created activity be selected once it appears in the data.
+  const selectActivityAfterCreate = React.useCallback((id: string) => {
+    setPendingSelectActivityId(id);
+  }, []);
+
   // Clear selection if the selected node was deleted
   const clearSelection = React.useCallback(() => {
     setSelectedNode(null);
@@ -128,6 +167,7 @@ export function useTreeState({ topics, nodes, activities }: UseTreeStateOptions)
     handleToggleExpand,
     handleToggleExpandAll,
     setNewActivity,
+    selectActivityAfterCreate,
     clearSelection,
   };
 }

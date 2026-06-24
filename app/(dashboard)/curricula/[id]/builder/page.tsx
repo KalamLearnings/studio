@@ -45,6 +45,7 @@ export default function BuilderPage() {
     handleToggleExpand,
     handleToggleExpandAll,
     setNewActivity,
+    selectActivityAfterCreate,
     clearSelection,
   } = useTreeState({ topics, nodes, activities });
 
@@ -83,6 +84,7 @@ export default function BuilderPage() {
     selectedNode,
     clearSelection,
     setNewActivity,
+    selectActivityAfterCreate,
   });
 
   // Open an activity in the form pane by pasting its ID (Phase 1: current curriculum).

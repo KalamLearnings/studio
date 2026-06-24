@@ -36,6 +36,7 @@ interface UseBuilderActionsOptions {
   selectedNode: TreeNode | null;
   clearSelection: () => void;
   setNewActivity: (activity: NewActivityState | null) => void;
+  selectActivityAfterCreate: (id: string) => void;
 }
 
 export function useBuilderActions({
@@ -46,6 +47,7 @@ export function useBuilderActions({
   selectedNode,
   clearSelection,
   setNewActivity,
+  selectActivityAfterCreate,
 }: UseBuilderActionsOptions) {
   // Mutations
   const createTopic = useCreateTopic();
@@ -170,13 +172,18 @@ export function useBuilderActions({
   );
 
   const handleSaveNewActivity = React.useCallback(
-    (newActivity: NewActivityState, data: Record<string, unknown>) => {
+    async (newActivity: NewActivityState, data: Record<string, unknown>) => {
       const audioUrl = data.audioUrl as string | undefined;
       // Instruction text is optional. Save exactly what was typed (trimmed);
       // do NOT fall back to the activity type's name — that previously injected
       // labels like "Sound Blending" into blank instructions.
       const instructionText = (data.instruction as string | undefined)?.trim();
-      createActivity.mutate({
+
+      // Await the create so the form keeps showing its loading state until the
+      // activity exists, then select it (the tree refetch makes it appear) so
+      // the form stays open in edit mode and the resources panel populates.
+      // On error the new-activity form is left open so the user can retry.
+      const created = await createActivity.mutateAsync({
         curriculumId,
         nodeId: newActivity.nodeId,
         data: {
@@ -193,8 +200,9 @@ export function useBuilderActions({
       });
 
       setNewActivity(null);
+      selectActivityAfterCreate(created.id);
     },
-    [curriculumId, createActivity, setNewActivity]
+    [curriculumId, createActivity, setNewActivity, selectActivityAfterCreate]
   );
 
   const handleCancelNewActivity = React.useCallback(() => {
@@ -203,7 +211,7 @@ export function useBuilderActions({
 
   // Save edits to an existing activity.
   const handleSaveActivity = React.useCallback(
-    (activityId: string, data: Record<string, unknown>) => {
+    async (activityId: string, data: Record<string, unknown>) => {
       const activity = activities?.find((a) => a.id === activityId);
       if (!activity) return;
 
@@ -214,16 +222,18 @@ export function useBuilderActions({
       const existingAudioUrl = (activity.instruction as { audio_url?: string } | undefined)
         ?.audio_url;
       const audioUrl = newAudioUrl ?? existingAudioUrl;
+      const instructionText = (data.instruction as string | undefined)?.trim();
 
-      updateActivity.mutate({
+      // Awaited so the form keeps its loading state until the update resolves.
+      await updateActivity.mutateAsync({
         curriculumId,
         nodeId: activity.node_id,
         activityId: activity.id,
         data: {
           type: activity.type,
-          instruction: data.instruction
+          instruction: instructionText
             ? {
-                en: data.instruction as string,
+                en: instructionText,
                 ...(audioUrl ? { audio_url: audioUrl } : {}),
               }
             : activity.instruction,

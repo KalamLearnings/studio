@@ -119,7 +119,13 @@ export function useTreeState({ topics, nodes, activities }: UseTreeStateOptions)
 
   // Select a newly created activity once it lands in the refetched tree, and
   // expand its topic + node so it's visible. Runs when the pending id is set or
-  // when the data updates; clears the pending id once selected.
+  // when the data updates.
+  //
+  // The new-activity form (driven by `newActivity`) is cleared HERE — in the
+  // same commit that selects the created activity — rather than right after the
+  // create resolves. Clearing it earlier would leave a frame where neither
+  // `newActivity` nor a matching `selectedNode` is set, making the form flicker
+  // away and back. This hands off directly from the form to the selected row.
   React.useEffect(() => {
     if (!pendingSelectActivityId) return;
 
@@ -141,6 +147,7 @@ export function useTreeState({ topics, nodes, activities }: UseTreeStateOptions)
       next.add(activity.node_id);
       return next;
     });
+    setNewActivity(null);
     setPendingSelectActivityId(null);
   }, [pendingSelectActivityId, activities, nodes, tree]);
 

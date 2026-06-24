@@ -199,10 +199,11 @@ export function useBuilderActions({
         },
       });
 
-      setNewActivity(null);
+      // Hand off to the selection effect: it swaps the new-activity form for the
+      // selected created activity in a single commit (no empty-state flicker).
       selectActivityAfterCreate(created.id);
     },
-    [curriculumId, createActivity, setNewActivity, selectActivityAfterCreate]
+    [curriculumId, createActivity, selectActivityAfterCreate]
   );
 
   const handleCancelNewActivity = React.useCallback(() => {

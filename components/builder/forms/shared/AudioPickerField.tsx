@@ -133,6 +133,7 @@ export function AudioPickerField({
           type="button"
           variant="outline"
           size="sm"
+          className="shrink-0"
           onClick={() => setShowPicker(true)}
         >
           <Volume2 className="h-4 w-4 mr-1" />

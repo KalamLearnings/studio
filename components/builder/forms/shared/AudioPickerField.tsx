@@ -102,7 +102,7 @@ export function AudioPickerField({
               <p className="text-sm font-medium text-primary truncate">
                 Audio Selected
               </p>
-              <p className="text-xs text-muted-foreground truncate">{value}</p>
+              <p className="text-xs text-muted-foreground break-all line-clamp-1">{value}</p>
             </div>
             <Button
               type="button"

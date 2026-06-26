@@ -236,6 +236,8 @@ export function useBuilderActions({
         activityId: activity.id,
         data: {
           type: activity.type,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          config: (data.config ?? activity.config ?? {}) as any,
           instruction: instructionText
             ? { en: instructionText, ...(voiceId ? { voiceId } : {}) }
             : activity.instruction,

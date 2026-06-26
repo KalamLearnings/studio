@@ -193,6 +193,7 @@ export default function BuilderPage() {
           config={newActivity ? undefined : (selectedActivity?.config as Record<string, unknown> | undefined)}
           instruction={newActivity ? undefined : selectedActivity?.instruction?.en}
           instructionAudioUrl={newActivity ? undefined : selectedActivity?.instruction?.audio_url}
+          instructionVoiceId={newActivity ? undefined : selectedActivity?.instruction?.voiceId}
           topic={currentTopic}
           isNew={!!newActivity}
           onSave={

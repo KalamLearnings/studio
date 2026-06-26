@@ -12,6 +12,7 @@ import {
   type TopicContext,
 } from "./forms";
 import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
+import { DEFAULT_VOICE } from "@/lib/constants/voices";
 
 interface ActivityFormProps {
   activityType?: string;
@@ -19,6 +20,8 @@ interface ActivityFormProps {
   instruction?: string;
   /** Saved instruction audio URL — shown by the play button for preview. */
   instructionAudioUrl?: string | null;
+  /** Saved TTS voice for this activity's instruction (defaults to Shelby). */
+  instructionVoiceId?: string | null;
   topic?: TopicContext | null;
   isNew?: boolean;
   /**
@@ -38,6 +41,7 @@ export function ActivityForm({
   config = {},
   instruction: initialInstruction = "",
   instructionAudioUrl = null,
+  instructionVoiceId = null,
   topic,
   isNew = false,
   onSave,
@@ -50,7 +54,13 @@ export function ActivityForm({
     normalizeActivityConfig(activityType, config),
   );
   const [instruction, setInstruction] = React.useState(initialInstruction);
-  const [selectedVoice, setSelectedVoice] = React.useState<string | undefined>(undefined);
+  // Initialize to the activity's saved voice, falling back to the default
+  // (Shelby). Never undefined — otherwise the form would display the default
+  // voice but send no voiceId, and the backend would fall back to its own env
+  // default instead of the voice shown in the picker.
+  const [selectedVoice, setSelectedVoice] = React.useState<string>(
+    instructionVoiceId || DEFAULT_VOICE.id,
+  );
   // Whether the backend should (re)generate instruction audio on save. The
   // AudioInputField auto-checks this when the text or voice changes and lets the
   // creator toggle it manually. Irrelevant on create (backend always generates).

@@ -11,10 +11,9 @@ interface FormPanelProps {
   config?: ActivityConfig;
   instruction?: string;
   instructionAudioUrl?: string | null;
-  activityId?: string;
   topic: Topic | null;
   isNew: boolean;
-  onSave?: (data: Record<string, unknown>) => void;
+  onSave?: (data: Record<string, unknown>) => Promise<unknown> | void;
   onCancel?: () => void;
 }
 
@@ -24,7 +23,6 @@ export function FormPanel({
   config,
   instruction,
   instructionAudioUrl,
-  activityId,
   topic,
   isNew,
   onSave,
@@ -38,7 +36,6 @@ export function FormPanel({
         config={config}
         instruction={instruction}
         instructionAudioUrl={instructionAudioUrl}
-        activityId={activityId}
         topic={topic}
         isNew={isNew}
         onSave={onSave}

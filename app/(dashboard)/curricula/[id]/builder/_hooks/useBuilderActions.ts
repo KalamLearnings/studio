@@ -173,12 +173,16 @@ export function useBuilderActions({
 
   const handleSaveNewActivity = React.useCallback(
     async (newActivity: NewActivityState, data: Record<string, unknown>) => {
-      const audioUrl = data.audioUrl as string | undefined;
       // Instruction text is optional. Save exactly what was typed (trimmed);
       // do NOT fall back to the activity type's name — that previously injected
       // labels like "Sound Blending" into blank instructions.
       const instructionText = (data.instruction as string | undefined)?.trim();
+      const voiceId = data.voiceId as string | undefined;
 
+      // The BACKEND owns instruction audio: we send intent only (text + voice),
+      // never an audio_url. On create the backend always generates, so no
+      // regenerate flag is needed.
+      //
       // Await the create so the form keeps showing its loading state until the
       // activity exists, then select it (the tree refetch makes it appear) so
       // the form stays open in edit mode and the resources panel populates.
@@ -190,10 +194,7 @@ export function useBuilderActions({
           type: newActivity.type as any,
           instruction: {
             ...(instructionText ? { en: instructionText } : {}),
-            // The form generates+uploads instruction audio and returns its URL
-            // as a top-level `audioUrl`; merge it into the instruction so it is
-            // actually persisted (otherwise the generated audio is dropped).
-            ...(audioUrl ? { audio_url: audioUrl } : {}),
+            ...(voiceId ? { voiceId } : {}),
           },
           config: (data.config || {}) as any,
         },
@@ -202,6 +203,9 @@ export function useBuilderActions({
       // Hand off to the selection effect: it swaps the new-activity form for the
       // selected created activity in a single commit (no empty-state flicker).
       selectActivityAfterCreate(created.id);
+
+      // Returned to the form so it can read back the backend's audio_url.
+      return created;
     },
     [curriculumId, createActivity, selectActivityAfterCreate]
   );
@@ -216,29 +220,26 @@ export function useBuilderActions({
       const activity = activities?.find((a) => a.id === activityId);
       if (!activity) return;
 
-      // Newly generated instruction audio arrives as a top-level `audioUrl`.
-      // Use it when present; otherwise keep whatever audio_url the activity
-      // already had so editing the text doesn't wipe existing audio.
-      const newAudioUrl = data.audioUrl as string | undefined;
-      const existingAudioUrl = (activity.instruction as { audio_url?: string } | undefined)
-        ?.audio_url;
-      const audioUrl = newAudioUrl ?? existingAudioUrl;
+      // The BACKEND owns instruction audio. We send intent only — the
+      // instruction text, the chosen voice, and a top-level `regenerateAudio`
+      // flag — and never an audio_url. When `regenerateAudio` is false the
+      // backend keeps the existing clip; when true it regenerates + overwrites.
       const instructionText = (data.instruction as string | undefined)?.trim();
+      const voiceId = data.voiceId as string | undefined;
+      const regenerateAudio = data.regenerateAudio === true;
 
-      // Awaited so the form keeps its loading state until the update resolves.
-      await updateActivity.mutateAsync({
+      // Awaited so the form keeps its loading state until the update resolves,
+      // and returned so the form can read back the backend's audio_url.
+      return updateActivity.mutateAsync({
         curriculumId,
         nodeId: activity.node_id,
         activityId: activity.id,
         data: {
           type: activity.type,
           instruction: instructionText
-            ? {
-                en: instructionText,
-                ...(audioUrl ? { audio_url: audioUrl } : {}),
-              }
+            ? { en: instructionText, ...(voiceId ? { voiceId } : {}) }
             : activity.instruction,
-          config: (data.config || {}) as any,
+          regenerateAudio,
         },
       });
     },

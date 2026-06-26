@@ -13,8 +13,43 @@ import {
 } from '@/lib/api/curricula';
 import type { Article, CreateArticle, UpdateArticle, BatchReorder } from '@/lib/schemas/curriculum';
 import type { ActivityTypeGroup } from '@/lib/api/curricula';
+import type { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { sortBySequence } from '@/lib/utils/reorder';
+
+// ============================================================================
+// CACHE HELPERS
+// ============================================================================
+
+/**
+ * Insert-or-replace an activity in the query caches the builder reads from, so a
+ * create/update response (carrying the backend-owned instruction.audio_url) is
+ * reflected immediately — before the invalidation refetch resolves.
+ *
+ * Updates both the per-node `activities` cache and every `all-activities` cache
+ * (its key embeds the sorted node ids, so we match by prefix).
+ */
+function upsertActivityInCaches(
+  queryClient: QueryClient,
+  curriculumId: string,
+  nodeId: string,
+  activity: Article,
+) {
+  const replace = (list: Article[] | undefined) => {
+    if (!list) return list;
+    const idx = list.findIndex((a) => a.id === activity.id);
+    if (idx === -1) return [...list, activity];
+    const next = [...list];
+    next[idx] = activity;
+    return next;
+  };
+
+  queryClient.setQueryData<Article[]>(['activities', curriculumId, nodeId], replace);
+  queryClient.setQueriesData<Article[]>(
+    { queryKey: ['all-activities', curriculumId] },
+    replace,
+  );
+}
 
 // ============================================================================
 // QUERY HOOKS
@@ -88,6 +123,9 @@ export function useCreateActivity() {
       data: CreateArticle;
     }) => createArticle(curriculumId, { ...data, node_id: nodeId }),
     onSuccess: (newActivity, { curriculumId, nodeId }) => {
+      // Seed the caches with the returned activity (incl. backend-owned
+      // instruction.audio_url) so the new clip is visible before the refetch.
+      upsertActivityInCaches(queryClient, curriculumId, nodeId, newActivity);
       // Invalidate to refetch
       queryClient.invalidateQueries({ queryKey: ['activities', curriculumId, nodeId] });
       queryClient.invalidateQueries({ queryKey: ['all-activities', curriculumId] });
@@ -117,7 +155,11 @@ export function useUpdateActivity() {
       activityId: string;
       data: UpdateArticle;
     }) => updateArticle(curriculumId, activityId, data),
-    onSuccess: (_, { curriculumId, nodeId }) => {
+    onSuccess: (updatedActivity, { curriculumId, nodeId }) => {
+      // Write the backend's response (incl. the server-owned
+      // instruction.audio_url) into the caches so the player shows the new clip
+      // without waiting for the refetch / a page refresh.
+      upsertActivityInCaches(queryClient, curriculumId, nodeId, updatedActivity);
       queryClient.invalidateQueries({ queryKey: ['activities', curriculumId, nodeId] });
       queryClient.invalidateQueries({ queryKey: ['all-activities', curriculumId] });
       toast.success('Activity updated successfully');

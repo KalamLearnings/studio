@@ -33,7 +33,12 @@ export const LocalizedTextSchema = z.object({
 export const InstructionSchema = z.object({
   en: z.string().optional(),
   ar: z.string().optional(),
+  // Server-controlled: the backend owns instruction-audio generation and writes
+  // this on save. Clients send intent (text + voiceId) and never an audio_url.
   audio_url: z.string().optional(),
+  // The chosen TTS voice. Sent by the client as part of the instruction intent;
+  // the backend uses it when generating audio.
+  voiceId: z.string().optional(),
 });
 
 export const LetterSchema = z.object({
@@ -218,6 +223,9 @@ export const CreateArticleSchema = z.object({
   config: ArticleConfigSchema,
   template_id: z.string().optional(),
   sequence_number: z.number().int().positive().optional(),
+  // Request-only flag: ask the backend to (re)generate instruction audio. The
+  // backend always generates on create, so it is only meaningful on update.
+  regenerateAudio: z.boolean().optional(),
 });
 
 export const UpdateArticleSchema = CreateArticleSchema.extend({

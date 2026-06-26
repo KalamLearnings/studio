@@ -17,13 +17,16 @@ interface ActivityFormProps {
   activityType?: string;
   config?: ActivityConfig;
   instruction?: string;
-  /** Saved instruction audio URL — shows the play button and lets save reuse it. */
+  /** Saved instruction audio URL — shown by the play button for preview. */
   instructionAudioUrl?: string | null;
-  /** Activity id (edit mode) — embedded in auto-generated audio filenames. */
-  activityId?: string;
   topic?: TopicContext | null;
   isNew?: boolean;
-  onSave?: (data: Record<string, unknown>) => void | Promise<void>;
+  /**
+   * Persists the activity. Receives intent only (config, instruction text,
+   * voiceId, regenerateAudio) and resolves to the saved activity returned by the
+   * backend so the form can read back the server-owned `instruction.audio_url`.
+   */
+  onSave?: (data: Record<string, unknown>) => Promise<unknown> | void;
   onCancel?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
@@ -35,7 +38,6 @@ export function ActivityForm({
   config = {},
   instruction: initialInstruction = "",
   instructionAudioUrl = null,
-  activityId,
   topic,
   isNew = false,
   onSave,
@@ -48,21 +50,18 @@ export function ActivityForm({
     normalizeActivityConfig(activityType, config),
   );
   const [instruction, setInstruction] = React.useState(initialInstruction);
-  // Original instruction text at mount — used to detect whether the text changed
-  // (so we can auto-regenerate audio to match it on save).
-  const originalInstruction = React.useRef(initialInstruction);
   const [selectedVoice, setSelectedVoice] = React.useState<string | undefined>(undefined);
-  const [generatedAudio, setGeneratedAudio] = React.useState<{
-    blob: Blob;
-    blobUrl: string;
-    filePath: string;
-  } | null>(null);
-  // Initialize from the saved activity's audio so the play button shows on
-  // reopen and save can reuse it when nothing changed.
+  // Whether the backend should (re)generate instruction audio on save. The
+  // AudioInputField auto-checks this when the text or voice changes and lets the
+  // creator toggle it manually. Irrelevant on create (backend always generates).
+  const [regenerateAudio, setRegenerateAudio] = React.useState(false);
+  // The saved instruction audio URL, shown by the play button. Initialized from
+  // the activity and refreshed from the save response so the new clip plays
+  // without a page refresh.
   const [existingAudioUrl, setExistingAudioUrl] = React.useState<string | null>(
     instructionAudioUrl,
   );
-  // Blocks the Save/Create button while instruction audio is generated/uploaded.
+  // Blocks the Save/Create button while the save (incl. backend TTS) runs.
   const [isSaving, setIsSaving] = React.useState(false);
 
   // Get letter data from topic if available
@@ -82,94 +81,42 @@ export function ActivityForm({
     ? getActivityFormOptions(activityType)
     : {};
 
-  // Clean up blob URLs when component unmounts
-  React.useEffect(() => {
-    return () => {
-      if (generatedAudio?.blobUrl) {
-        URL.revokeObjectURL(generatedAudio.blobUrl);
-      }
-    };
-  }, [generatedAudio]);
-
   // Handle config changes
   const handleConfigChange = (newConfig: ActivityConfig) => {
     setLocalConfig(newConfig);
     onConfigChange?.(newConfig);
   };
 
-  // Handle audio generation callback
-  const handleAudioGenerated = (blob: Blob, blobUrl: string, filePath: string) => {
-    // Clean up old blob URL
-    if (generatedAudio?.blobUrl) {
-      URL.revokeObjectURL(generatedAudio.blobUrl);
-    }
-    setGeneratedAudio({ blob, blobUrl, filePath });
-    setExistingAudioUrl(null);
-  };
-
   // Handle save.
   //
-  // Instruction audio is auto-generated on save so creators don't have to do it
-  // as a separate step. Decision table for what audio_url to persist:
-  //   - no instruction text                  -> no audio
-  //   - manual audio generated in this form  -> upload + use it
-  //   - text present, no existing audio       -> auto-generate
-  //   - text changed vs. original             -> auto-regenerate to match
-  //   - text unchanged, audio exists          -> reuse existing (no TTS call)
-  // The save is blocked (isSaving) while any TTS/upload runs.
+  // The client no longer generates or uploads instruction audio — the BACKEND
+  // owns it. We pass intent only: the instruction text, the chosen voice, and
+  // `regenerateAudio` (whether the backend should overwrite the existing clip).
+  // On create the backend always generates, so the flag is ignored there.
+  //
+  // `onSave` resolves to the saved activity returned by the backend; we read its
+  // `instruction.audio_url` back into local state so the play button reflects the
+  // new clip without a page refresh.
   const handleSave = async () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      const text = instruction.trim();
-      let audioUrl = existingAudioUrl;
-
-      if (!text) {
-        // No instruction text -> no audio.
-        audioUrl = null;
-      } else if (generatedAudio) {
-        // Creator generated audio manually in this form; upload that exact blob.
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const { error } = await supabase.storage
-          .from("curriculum-audio")
-          .upload(generatedAudio.filePath, generatedAudio.blob, {
-            contentType: "audio/mpeg",
-            cacheControl: "31536000",
-            upsert: true,
-          });
-        if (error) throw error;
-        audioUrl = generatedAudio.filePath;
-      } else {
-        const textChanged = text !== originalInstruction.current.trim();
-        if (!existingAudioUrl || textChanged) {
-          // Auto-generate (no audio yet) or auto-regenerate (text changed).
-          const { generateInstructionAudio } = await import(
-            "@/lib/audio/generateInstructionAudio"
-          );
-          const { filePath } = await generateInstructionAudio({
-            text,
-            letter: letterData,
-            voiceId: selectedVoice,
-            activityId,
-          });
-          audioUrl = filePath;
-        }
-        // else: text unchanged and audio exists -> reuse existingAudioUrl as-is.
-      }
-
-      // Await the parent's save (create/update + post-save selection) so the
-      // form keeps its loading state until the whole flow finishes.
-      await onSave?.({
+      const saved = await onSave?.({
         config: localConfig,
         instruction,
-        audioUrl,
         voiceId: selectedVoice,
+        regenerateAudio,
       });
+
+      // Adopt the backend's audio_url (source of truth) and disarm the flag.
+      const savedAudioUrl =
+        (saved as { instruction?: { audio_url?: string | null } } | undefined)
+          ?.instruction?.audio_url ?? null;
+      setExistingAudioUrl(savedAudioUrl);
+      setRegenerateAudio(false);
     } catch (error) {
-      console.error("Error saving activity / generating instruction audio:", error);
-      // Surface the failure so the creator can retry rather than silently
-      // saving without audio.
+      console.error("Error saving activity:", error);
+      // Surface the failure so the creator can retry.
       const message = error instanceof Error ? error.message : "Failed to save";
       window.alert(`Could not save activity: ${message}`);
     } finally {
@@ -257,9 +204,13 @@ export function ActivityForm({
               letterData={letterData}
               required={false}
               existingAudioUrl={existingAudioUrl}
-              onAudioGenerated={handleAudioGenerated}
               selectedVoice={selectedVoice}
               onVoiceChange={setSelectedVoice}
+              // Regenerate is only meaningful when editing; on create the backend
+              // always generates, so hide the checkbox.
+              showRegenerate={!isNew}
+              regenerateAudio={regenerateAudio}
+              onRegenerateAudioChange={setRegenerateAudio}
             />
           )}
 

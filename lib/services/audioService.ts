@@ -12,6 +12,29 @@ import { SUPPORTED_AUDIO_TYPES, MAX_AUDIO_FILE_SIZE } from '@/lib/types/audio';
 const BUCKET_NAME = 'curriculum-audio';
 const AUDIO_FOLDER = 'audio';
 
+/**
+ * Resolve an audio reference to a playable URL.
+ *
+ * The backend stores instruction audio as a RELATIVE storage path (e.g.
+ * `instructions/foo.mp3`) so it is portable across environments. Such a path is
+ * not playable as-is — a browser resolves it against the current page origin
+ * (e.g. studio.kalamkidslearning.com) and 404s. This converts a relative bucket
+ * path into the environment-correct Supabase public URL, while passing through
+ * values that are already playable (absolute http(s) URLs and blob: URLs).
+ *
+ * Returns null for empty input.
+ */
+export function resolveAudioUrl(ref: string | null | undefined): string | null {
+  if (!ref) return null;
+  if (/^(https?:|blob:|data:)/.test(ref)) return ref;
+
+  const supabase = createClient();
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(BUCKET_NAME).getPublicUrl(ref);
+  return publicUrl;
+}
+
 export interface AudioFilters {
   category?: AudioCategory;
   searchQuery?: string;

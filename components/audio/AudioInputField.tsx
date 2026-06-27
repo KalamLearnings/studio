@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { VoiceTagsInput } from "./VoiceTagsInput";
 import { VoiceSelector } from "./VoiceSelector";
 import { DEFAULT_VOICE } from "@/lib/constants/voices";
+import { resolveAudioUrl } from "@/lib/services/audioService";
 import {
   AUDIO_CATEGORIES,
   SUPPORTED_AUDIO_TYPES,
@@ -311,7 +312,10 @@ export function AudioInputField({
     } else if (inputMode === "upload" && file) {
       audioUrl = URL.createObjectURL(file);
     } else if (existingAudioUrl) {
-      audioUrl = existingAudioUrl;
+      // existingAudioUrl may be a relative storage path (the backend stores
+      // instruction audio as `instructions/...mp3`); resolve it to a full
+      // Supabase URL so it plays before a page refresh, not just after.
+      audioUrl = resolveAudioUrl(existingAudioUrl) ?? undefined;
     }
 
     if (!audioUrl) return;

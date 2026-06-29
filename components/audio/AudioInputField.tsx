@@ -103,7 +103,9 @@ export interface AudioSubmitData {
   displayName: string;
   category: AudioCategory;
   tags: string[];
-  file: File;
+  // Undefined when editing an existing asset without regenerating/replacing the
+  // clip (metadata-only edit). Always present on create.
+  file?: File;
   metadata?: Record<string, unknown>;
 }
 
@@ -459,7 +461,7 @@ export function AudioInputField({
 
       await onSubmit({
         displayName: displayName.trim(),
-        file: uploadFile as File,
+        file: uploadFile,
         category: category,
         tags,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,

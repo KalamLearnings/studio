@@ -56,12 +56,27 @@ interface AudioAssetRow {
   updated_at: string;
 }
 
+/**
+ * Append a version query derived from `updated_at` so Studio fetches fresh bytes
+ * after a regenerate-in-place overwrite. The storage path (and thus the base
+ * URL embedded in activity configs) is unchanged — only Studio's own reads bust
+ * the browser/CDN cache. Without this, an overwritten clip keeps playing the old
+ * cached object because the public URL is byte-identical.
+ */
+function withCacheBuster(publicUrl: string, updatedAt: string): string {
+  if (!updatedAt) return publicUrl;
+  const version = Date.parse(updatedAt);
+  if (Number.isNaN(version)) return publicUrl;
+  const separator = publicUrl.includes('?') ? '&' : '?';
+  return `${publicUrl}${separator}v=${version}`;
+}
+
 function rowToAudioAsset(row: AudioAssetRow, publicUrl: string): AudioAsset {
   return {
     id: row.id,
     name: row.name,
     displayName: row.display_name,
-    url: publicUrl,
+    url: withCacheBuster(publicUrl, row.updated_at),
     storagePath: row.storage_path,
     category: row.category,
     tags: row.tags || [],
@@ -248,6 +263,98 @@ export async function updateAudioAsset(
     .getPublicUrl(data.storage_path);
 
   return rowToAudioAsset(data, publicUrl);
+}
+
+/**
+ * Replaces the underlying file of an existing audio asset (regenerate-in-place).
+ *
+ * BAND-AID: activities embed the audio's public URL (its storage_path) directly
+ * in their config — there is no live audio_assets-id reference at playback time
+ * (see ASSET_ASSOCIATION_MODEL_PLAN.md). So to fix a wrong clip without
+ * re-authoring every referencing config, we OVERWRITE the bytes at the SAME
+ * storage_path. The URL is unchanged, so every consumer (the library row and any
+ * activity config pointing at that path) serves the corrected audio.
+ *
+ * cacheControl is set low here (unlike uploads' 1-year) so the corrected clip
+ * actually propagates instead of being masked by the old cached object.
+ *
+ * Also persists displayName/category/tags and merges metadata (so ttsText /
+ * voiceId are saved for next time).
+ */
+export async function replaceAudioAssetFile(
+  id: string,
+  data: {
+    file: File;
+    displayName?: string;
+    category?: AudioCategory;
+    tags?: string[];
+    metadata?: Record<string, unknown>;
+  }
+): Promise<AudioAsset> {
+  const supabase = createClient();
+  const { file, displayName, category, tags, metadata } = data;
+
+  validateAudioFile(file);
+
+  // Read the existing row so we overwrite the SAME path and merge metadata.
+  const { data: existing, error: fetchError } = await supabase
+    .from('audio_assets')
+    .select('storage_path, metadata')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching audio asset for replace:', fetchError);
+    throw new Error(`Failed to find audio asset: ${fetchError.message}`);
+  }
+
+  const storagePath = existing.storage_path as string;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(storagePath, file, {
+      // Short cache so the corrected clip is not masked by the previously
+      // cached object at this same path.
+      cacheControl: '60',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error('Error overwriting audio file:', uploadError);
+    throw new Error(`Failed to replace audio: ${uploadError.message}`);
+  }
+
+  const mergedMetadata = {
+    ...((existing.metadata as Record<string, unknown> | null) ?? {}),
+    ...(metadata ?? {}),
+  };
+
+  const updateData: Record<string, unknown> = {
+    file_size: file.size,
+    mime_type: file.type,
+    metadata: mergedMetadata,
+  };
+  if (displayName !== undefined) updateData.display_name = displayName;
+  if (category !== undefined) updateData.category = category;
+  if (tags !== undefined) updateData.tags = tags;
+
+  const { data: updatedRow, error: updateError } = await supabase
+    .from('audio_assets')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError) {
+    console.error('Error updating audio asset after replace:', updateError);
+    throw new Error(`Failed to save audio metadata: ${updateError.message}`);
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(storagePath);
+
+  return rowToAudioAsset(updatedRow, publicUrl);
 }
 
 /**

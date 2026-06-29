@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -49,33 +50,89 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 
-// Publish Toggle Component
-function PublishToggle({
+/**
+ * Per-row overflow (kebab) menu. Consolidates the row's actions — add child,
+ * publish toggle, duplicate, delete — into one ⋯ menu so they can't be
+ * fat-fingered. An item renders only when its callback is provided, so each row
+ * type (topic / node / activity) gets exactly the actions it supports.
+ */
+function RowActionsMenu({
+  addLabel,
+  onAdd,
   isPublished,
-  onToggle,
+  onTogglePublish,
+  onDuplicate,
+  onDelete,
 }: {
-  isPublished: boolean;
-  onToggle: () => void;
+  addLabel?: string;
+  onAdd?: () => void;
+  isPublished?: boolean;
+  onTogglePublish?: () => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 }) {
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggle();
-      }}
-      className={cn(
-        "relative inline-flex h-4 w-7 items-center rounded-full transition-colors",
-        isPublished ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
-      )}
-      title={isPublished ? "Published - click to unpublish" : "Draft - click to publish"}
-    >
-      <span
-        className={cn(
-          "inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform",
-          isPublished ? "translate-x-3.5" : "translate-x-0.5"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 p-1 hover:bg-muted rounded transition-all"
+          title="Actions"
+        >
+          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+        {onAdd && (
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              onAdd();
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {addLabel ?? "Add"}
+          </DropdownMenuItem>
         )}
-      />
-    </button>
+        {onTogglePublish && (
+          <DropdownMenuCheckboxItem
+            checked={isPublished}
+            onSelect={(e) => {
+              e.preventDefault();
+              onTogglePublish();
+            }}
+          >
+            Published
+          </DropdownMenuCheckboxItem>
+        )}
+        {onDuplicate && (
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              onDuplicate();
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate
+          </DropdownMenuItem>
+        )}
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={(e) => {
+                e.preventDefault();
+                onDelete();
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -200,52 +257,15 @@ function DraggableTopic({
           {node.title}
         </button>
 
-        {/* Publish Toggle */}
-        {onTogglePublish && (
-          <div className="opacity-0 group-hover:opacity-100">
-            <PublishToggle isPublished={isPublished} onToggle={onTogglePublish} />
-          </div>
-        )}
-
-        {/* Add Node Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddNode();
-          }}
-          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/10 rounded transition-all"
-          title="Add Node"
-        >
-          <Plus className="h-3 w-3 text-primary" />
-        </button>
-
-        {/* Duplicate Button */}
-        {onDuplicate && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate();
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-all"
-            title="Duplicate Topic"
-          >
-            <Copy className="h-3 w-3 text-green-600" />
-          </button>
-        )}
-
-        {/* Delete Button */}
-        {onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-all"
-            title="Delete Topic"
-          >
-            <Trash2 className="h-3 w-3 text-destructive" />
-          </button>
-        )}
+        {/* Actions */}
+        <RowActionsMenu
+          addLabel="Add Node"
+          onAdd={onAddNode}
+          isPublished={isPublished}
+          onTogglePublish={onTogglePublish}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+        />
       </div>
       {children}
     </div>
@@ -324,38 +344,14 @@ function DroppableNode({
           {node.title}
         </button>
 
-        {/* Publish Toggle */}
-        {onTogglePublish && (
-          <div className="opacity-0 group-hover:opacity-100">
-            <PublishToggle isPublished={isPublished} onToggle={onTogglePublish} />
-          </div>
-        )}
-
-        {/* Add Activity Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddActivity();
-          }}
-          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/10 rounded transition-all"
-          title="Add Activity"
-        >
-          <Plus className="h-3 w-3 text-primary" />
-        </button>
-
-        {/* Delete Button */}
-        {onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-all"
-            title="Delete Node"
-          >
-            <Trash2 className="h-3 w-3 text-destructive" />
-          </button>
-        )}
+        {/* Actions */}
+        <RowActionsMenu
+          addLabel="Add Activity"
+          onAdd={onAddActivity}
+          isPublished={isPublished}
+          onTogglePublish={onTogglePublish}
+          onDelete={onDelete}
+        />
       </div>
       {children}
     </div>
@@ -450,36 +446,12 @@ function DraggableActivity({
           .join(" ") || node.title}
       </button>
 
-      {/* Publish Toggle */}
-      {onTogglePublish && (
-        <div className="opacity-0 group-hover:opacity-100">
-          <PublishToggle isPublished={isPublished} onToggle={onTogglePublish} />
-        </div>
-      )}
-
-      {/* Delete Button */}
-      {onDelete && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className={cn(
-            "opacity-0 group-hover:opacity-100 p-1 rounded transition-all",
-            isSelected
-              ? "hover:bg-primary-foreground/20"
-              : "hover:bg-destructive/10"
-          )}
-          title="Delete Activity"
-        >
-          <Trash2
-            className={cn(
-              "h-3 w-3",
-              isSelected ? "text-primary-foreground" : "text-destructive"
-            )}
-          />
-        </button>
-      )}
+      {/* Actions */}
+      <RowActionsMenu
+        isPublished={isPublished}
+        onTogglePublish={onTogglePublish}
+        onDelete={onDelete}
+      />
     </div>
   );
 }

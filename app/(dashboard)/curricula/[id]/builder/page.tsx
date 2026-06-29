@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { ActivityTypePicker } from "@/components/builder/activity-type-picker";
 import { LetterSelectorModal } from "@/components/builder/letter-selector-modal";
+import { NodeNameModal } from "@/components/builder/node-name-modal";
 import {
   useBuilderData,
   useTreeState,
@@ -63,9 +64,12 @@ export default function BuilderPage() {
     setActivityPickerOpen,
     letterSelectorOpen,
     setLetterSelectorOpen,
+    nodeModalOpen,
+    setNodeModalOpen,
     handleAddTopic,
     handleLetterSelect,
     handleAddNode,
+    handleConfirmAddNode,
     handleAddActivity,
     handleSelectActivityType,
     handleSaveNewActivity,
@@ -225,6 +229,12 @@ export default function BuilderPage() {
         open={letterSelectorOpen}
         onOpenChange={setLetterSelectorOpen}
         onSelect={handleLetterSelect}
+      />
+
+      <NodeNameModal
+        open={nodeModalOpen}
+        onOpenChange={setNodeModalOpen}
+        onConfirm={handleConfirmAddNode}
       />
     </div>
   );

@@ -67,6 +67,7 @@ export function useBuilderActions({
   // Modal state
   const [activityPickerOpen, setActivityPickerOpen] = React.useState(false);
   const [letterSelectorOpen, setLetterSelectorOpen] = React.useState(false);
+  const [nodeModalOpen, setNodeModalOpen] = React.useState(false);
   const [pendingParentId, setPendingParentId] = React.useState<string | null>(null);
   const [pendingTopicId, setPendingTopicId] = React.useState<string | null>(null);
 
@@ -107,19 +108,29 @@ export function useBuilderActions({
   );
 
   // Node actions
-  const handleAddNode = React.useCallback(
-    (parentId: string) => {
+  // handleAddNode no longer creates immediately — it opens a modal that asks for
+  // a name (Cancel creates nothing). The old one-click "+" silently spawned
+  // "New Node" rows and was easy to fat-finger.
+  const handleAddNode = React.useCallback((topicId: string) => {
+    setPendingTopicId(topicId);
+    setNodeModalOpen(true);
+  }, []);
+
+  const handleConfirmAddNode = React.useCallback(
+    (name: string) => {
+      if (!pendingTopicId) return;
       // Backend assigns sequence_number (max+1). See handleLetterSelect.
       createNode.mutate({
         curriculumId,
-        topicId: parentId,
+        topicId: pendingTopicId,
         data: {
-          title: { en: "New Node" },
+          title: { en: name },
           type: "lesson",
         },
       });
+      setPendingTopicId(null);
     },
-    [curriculumId, createNode]
+    [curriculumId, pendingTopicId, createNode]
   );
 
   // Activity actions
@@ -399,10 +410,13 @@ export function useBuilderActions({
     setActivityPickerOpen,
     letterSelectorOpen,
     setLetterSelectorOpen,
+    nodeModalOpen,
+    setNodeModalOpen,
     // Actions
     handleAddTopic,
     handleLetterSelect,
     handleAddNode,
+    handleConfirmAddNode,
     handleAddActivity,
     handleSelectActivityType,
     handleSelectTemplate,

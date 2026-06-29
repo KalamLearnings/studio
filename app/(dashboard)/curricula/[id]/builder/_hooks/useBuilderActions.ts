@@ -237,6 +237,15 @@ export function useBuilderActions({
       const voiceId = data.voiceId as string | undefined;
       const regenerateAudio = data.regenerateAudio === true;
 
+      // Clearing the text must REMOVE the instruction (backend clears the
+      // audio_url and deletes the file). Send an explicit empty instruction —
+      // NOT activity.instruction, which would resend the old text + audio and
+      // make the clear a no-op.
+      const instruction =
+        instructionText
+          ? { en: instructionText, ...(voiceId ? { voiceId } : {}) }
+          : { en: "", ...(voiceId ? { voiceId } : {}) };
+
       // Awaited so the form keeps its loading state until the update resolves,
       // and returned so the form can read back the backend's audio_url.
       return updateActivity.mutateAsync({
@@ -247,9 +256,7 @@ export function useBuilderActions({
           type: activity.type,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           config: (data.config ?? activity.config ?? {}) as any,
-          instruction: instructionText
-            ? { en: instructionText, ...(voiceId ? { voiceId } : {}) }
-            : activity.instruction,
+          instruction,
           regenerateAudio,
         },
       });

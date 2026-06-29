@@ -4,6 +4,14 @@ import * as React from "react";
 import { Save, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { AudioInputField } from "@/components/audio/AudioInputField";
 import {
   getActivityFormComponent,
@@ -74,6 +82,9 @@ export function ActivityForm({
   );
   // Blocks the Save/Create button while the save (incl. backend TTS) runs.
   const [isSaving, setIsSaving] = React.useState(false);
+  // When the author clears the instruction text but a clip still exists, we
+  // confirm before saving since saving will remove the audio (backend deletes it).
+  const [confirmClearAudio, setConfirmClearAudio] = React.useState(false);
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
@@ -108,7 +119,7 @@ export function ActivityForm({
   // `onSave` resolves to the saved activity returned by the backend; we read its
   // `instruction.audio_url` back into local state so the play button reflects the
   // new clip without a page refresh.
-  const handleSave = async () => {
+  const doSave = async () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -133,6 +144,19 @@ export function ActivityForm({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Saving with empty instruction text but an existing clip will remove the
+  // audio (backend clears the ref and deletes the file). Confirm first so it
+  // isn't a silent side effect.
+  const handleSave = async () => {
+    if (isSaving) return;
+    const textCleared = !instruction.trim();
+    if (textCleared && existingAudioUrl) {
+      setConfirmClearAudio(true);
+      return;
+    }
+    await doSave();
   };
 
   if (!activityType) {
@@ -249,6 +273,38 @@ export function ActivityForm({
           </div>
         </div>
       </ScrollArea>
+
+      {/* Confirm removing audio when the instruction text was cleared. */}
+      <Dialog open={confirmClearAudio} onOpenChange={setConfirmClearAudio}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove instruction audio?</DialogTitle>
+            <DialogDescription>
+              You cleared the instruction text, so its audio will be removed when
+              you save. This can&apos;t be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmClearAudio(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                setConfirmClearAudio(false);
+                await doSave();
+              }}
+              disabled={isSaving}
+            >
+              Remove &amp; Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

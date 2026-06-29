@@ -12,6 +12,8 @@ interface DragHarakaConfig {
   targetLetter?: LetterReference | null;
   harakaType?: HarakaType;
   distractorLetters?: LetterReference[];
+  /** Wrong harakat scattered as draggable options (multi-haraka mode). */
+  distractorHarakat?: HarakaType[];
 }
 
 const HARAKA_OPTIONS: {
@@ -41,6 +43,11 @@ export function DragHarakaToLetterForm({
   const targetLetter = config?.targetLetter || null;
   const harakaType = config?.harakaType || "fatha";
   const distractorLetters = config?.distractorLetters || [];
+  const distractorHarakat = config?.distractorHarakat || [];
+  const [useHarakaDistractors, setUseHarakaDistractors] = React.useState(
+    Array.isArray(config?.distractorHarakat) &&
+      config.distractorHarakat.length > 0
+  );
 
   const updateConfig = (updates: Partial<DragHarakaConfig>) => {
     onChange({ ...config, ...updates });
@@ -62,6 +69,15 @@ export function DragHarakaToLetterForm({
     return getLetterDisplayChar(ref, getLetter);
   };
 
+  // Toggle a distractor haraka on/off. The target harakaType can never be a
+  // distractor, so it's excluded from the options below.
+  const toggleDistractorHaraka = (value: HarakaType) => {
+    const next = distractorHarakat.includes(value)
+      ? distractorHarakat.filter((h) => h !== value)
+      : [...distractorHarakat, value];
+    updateConfig({ distractorHarakat: next.length > 0 ? next : undefined });
+  };
+
   const targetLetterDisplay = getLetterDisplay(targetLetter);
   const harakaInfo = HARAKA_OPTIONS.find((h) => h.value === harakaType);
 
@@ -77,7 +93,21 @@ export function DragHarakaToLetterForm({
             <button
               key={haraka.value}
               type="button"
-              onClick={() => updateConfig({ harakaType: haraka.value })}
+              onClick={() =>
+                updateConfig({
+                  harakaType: haraka.value,
+                  // A haraka can't be both target and distractor — prune it.
+                  ...(distractorHarakat.includes(haraka.value)
+                    ? {
+                        distractorHarakat:
+                          distractorHarakat.filter((h) => h !== haraka.value)
+                            .length > 0
+                            ? distractorHarakat.filter((h) => h !== haraka.value)
+                            : undefined,
+                      }
+                    : {}),
+                })
+              }
               className={cn(
                 "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
                 harakaType === haraka.value
@@ -162,6 +192,62 @@ export function DragHarakaToLetterForm({
           />
         </FormField>
       )}
+
+      <FormField
+        label="Haraka Options"
+        hint="Add wrong harakat so the student must pick the correct one to drag"
+      >
+        <label className="flex items-center gap-2 cursor-pointer mb-3">
+          <input
+            type="checkbox"
+            checked={useHarakaDistractors}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setUseHarakaDistractors(on);
+              if (!on) updateConfig({ distractorHarakat: undefined });
+            }}
+            className="w-4 h-4 text-primary"
+          />
+          <span className="text-sm">Add distractor harakat</span>
+          <span className="text-xs text-muted-foreground">
+            (scatter wrong harakat to choose from)
+          </span>
+        </label>
+
+        {useHarakaDistractors && (
+          <div className="grid grid-cols-5 gap-2">
+            {HARAKA_OPTIONS.map((haraka) => {
+              const isTarget = haraka.value === harakaType;
+              const selected = distractorHarakat.includes(haraka.value);
+              return (
+                <button
+                  key={haraka.value}
+                  type="button"
+                  disabled={isTarget}
+                  onClick={() => toggleDistractorHaraka(haraka.value)}
+                  title={isTarget ? "This is the target haraka" : undefined}
+                  className={cn(
+                    "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
+                    isTarget
+                      ? "border-green-400 bg-green-50 dark:bg-green-900/20 opacity-60 cursor-not-allowed"
+                      : selected
+                      ? "border-primary bg-primary/10 shadow-md"
+                      : "border-border hover:border-primary/50 hover:bg-muted"
+                  )}
+                >
+                  <span className="text-3xl font-arabic mb-1">
+                    {"ب" + haraka.char}
+                  </span>
+                  <span className="text-xs font-medium">{haraka.label}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {isTarget ? "target" : selected ? "distractor" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </FormField>
 
       {targetLetter && harakaType && (
         <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg">

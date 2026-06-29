@@ -53,7 +53,8 @@ export function useSaveGeneratedTopic() {
           ar: generated.description.ar || generated.description.en,
         } : undefined,
         type: 'lesson',
-        sequence_number: 1,
+        // Backend assigns sequence_number (max+1). A hardcoded 1 collided with
+        // existing topics; see CreateTopicSchema.
         ...(letterId ? { letter_id: letterId } : {}),
       });
 
@@ -75,7 +76,10 @@ export function useSaveGeneratedTopic() {
             ar: '',
           },
           type: mapNodeType(genNode.type),
-          sequence_number: ni + 1,
+          // Backend assigns sequence_number (max+1). These nodes join a
+          // curriculum that may already have nodes, so ni+1 would collide with
+          // the curriculum_id/sequence_number unique constraint. The loop is
+          // sequential and awaited, so insertion order is preserved.
         });
 
         totalNodes++;
@@ -92,7 +96,8 @@ export function useSaveGeneratedTopic() {
               ar: genActivity.instruction.ar || '',
             },
             config: genActivity.config || {},
-            sequence_number: ai + 1,
+            // Backend assigns sequence_number (max+1); sequential awaited loop
+            // preserves order. See node creation above.
           });
 
           totalActivities++;

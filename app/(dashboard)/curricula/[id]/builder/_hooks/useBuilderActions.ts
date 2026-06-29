@@ -87,8 +87,10 @@ export function useBuilderActions({
         ? `Letter ${letter.name_english} (${letter.letter})`
         : topicName || `New ${topicType.charAt(0).toUpperCase() + topicType.slice(1)}`;
 
-      const nextSequence = (topics?.length || 0) + 1;
-
+      // Don't compute sequence_number here. The backend assigns the next number
+      // from the DB max; a client-side length+1 collides with the
+      // curriculum_id/sequence_number unique constraint when the list has gaps
+      // from deletions. (Activities already rely on this backend behavior.)
       createTopic.mutate({
         curriculumId,
         data: {
@@ -98,30 +100,26 @@ export function useBuilderActions({
           letter_haraka:
             letter && haraka && haraka !== "none" ? haraka : undefined,
           type: topicType,
-          sequence_number: nextSequence,
         },
       });
     },
-    [curriculumId, topics, createTopic]
+    [curriculumId, createTopic]
   );
 
   // Node actions
   const handleAddNode = React.useCallback(
     (parentId: string) => {
-      const topicNodes = nodes?.filter(n => n.topic_id === parentId) || [];
-      const nextSequence = topicNodes.length + 1;
-
+      // Backend assigns sequence_number (max+1). See handleLetterSelect.
       createNode.mutate({
         curriculumId,
         topicId: parentId,
         data: {
           title: { en: "New Node" },
           type: "lesson",
-          sequence_number: nextSequence,
         },
       });
     },
-    [curriculumId, nodes, createNode]
+    [curriculumId, createNode]
   );
 
   // Activity actions

@@ -97,7 +97,11 @@ export const CreateTopicSchema = z.object({
   letter_id: z.string().optional(), // Letter ID reference (e.g., "jeem", "alif")
   letter_form: LetterFormSchema.optional(), // Which form of the letter (isolated, initial, medial, final)
   letter_haraka: LetterHarakaSchema.optional(), // Optional diacritic for the topic letter
-  sequence_number: z.number().int().positive().default(1),
+  // NOTE: sequence_number is intentionally NOT part of create. The backend
+  // assigns the next number from the DB max (curriculum service.ts). A
+  // client-computed value (length+1) collides with the
+  // curriculum_id/sequence_number unique constraint when the list has gaps from
+  // deletions. Ordering is owned by the reorder endpoint, not create.
   title: LocalizedTextSchema,
   description: LocalizedTextSchema.optional(),
   type: TopicTypeSchema.optional().default('lesson'),
@@ -128,7 +132,7 @@ export const NodeSchema = z.object({
 });
 
 export const CreateNodeSchema = z.object({
-  sequence_number: z.number().int().positive().default(1),
+  // sequence_number intentionally omitted — backend assigns max+1. See CreateTopicSchema.
   type: z.enum(['lesson', 'assessment', 'intro']).default('lesson'),
   title: LocalizedTextSchema,
   description: LocalizedTextSchema.optional(),

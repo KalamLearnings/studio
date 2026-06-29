@@ -5,12 +5,87 @@
  * Uses audio_assets table for metadata + storage for files.
  */
 
-import { createClient } from '@/lib/supabase/client';
+import {
+  createClient,
+  getEnvironmentBaseUrl,
+  getEdgeFunctionAuthHeaders,
+} from '@/lib/supabase/client';
 import type { AudioAsset, AudioCategory, AudioUploadData } from '@/lib/types/audio';
 import { SUPPORTED_AUDIO_TYPES, MAX_AUDIO_FILE_SIZE } from '@/lib/types/audio';
 
 const BUCKET_NAME = 'curriculum-audio';
 const AUDIO_FOLDER = 'audio';
+
+/**
+ * Generate conditional-response audio from text and store it, returning a FULL
+ * public URL.
+ *
+ * Conditional audio is NOT backend-owned (unlike instruction audio): the
+ * dashboard must produce the file. This reuses the existing /tts edge function
+ * and the same curriculum-audio bucket as uploadAudioAsset.
+ *
+ * It deliberately returns a fully-qualified public URL (not a relative path)
+ * because (a) the schema's audio_url is .url(), (b) the mobile player uses the
+ * value verbatim with no resolver, and (c) the backend's read-time resolver only
+ * rewrites conditionalAudio.rules[] paths, NOT the predefined slot paths — so a
+ * relative slot path would never resolve. A full URL sidesteps all of that.
+ */
+export async function generateConditionalAudio(
+  text: string,
+  voiceId?: string,
+): Promise<string> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Not authenticated. Please log in.');
+  }
+
+  // 1. Synthesize via the shared TTS edge function (Arabic, like instruction/library TTS).
+  const ttsResponse = await fetch(`${getEnvironmentBaseUrl()}/functions/v1/tts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getEdgeFunctionAuthHeaders(session.access_token),
+    },
+    body: JSON.stringify({ text, language: 'ar', voice_id: voiceId }),
+  });
+
+  if (!ttsResponse.ok) {
+    const err = await ttsResponse.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to generate audio');
+  }
+
+  const responseData = await ttsResponse.json();
+  const data = responseData.data || responseData;
+
+  // 2. base64 -> bytes
+  const binary = atob(data.audio_data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  // 3. Upload to a unique path under the conditional/ folder.
+  const timestamp = Date.now();
+  const rand = Math.random().toString(36).slice(2, 8);
+  const storagePath = `${AUDIO_FOLDER}/conditional/${timestamp}_${rand}.mp3`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(storagePath, bytes, {
+      contentType: data.content_type || 'audio/mpeg',
+      cacheControl: '60',
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload conditional audio: ${uploadError.message}`);
+  }
+
+  // 4. Return the full public URL.
+  const { data: { publicUrl } } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(storagePath);
+  return publicUrl;
+}
 
 /**
  * Resolve an audio reference to a playable URL.

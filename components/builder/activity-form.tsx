@@ -12,6 +12,7 @@ import {
   type TopicContext,
 } from "./forms";
 import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
+import { ConditionalAudioSection } from "./forms/shared/ConditionalAudioSection";
 import { DEFAULT_VOICE } from "@/lib/constants/voices";
 
 interface ActivityFormProps {
@@ -234,6 +235,18 @@ export function ActivityForm({
               />
             </div>
           )}
+
+          {/* Conditional audio responses — shared across all activity types,
+              stored at config.conditionalAudio. Optional/collapsed. */}
+          <div className="pt-4 border-t">
+            <ConditionalAudioSection
+              value={localConfig.conditionalAudio}
+              voiceId={selectedVoice}
+              onChange={(conditionalAudio) =>
+                handleConfigChange({ ...localConfig, conditionalAudio })
+              }
+            />
+          </div>
         </div>
       </ScrollArea>
     </div>

@@ -39,7 +39,7 @@ interface VoiceTagsInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  dir?: "ltr" | "rtl";
+  dir?: "ltr" | "rtl" | "auto";
   rows?: number;
   className?: string;
   disabled?: boolean;

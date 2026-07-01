@@ -146,21 +146,24 @@ export function useReorderTopics() {
 
       const oldIndex = topics.findIndex((t) => t.id === activeId);
       const newIndex = topics.findIndex((t) => t.id === overId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+        return Promise.resolve();
+      }
 
       const reordered = [...topics];
       const [moved] = reordered.splice(oldIndex, 1);
       reordered.splice(newIndex, 0, moved);
 
-      const changes = reordered
-        .map((topic, index) => ({
-          id: topic.id,
-          sequence_number: index + 1,
-        }))
-        .filter((item, index) => topics[index].id !== item.id);
+      // Send the COMPLETE ordered list, not just the moved rows. A partial
+      // delta can make a moved row collide with an untouched row still holding
+      // its target number, which breaks the backend's uniqueness swap. The
+      // backend renumbers 1..N from this order.
+      const items = reordered.map((topic, index) => ({
+        id: topic.id,
+        sequence_number: index + 1,
+      }));
 
-      if (changes.length === 0) return Promise.resolve();
-
-      return reorderTopics(curriculumId, { items: changes });
+      return reorderTopics(curriculumId, { items });
     },
     onSuccess: (_, { curriculumId }) => {
       queryClient.invalidateQueries({ queryKey: ['topics', curriculumId] });

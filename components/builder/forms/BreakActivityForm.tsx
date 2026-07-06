@@ -39,10 +39,7 @@ const LINE_PATTERN_OPTIONS = [
   { value: "wavy", label: "Wavy", icon: "〰️" },
   { value: "zigzag", label: "Zigzag", icon: "⚡" },
   { value: "spiral", label: "Spiral", icon: "🌀" },
-  { value: "square", label: "Square", icon: "⬜" },
-  { value: "circle", label: "Circle", icon: "⭕" },
   { value: "star", label: "Star", icon: "⭐" },
-  { value: "triangle", label: "Triangle", icon: "🔺" },
   { value: "heart", label: "Heart", icon: "❤️" },
 ];
 

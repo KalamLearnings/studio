@@ -9,8 +9,13 @@ import {
   ImageLibraryModal,
   AudioPickerField,
 } from "./shared";
-import { useLetters } from "@/lib/hooks/useLetters";
-import type { BaseActivityFormProps, LetterReference, LetterForm } from "./types";
+import { useLetters, getLetterDisplayChar } from "@/lib/hooks/useLetters";
+import type {
+  BaseActivityFormProps,
+  LetterReference,
+  LetterForm,
+  HarakaType,
+} from "./types";
 
 type MatchItemType = "letter" | "word" | "image" | "audio";
 
@@ -19,6 +24,7 @@ interface MatchItem {
   value: string;
   letterId?: string;
   form?: LetterForm;
+  haraka?: HarakaType;
   label?: string;
   audioId?: string;
   audioUrl?: string;
@@ -52,7 +58,7 @@ interface MatchItemEditorProps {
 }
 
 function MatchItemEditor({ item, onChange }: MatchItemEditorProps) {
-  const { letters } = useLetters();
+  const { getLetter } = useLetters();
   const [showImageLibrary, setShowImageLibrary] = React.useState(false);
 
   const handleTypeChange = (type: MatchItemType) => {
@@ -61,6 +67,7 @@ function MatchItemEditor({ item, onChange }: MatchItemEditorProps) {
       value: "",
       letterId: undefined,
       form: undefined,
+      haraka: undefined,
       label: undefined,
       audioId: undefined,
       audioUrl: undefined,
@@ -69,26 +76,36 @@ function MatchItemEditor({ item, onChange }: MatchItemEditorProps) {
 
   const handleLetterChange = (ref: LetterReference | LetterReference[] | null) => {
     if (!ref) {
-      onChange({ ...item, value: "", letterId: undefined, form: undefined });
+      onChange({
+        ...item,
+        value: "",
+        letterId: undefined,
+        form: undefined,
+        haraka: undefined,
+      });
       return;
     }
 
     const letterRef = Array.isArray(ref) ? ref[0] : ref;
-    const letterData = letters.find((l) => l.id === letterRef.letterId);
-    const displayChar =
-      letterData?.forms?.[letterRef.form] || letterData?.letter || "";
+    const haraka = letterRef.haraka as HarakaType | undefined;
 
     onChange({
       ...item,
-      value: displayChar,
+      // Mobile renders `value` verbatim, so the glyph has to carry the haraka.
+      value: getLetterDisplayChar(letterRef, getLetter),
       letterId: letterRef.letterId,
       form: letterRef.form,
+      haraka,
     });
   };
 
   const getLetterRef = (): LetterReference | null => {
     if (item.type === "letter" && item.letterId && item.form) {
-      return { letterId: item.letterId, form: item.form };
+      return {
+        letterId: item.letterId,
+        form: item.form,
+        ...(item.haraka ? { haraka: item.haraka } : {}),
+      };
     }
     return null;
   };

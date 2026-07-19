@@ -106,9 +106,10 @@ export function useReorderCurricula() {
       const reordered = reorderById(curricula, activeId, overId);
       if (!reordered) return Promise.resolve();
 
-      // Send the COMPLETE ordered list. The backend writes these numbers
-      // verbatim, so a partial delta would leave untouched rows holding stale
-      // numbers and scramble the order.
+      // Send the COMPLETE ordered list. Unlike topics, the backend does not
+      // renumber -- it writes these numbers verbatim -- so a partial delta
+      // would leave untouched rows holding stale numbers and scramble the
+      // order.
       const items = reordered.map((curriculum, index) => ({
         id: curriculum.id,
         sequence_number: index + 1,
@@ -145,6 +146,10 @@ export function useReorderCurricula() {
 /**
  * Move the item with `activeId` to the position of `overId`.
  * Returns null when the move is a no-op.
+ *
+ * Mirrors `applyMoveToPosition` in the backend's curriculum/reorder-sequence.ts,
+ * which carries the unit tests for this math. The two repos share no code path,
+ * so keep them in step by hand.
  */
 function reorderById(
   curricula: Curriculum[],

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Gift, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -12,6 +12,7 @@ interface BuilderHeaderProps {
   activitySearchId: string;
   onActivitySearchIdChange: (value: string) => void;
   onOpenActivityById: () => void;
+  onOpenRewards: () => void;
 }
 
 export function BuilderHeader({
@@ -21,6 +22,7 @@ export function BuilderHeader({
   activitySearchId,
   onActivitySearchIdChange,
   onOpenActivityById,
+  onOpenRewards,
 }: BuilderHeaderProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b bg-background px-4">
@@ -51,6 +53,11 @@ export function BuilderHeader({
           />
         </div>
       </div>
+
+      <Button variant="outline" size="sm" onClick={onOpenRewards}>
+        <Gift className="mr-2 h-4 w-4" />
+        Rewards
+      </Button>
     </header>
   );
 }

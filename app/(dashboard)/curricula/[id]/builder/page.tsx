@@ -16,6 +16,7 @@ import {
 } from "./_hooks";
 import {
   BuilderHeader,
+  CurriculumRewardsModal,
   TreePanel,
   FormPanel,
   PreviewPanel,
@@ -94,6 +95,7 @@ export default function BuilderPage() {
   // Open an activity in the form pane by pasting its ID (Phase 1: current curriculum).
   const [activitySearchId, setActivitySearchId] = useState("");
   const [viewMode, setViewMode] = useState<BuilderViewMode>("lesson");
+  const [rewardsModalOpen, setRewardsModalOpen] = useState(false);
 
   // Activities grouped by type for the "By Type" view (client-side derivation).
   const activityGroups = useActivitiesByType(activities, nodes, topics);
@@ -162,6 +164,7 @@ export default function BuilderPage() {
         activitySearchId={activitySearchId}
         onActivitySearchIdChange={setActivitySearchId}
         onOpenActivityById={handleOpenActivityById}
+        onOpenRewards={() => setRewardsModalOpen(true)}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -235,6 +238,13 @@ export default function BuilderPage() {
         open={nodeModalOpen}
         onOpenChange={setNodeModalOpen}
         onConfirm={handleConfirmAddNode}
+      />
+
+      <CurriculumRewardsModal
+        open={rewardsModalOpen}
+        onOpenChange={setRewardsModalOpen}
+        curriculumId={curriculumId}
+        curriculumTitle={curriculum?.title?.en || "this curriculum"}
       />
     </div>
   );

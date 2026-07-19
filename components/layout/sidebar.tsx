@@ -12,6 +12,7 @@ import {
   BookMarked,
   Gamepad2,
   Ticket,
+  ShoppingBag,
   Settings,
   ExternalLink,
   LogOut,
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { title: "Books", href: "/books", icon: BookMarked },
   { title: "Games", href: "/games", icon: Gamepad2 },
   { title: "Promos", href: "/promo-codes", icon: Ticket },
+  { title: "Shop", href: "/shop-items", icon: ShoppingBag },
 ];
 
 const bottomNavItems: NavItem[] = [

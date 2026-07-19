@@ -54,6 +54,7 @@ import {
   useCreateCurriculum,
   useDeleteCurriculum,
   useReorderCurricula,
+  reorderById,
 } from "@/lib/hooks/useCurriculum";
 import type { Curriculum } from "@/lib/schemas/curriculum";
 
@@ -194,14 +195,21 @@ export default function CurriculaPage() {
   const handleDragEnd = React.useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
-      if (!over || active.id === over.id) return;
+      if (!over || active.id === over.id || !curricula) return;
 
-      reorderMutation.mutate({
-        activeId: String(active.id),
-        overId: String(over.id),
-      });
+      // Compute the moved list here, from the list as it is right now. The
+      // mutation applies it verbatim rather than deriving it again, so the
+      // move is only ever applied once.
+      const reordered = reorderById(
+        curricula,
+        String(active.id),
+        String(over.id)
+      );
+      if (!reordered) return;
+
+      reorderMutation.mutate({ reordered });
     },
-    [reorderMutation]
+    [curricula, reorderMutation]
   );
 
   const filteredCurricula = React.useMemo(() => {

@@ -98,14 +98,17 @@ export function useUpdateCurriculum() {
 export function useReorderCurricula() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ activeId, overId }: { activeId: string; overId: string }) => {
-      const curricula = queryClient.getQueryData<Curriculum[]>(['curricula']);
-      if (!curricula) throw new Error('Curricula not found');
-
-      const reordered = reorderById(curricula, activeId, overId);
-      if (!reordered) return Promise.resolve();
-
+  return useMutation<
+    void,
+    Error,
+    { reordered: Curriculum[] },
+    { previous?: Curriculum[] }
+  >({
+    // Takes the ALREADY-reordered list. Deriving it here from the cache would
+    // be wrong: onMutate runs first and writes the moved list to the cache, so
+    // applying the move again would -- for a single-position swap -- land the
+    // item back where it started and send an unchanged payload.
+    mutationFn: async ({ reordered }) => {
       // Send the COMPLETE ordered list. Unlike topics, the backend does not
       // renumber -- it writes these numbers verbatim -- so a partial delta
       // would leave untouched rows holding stale numbers and scramble the
@@ -115,22 +118,17 @@ export function useReorderCurricula() {
         sequence_number: index + 1,
       }));
 
-      return reorderCurricula({ items });
+      await reorderCurricula({ items });
     },
-    onMutate: async ({ activeId, overId }) => {
+    onMutate: async ({ reordered }) => {
       await queryClient.cancelQueries({ queryKey: ['curricula'] });
       const previous = queryClient.getQueryData<Curriculum[]>(['curricula']);
 
-      if (previous) {
-        const reordered = reorderById(previous, activeId, overId);
-        if (reordered) {
-          queryClient.setQueryData<Curriculum[]>(['curricula'], reordered);
-        }
-      }
+      queryClient.setQueryData<Curriculum[]>(['curricula'], reordered);
 
       return { previous };
     },
-    onError: (error: Error, _vars, context) => {
+    onError: (error, _vars, context) => {
       // Roll back to the pre-drag order.
       if (context?.previous) {
         queryClient.setQueryData<Curriculum[]>(['curricula'], context.previous);
@@ -151,7 +149,7 @@ export function useReorderCurricula() {
  * which carries the unit tests for this math. The two repos share no code path,
  * so keep them in step by hand.
  */
-function reorderById(
+export function reorderById(
   curricula: Curriculum[],
   activeId: string,
   overId: string

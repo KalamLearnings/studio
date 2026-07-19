@@ -7,6 +7,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import type { Asset, AssetCategory, AssetUploadData } from '@/lib/types/assets';
+import { ASSET_CATEGORIES } from '@/lib/types/assets';
 import { compressImage } from '@/lib/utils/imageUpload';
 
 const BUCKET_NAME = 'curriculum-images';
@@ -46,10 +47,8 @@ export async function getAssets(filters?: AssetFilters): Promise<Asset[]> {
     }
   } else {
     // No category selected - fetch from all categories
-    const categories: AssetCategory[] = [
-      'letters', 'books', 'fruits', 'animals',
-      'shapes', 'colors', 'numbers', 'misc'
-    ];
+    // Derived from ASSET_CATEGORIES so adding a category needs one edit, not three
+    const categories = Object.keys(ASSET_CATEGORIES) as AssetCategory[];
 
     // Fetch files from each category folder
     const promises = categories.map(async (category) => {
@@ -307,10 +306,7 @@ function extractCategoryFromPath(path: string): AssetCategory {
   const parts = path.split('/');
   const categoryPart = parts[parts.length - 2];
 
-  const validCategories: AssetCategory[] = [
-    'letters', 'books', 'fruits', 'animals',
-    'shapes', 'colors', 'numbers', 'misc'
-  ];
+  const validCategories = Object.keys(ASSET_CATEGORIES) as AssetCategory[];
 
   return validCategories.includes(categoryPart as AssetCategory)
     ? (categoryPart as AssetCategory)

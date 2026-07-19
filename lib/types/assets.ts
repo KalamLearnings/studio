@@ -12,6 +12,7 @@ export type AssetCategory =
   | 'shapes'
   | 'colors'
   | 'numbers'
+  | 'stickers'
   | 'misc';
 
 export interface Asset {
@@ -45,5 +46,6 @@ export const ASSET_CATEGORIES: Record<AssetCategory, { label: string; icon: stri
   shapes: { label: 'Shapes', icon: '⬛' },
   colors: { label: 'Colors', icon: '🎨' },
   numbers: { label: 'Numbers', icon: '🔢' },
+  stickers: { label: 'Stickers', icon: '⭐' },
   misc: { label: 'Miscellaneous', icon: '📦' },
 };

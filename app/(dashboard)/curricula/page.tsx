@@ -2,7 +2,29 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Plus, Search, MoreVertical, BookOpen, Calendar, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  BookOpen,
+  Calendar,
+  Loader2,
+  GripVertical,
+} from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,18 +53,50 @@ import {
   useCurricula,
   useCreateCurriculum,
   useDeleteCurriculum,
+  useReorderCurricula,
 } from "@/lib/hooks/useCurriculum";
 import type { Curriculum } from "@/lib/schemas/curriculum";
 
 const CurriculumCard = React.memo(function CurriculumCard({
   curriculum,
   onDelete,
+  isDraggable,
 }: {
   curriculum: Curriculum;
   onDelete: (id: string) => void;
+  isDraggable: boolean;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: curriculum.id, disabled: !isDraggable });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <Card className="group relative">
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`group relative ${isDragging ? "z-10 opacity-50" : ""}`}
+    >
+      {isDraggable && (
+        <button
+          type="button"
+          className="absolute left-1 top-1/2 -translate-y-1/2 cursor-grab touch-none rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent group-hover:opacity-100 active:cursor-grabbing"
+          aria-label={`Reorder ${curriculum.title?.en || "curriculum"}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -126,6 +180,29 @@ export default function CurriculaPage() {
   const { data: curricula, isLoading, error } = useCurricula();
   const createMutation = useCreateCurriculum();
   const deleteMutation = useDeleteCurriculum();
+  const reorderMutation = useReorderCurricula();
+
+  // Dragging while a search filter is active would reorder against the
+  // filtered list, whose positions do not match the real sequence -- the
+  // hidden neighbours would silently keep their old numbers.
+  const isDraggable = searchQuery.trim() === "";
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragEnd = React.useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      reorderMutation.mutate({
+        activeId: String(active.id),
+        overId: String(over.id),
+      });
+    },
+    [reorderMutation]
+  );
 
   const filteredCurricula = React.useMemo(() => {
     if (!curricula) return [];
@@ -195,6 +272,12 @@ export default function CurriculaPage() {
         />
       </div>
 
+      {!isDraggable && !isLoading && filteredCurricula.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Clear the search to reorder curricula.
+        </p>
+      )}
+
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
@@ -204,15 +287,27 @@ export default function CurriculaPage() {
 
       {/* Curricula Grid */}
       {!isLoading && filteredCurricula.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCurricula.map((curriculum) => (
-            <CurriculumCard
-              key={curriculum.id}
-              curriculum={curriculum}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={filteredCurricula.map((c) => c.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredCurricula.map((curriculum) => (
+                <CurriculumCard
+                  key={curriculum.id}
+                  curriculum={curriculum}
+                  onDelete={handleDelete}
+                  isDraggable={isDraggable}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Empty State */}

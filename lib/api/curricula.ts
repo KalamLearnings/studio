@@ -282,6 +282,16 @@ export async function deleteNode(
 }
 
 /**
+ * Batch reorder curricula (top level)
+ */
+export async function reorderCurricula(data: BatchReorder): Promise<void> {
+  return fetchWithAuth<void>('/curriculum/reorder', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * Batch reorder topics within a curriculum
  */
 export async function reorderTopics(

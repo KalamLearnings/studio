@@ -68,7 +68,11 @@ export const CreateCurriculumSchema = z.object({
   title: LocalizedTextSchema,
 });
 
-export const UpdateCurriculumSchema = CreateCurriculumSchema.partial();
+// Publishing is a field update, not a dedicated endpoint — `is_published` has
+// to be updatable here the way it is for topics/nodes/articles.
+export const UpdateCurriculumSchema = CreateCurriculumSchema.partial().extend({
+  is_published: z.boolean().optional(),
+});
 
 // ============================================================================
 // TOPIC

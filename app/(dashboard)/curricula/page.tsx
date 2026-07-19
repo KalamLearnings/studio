@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/card";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -54,6 +55,7 @@ import {
   useCreateCurriculum,
   useDeleteCurriculum,
   useReorderCurricula,
+  useUpdateCurriculum,
   reorderById,
 } from "@/lib/hooks/useCurriculum";
 import type { Curriculum } from "@/lib/schemas/curriculum";
@@ -61,10 +63,14 @@ import type { Curriculum } from "@/lib/schemas/curriculum";
 const CurriculumCard = React.memo(function CurriculumCard({
   curriculum,
   onDelete,
+  onTogglePublish,
+  isPublishPending,
   isDraggable,
 }: {
   curriculum: Curriculum;
   onDelete: (id: string) => void;
+  onTogglePublish: (curriculum: Curriculum) => void;
+  isPublishPending: boolean;
   isDraggable: boolean;
 }) {
   const {
@@ -132,6 +138,17 @@ const CurriculumCard = React.memo(function CurriculumCard({
               <DropdownMenuItem>Duplicate</DropdownMenuItem>
               <DropdownMenuItem>Export</DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={!!curriculum.is_published}
+                disabled={isPublishPending}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  onTogglePublish(curriculum);
+                }}
+              >
+                Published
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => onDelete(curriculum.id)}
@@ -182,6 +199,11 @@ export default function CurriculaPage() {
   const createMutation = useCreateCurriculum();
   const deleteMutation = useDeleteCurriculum();
   const reorderMutation = useReorderCurricula();
+  const updateMutation = useUpdateCurriculum();
+
+  // Which curriculum's publish toggle is in flight, so only that card's item
+  // disables rather than every card's.
+  const [publishingId, setPublishingId] = React.useState<string | null>(null);
 
   // Dragging while a search filter is active would reorder against the
   // filtered list, whose positions do not match the real sequence -- the
@@ -242,6 +264,27 @@ export default function CurriculaPage() {
       }
     },
     [deleteMutation]
+  );
+
+  const handleTogglePublish = React.useCallback(
+    (curriculum: Curriculum) => {
+      const next = !curriculum.is_published;
+      const name = curriculum.title?.en || "this curriculum";
+
+      // Both directions are user-visible in the app immediately -- there is no
+      // staging step or version snapshot -- so confirm either way.
+      const message = next
+        ? `Publish "${name}"? It becomes visible in the app right away.`
+        : `Unpublish "${name}"? It disappears from the app for all children.`;
+      if (!confirm(message)) return;
+
+      setPublishingId(curriculum.id);
+      updateMutation.mutate(
+        { id: curriculum.id, data: { is_published: next } },
+        { onSettled: () => setPublishingId(null) }
+      );
+    },
+    [updateMutation]
   );
 
   if (error) {
@@ -310,6 +353,8 @@ export default function CurriculaPage() {
                   key={curriculum.id}
                   curriculum={curriculum}
                   onDelete={handleDelete}
+                  onTogglePublish={handleTogglePublish}
+                  isPublishPending={publishingId === curriculum.id}
                   isDraggable={isDraggable}
                 />
               ))}

@@ -8,7 +8,7 @@ import {
   useUpdateShopItem,
   useDeleteShopItem,
 } from "@/lib/hooks/useShopItems";
-import type { ShopItem, ShopItemCategory } from "@/lib/services/shopItemsService";
+import type { ShopItem, ShopItemCategory } from "@/lib/api/shopItems";
 import { MediaEmptyState } from "@/components/media";
 import { CoverImageField } from "@/components/books-games/CoverImageField";
 import { Button } from "@/components/ui/button";

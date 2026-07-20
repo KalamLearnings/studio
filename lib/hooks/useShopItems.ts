@@ -18,7 +18,7 @@ import {
   type ShopItemCategory,
   type CreateShopItemRequest,
   type UpdateShopItemRequest,
-} from '@/lib/services/shopItemsService';
+} from '@/lib/api/shopItems';
 
 const STALE_TIME = 5 * 60 * 1000;
 

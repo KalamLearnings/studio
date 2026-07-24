@@ -47,6 +47,8 @@ export interface AnimationIntroConfig {
   audioId?: string;
   /** URL of the narration audio played over the animation */
   audioUrl?: string;
+  /** Animation run time in ms — the auto-advance clock (state-machine .riv files never report an end) */
+  animationDurationMs?: number;
 }
 
 /**

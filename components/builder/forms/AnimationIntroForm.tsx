@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { FormField, Checkbox, AnimationLibraryModal, AudioPickerField } from "./shared";
+import { FormField, Checkbox, NumberInput, AnimationLibraryModal, AudioPickerField } from "./shared";
 import type { BaseActivityFormProps, AnimationIntroConfig } from "./types";
 
 /**
@@ -73,6 +73,28 @@ export function AnimationIntroForm({
             </p>
           </button>
         )}
+      </FormField>
+
+      <FormField
+        label="Animation Length (seconds)"
+        hint="How long the animation runs — the app auto-advances once both this time and the narration audio have finished. Check the length in Rive or the preview render."
+        required
+      >
+        <NumberInput
+          value={
+            config?.animationDurationMs
+              ? Math.round(config.animationDurationMs / 1000)
+              : 0
+          }
+          onChange={(value) =>
+            updateConfig({
+              animationDurationMs: value > 0 ? value * 1000 : undefined,
+            })
+          }
+          min={0}
+          max={300}
+          placeholder="36"
+        />
       </FormField>
 
       <AudioPickerField

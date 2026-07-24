@@ -31,6 +31,10 @@ export const AnimationIntroConfigSchema = z.object({
     .default(true)
     .describe('Loop the animation while the activity is on screen'),
 
+  animationDurationMs: z.number().int().positive()
+    .optional()
+    .describe('How long the animation runs, in ms. Drives auto-advance timing — state-machine .riv files never report an end event, so this is the reliable clock.'),
+
   audioId: z.string()
     .optional()
     .describe('ID of the narration audio asset'),

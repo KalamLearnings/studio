@@ -28,6 +28,7 @@ const MAX_RECENT_ACTIVITIES = 4;
 // List of implemented activities (using string to avoid type errors with extended types)
 const IMPLEMENTED_ACTIVITIES: string[] = [
   "show_letter_or_word",
+  "animation_intro",
   "tap_letter_in_word",
   "trace_letter",
   "pop_balloons_with_letter",

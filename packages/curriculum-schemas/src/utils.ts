@@ -98,6 +98,7 @@ export function validateOrThrow<T extends z.ZodType>(
 export function isValidActivityType(type: string): type is ActivityType {
   const validTypes: ActivityType[] = [
     'show_letter_or_word',
+    'animation_intro',
     'tap_letter_in_word',
     'trace_letter',
     'pop_balloons_with_letter',
@@ -152,6 +153,7 @@ export function isValidActivityType(type: string): type is ActivityType {
 export function getActivityCategory(type: ActivityType): string {
   const categories: Record<ActivityType, string> = {
     show_letter_or_word: 'Introduction',
+    animation_intro: 'Introduction',
     tap_letter_in_word: 'Recognition',
     trace_letter: 'Writing',
     pop_balloons_with_letter: 'Game',
@@ -207,6 +209,7 @@ export function getActivityCategory(type: ActivityType): string {
 export function getEstimatedDuration(type: ActivityType): number {
   const durations: Record<ActivityType, number> = {
     show_letter_or_word: 5,
+    animation_intro: 15,
     tap_letter_in_word: 30,
     trace_letter: 60,
     pop_balloons_with_letter: 60,
@@ -310,6 +313,10 @@ export function deepMerge<T extends Record<string, any>>(
  */
 export function createDefaultConfig(type: ActivityType): Record<string, any> {
   const defaults: Record<ActivityType, Record<string, any>> = {
+    animation_intro: {
+      animationUrl: '',
+      loop: true,
+    },
     show_letter_or_word: {
       contentType: 'letter',
       letter: 'ب',

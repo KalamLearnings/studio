@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 // Export all individual activity schemas and types
 export * from './show_letter_or_word';
+export * from './animation_intro';
 export * from './LetterRainConfig';
 export * from './audio_letter_match';
 export * from './memory_card_match';
@@ -50,6 +51,7 @@ export * from './camel_narration';
 
 // Import schemas for discriminated union
 import { ShowLetterOrWordActivitySchema } from './show_letter_or_word';
+import { AnimationIntroActivitySchema } from './animation_intro';
 import { LetterRainActivitySchema } from './LetterRainConfig';
 import { AudioLetterMatchActivitySchema } from './audio_letter_match';
 import { MemoryCardMatchActivitySchema } from './memory_card_match';
@@ -74,6 +76,7 @@ import { CamelNarrationActivitySchema } from './camel_narration';
 
 // Import config schemas for helper function
 import { ShowLetterOrWordConfigSchema } from './show_letter_or_word';
+import { AnimationIntroConfigSchema } from './animation_intro';
 import { LetterRainConfigSchema } from './LetterRainConfig';
 import { AudioLetterMatchConfigSchema } from './audio_letter_match';
 import { MemoryCardMatchConfigSchema } from './memory_card_match';
@@ -114,6 +117,7 @@ import type { ActivityType } from '../base';
  */
 export const ActivitySchema = z.discriminatedUnion('type', [
   ShowLetterOrWordActivitySchema,
+  AnimationIntroActivitySchema,
   TapLetterInWordActivitySchema,
   TraceLetterActivitySchema,
   PopBalloonsWithLetterActivitySchema,
@@ -144,6 +148,7 @@ export type Activity = z.infer<typeof ActivitySchema>;
  */
 const ACTIVITY_CONFIG_SCHEMAS = {
   show_letter_or_word: ShowLetterOrWordConfigSchema,
+  animation_intro: AnimationIntroConfigSchema,
   tap_letter_in_word: TapLetterInWordConfigSchema,
   trace_letter: TraceLetterConfigSchema,
   pop_balloons_with_letter: PopBalloonsWithLetterConfigSchema,

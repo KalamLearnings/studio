@@ -272,6 +272,7 @@ export type LocalizedTextWithConditionalAudio = z.infer<typeof LocalizedTextWith
  */
 export const ActivityTypeSchema = z.enum([
   'show_letter_or_word',
+  'animation_intro',
   'tap_letter_in_word',
   'trace_letter',
   'pop_balloons_with_letter',
@@ -324,6 +325,7 @@ export type ActivityType = z.infer<typeof ActivityTypeSchema>;
  */
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   show_letter_or_word: 'Show Single Letter or Word',
+  animation_intro: 'Animation Intro',
   tap_letter_in_word: 'Tap Target Letters in Word',
   trace_letter: 'Letter Tracing',
   pop_balloons_with_letter: 'Pop Balloons with Target Letter',

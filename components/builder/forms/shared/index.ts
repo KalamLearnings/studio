@@ -44,6 +44,9 @@ export { WordLetterPicker, extractLettersFromWord } from "./WordLetterPicker";
 // Image library modal
 export { ImageLibraryModal } from "./ImageLibraryModal";
 
+// Animation (Rive) library modal
+export { AnimationLibraryModal } from "./AnimationLibraryModal";
+
 // Game speed selector (for balloon, rain, fish, etc.)
 export { GameSpeedSelector, DEFAULT_SPEED_OPTIONS } from "./GameSpeedSelector";
 export type { SpeedOption } from "./GameSpeedSelector";

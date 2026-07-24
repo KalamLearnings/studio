@@ -9,7 +9,7 @@ import type { ArticleType } from '@/lib/schemas/curriculum';
 import type { LetterReference as LetterRef } from '@/lib/utils/letterReference';
 
 // Base types
-export type ContentType = 'letter' | 'word';
+export type ContentType = 'letter' | 'word' | 'image';
 export type LetterPosition = 'isolated' | 'initial' | 'medial' | 'final';
 export type BreakVariant = 'tracing_lines' | 'dot_tapping' | 'coloring' | 'memory_game' | 'tap_shapes';
 export type WritingMode = 'guided' | 'freehand';
@@ -27,9 +27,22 @@ export interface ShowLetterOrWordConfig {
   contentType: ContentType;
   letter?: string;
   word?: string;
+  image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   position?: LetterPosition;
   autoAdvance?: boolean;
   displayDuration?: number;
+}
+
+/**
+ * Animation Intro Activity Config
+ */
+export interface AnimationIntroConfig {
+  /** Public URL of a Rive (.riv) file in the curriculum-animations bucket */
+  animationUrl: string;
+  /** Loop the animation while the activity is on screen (default true) */
+  loop?: boolean;
 }
 
 /**
@@ -456,6 +469,7 @@ export interface CamelNarrationConfig {
  */
 export type ActivityConfig =
   | ShowLetterOrWordConfig
+  | AnimationIntroConfig
   | TapLetterInWordConfig
   | TraceLetterConfig
   | PopBalloonsWithLetterConfig
@@ -484,6 +498,7 @@ export type ActivityConfig =
  */
 export type ActivityConfigMap = {
   show_letter_or_word: ShowLetterOrWordConfig;
+  animation_intro: AnimationIntroConfig;
   tap_letter_in_word: TapLetterInWordConfig;
   trace_letter: TraceLetterConfig;
   pop_balloons_with_letter: PopBalloonsWithLetterConfig;

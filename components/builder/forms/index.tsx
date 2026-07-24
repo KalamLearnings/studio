@@ -5,6 +5,7 @@ import type { BaseActivityFormProps, ActivityType } from "./types";
 
 // Activity form components
 import { IntroActivityForm } from "./IntroActivityForm";
+import { AnimationIntroForm } from "./AnimationIntroForm";
 import { TapActivityForm } from "./TapActivityForm";
 import { WriteActivityForm } from "./WriteActivityForm";
 import { BreakActivityForm } from "./BreakActivityForm";
@@ -33,6 +34,7 @@ export * from "./shared";
 
 // Re-export individual forms
 export { IntroActivityForm } from "./IntroActivityForm";
+export { AnimationIntroForm } from "./AnimationIntroForm";
 export { TapActivityForm } from "./TapActivityForm";
 export { WriteActivityForm } from "./WriteActivityForm";
 export { BreakActivityForm } from "./BreakActivityForm";
@@ -245,6 +247,7 @@ type FormComponent = React.ComponentType<BaseActivityFormProps>;
 const activityFormComponents: Partial<Record<ActivityType, FormComponent>> = {
   // Custom forms (unique UI)
   show_letter_or_word: IntroActivityForm,
+  animation_intro: AnimationIntroForm,
   tap_letter_in_word: TapActivityForm,
   trace_letter: WriteActivityForm,
   break_time_minigame: BreakActivityForm,

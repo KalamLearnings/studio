@@ -43,6 +43,7 @@ export const ACTIVITY_CATEGORIES: ActivityCategoryInfo[] = [
 export const ACTIVITY_TYPE_CATEGORIES: Record<ActivityTypeString, ActivityCategory> = {
   // Introduction & Display
   show_letter_or_word: 'introduction',
+  animation_intro: 'introduction',
   content_with_cards: 'introduction',
   camel_narration: 'introduction',
 
@@ -124,6 +125,7 @@ export function getActivityCountByCategory(category: ActivityCategory): number {
  */
 export const ACTIVITY_TYPES: { value: string; label: string }[] = [
   { value: 'show_letter_or_word', label: 'Show Letter/Word/Image' },
+  { value: 'animation_intro', label: 'Animation Intro' },
   { value: 'tap_letter_in_word', label: 'Tap Target Letters in Word' },
   { value: 'trace_letter', label: 'Letter Tracing' },
   { value: 'pop_balloons_with_letter', label: 'Pop Balloons with Target Letter' },
@@ -173,6 +175,7 @@ export const ACTIVITY_TYPES: { value: string; label: string }[] = [
  */
 export const ACTIVITY_ICONS: Record<string, string> = {
   show_letter_or_word: '🔤',
+  animation_intro: '🎬',
   tap_letter_in_word: '👆',
   trace_letter: '✏️',
   pop_balloons_with_letter: '🎈',

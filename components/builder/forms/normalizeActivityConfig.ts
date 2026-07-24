@@ -48,7 +48,11 @@ export function normalizeActivityConfig(
         next.targetLetter = next.letter;
       }
       if (next.contentType == null) {
-        next.contentType = next.word ? "word" : "letter";
+        next.contentType = next.word
+          ? "word"
+          : next.image
+            ? "image"
+            : "letter";
       }
       break;
     }

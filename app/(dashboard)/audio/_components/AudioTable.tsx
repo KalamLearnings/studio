@@ -31,7 +31,9 @@ interface AudioTableProps {
 }
 
 const formatDuration = (ms?: number): string => {
-  if (!ms) return "0:00";
+  // Unknown duration (older rows uploaded before duration capture) — show a
+  // dash rather than a misleading 0:00
+  if (!ms) return "—";
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;

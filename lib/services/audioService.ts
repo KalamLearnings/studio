@@ -240,6 +240,28 @@ export async function getAudioAsset(id: string): Promise<AudioAsset | null> {
 }
 
 /**
+ * Read an audio file's duration (ms) in the browser via an <audio> element.
+ * Returns null when the duration can't be determined (corrupt file, format
+ * the browser won't decode) — callers store NULL rather than a wrong value.
+ */
+export async function getAudioDurationMs(file: Blob): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new window.Audio();
+    const finish = (value: number | null) => {
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    audio.onloadedmetadata = () => {
+      const seconds = audio.duration;
+      finish(Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : null);
+    };
+    audio.onerror = () => finish(null);
+    audio.src = url;
+  });
+}
+
+/**
  * Validates audio file before upload
  */
 function validateAudioFile(file: File): void {
@@ -260,6 +282,8 @@ export async function uploadAudioAsset(data: AudioUploadData): Promise<AudioAsse
   const { displayName, file, category, tags, metadata } = data;
 
   validateAudioFile(file);
+
+  const durationMs = await getAudioDurationMs(file);
 
   const extension = file.name.split('.').pop() || 'mp3';
   const sanitizedDisplayName = displayName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
@@ -287,6 +311,7 @@ export async function uploadAudioAsset(data: AudioUploadData): Promise<AudioAsse
       storage_path: storagePath,
       category,
       tags,
+      duration_ms: durationMs,
       file_size: file.size,
       mime_type: file.type,
       metadata: metadata || {},
@@ -371,6 +396,8 @@ export async function replaceAudioAssetFile(
 
   validateAudioFile(file);
 
+  const durationMs = await getAudioDurationMs(file);
+
   // Read the existing row so we overwrite the SAME path and merge metadata.
   const { data: existing, error: fetchError } = await supabase
     .from('audio_assets')
@@ -405,6 +432,7 @@ export async function replaceAudioAssetFile(
   };
 
   const updateData: Record<string, unknown> = {
+    duration_ms: durationMs,
     file_size: file.size,
     mime_type: file.type,
     metadata: mergedMetadata,

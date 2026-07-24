@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { FormField, Checkbox, AnimationLibraryModal } from "./shared";
+import { FormField, Checkbox, AnimationLibraryModal, AudioPickerField } from "./shared";
 import type { BaseActivityFormProps, AnimationIntroConfig } from "./types";
 
 /**
@@ -74,6 +74,14 @@ export function AnimationIntroForm({
           </button>
         )}
       </FormField>
+
+      <AudioPickerField
+        label="Narration Audio"
+        hint="Audio played over the animation; Continue unlocks when it finishes"
+        value={config?.audioUrl}
+        audioId={config?.audioId}
+        onChange={(audioUrl, audioId) => updateConfig({ audioUrl, audioId })}
+      />
 
       <FormField
         label="Loop Animation"

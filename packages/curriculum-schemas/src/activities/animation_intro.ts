@@ -30,6 +30,14 @@ export const AnimationIntroConfigSchema = z.object({
   loop: z.boolean()
     .default(true)
     .describe('Loop the animation while the activity is on screen'),
+
+  audioId: z.string()
+    .optional()
+    .describe('ID of the narration audio asset'),
+
+  audioUrl: z.string().url()
+    .optional()
+    .describe('URL of the narration audio played over the animation'),
 });
 
 /**

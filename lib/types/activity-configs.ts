@@ -43,6 +43,10 @@ export interface AnimationIntroConfig {
   animationUrl: string;
   /** Loop the animation while the activity is on screen (default true) */
   loop?: boolean;
+  /** ID of the narration audio asset */
+  audioId?: string;
+  /** URL of the narration audio played over the animation */
+  audioUrl?: string;
 }
 
 /**

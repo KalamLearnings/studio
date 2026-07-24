@@ -117,12 +117,16 @@ export interface IntroActivityConfig extends ActivityConfig {
   imageHeight?: number;
 }
 
-// Animation intro activity config (Rive animation + instruction audio)
+// Animation intro activity config (Rive animation + narration audio)
 export interface AnimationIntroConfig extends ActivityConfig {
   /** Public URL of a Rive (.riv) file in the curriculum-animations bucket */
   animationUrl?: string;
   /** Loop the animation while the activity is on screen (default true) */
   loop?: boolean;
+  /** ID of the narration audio asset */
+  audioId?: string;
+  /** URL of the narration audio played over the animation */
+  audioUrl?: string;
 }
 
 // Write/Trace activity config

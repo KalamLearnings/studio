@@ -259,8 +259,9 @@ export async function updateNode(
   nodeId: string,
   data: UpdateNode
 ): Promise<Node> {
+  // Backend route is flat: PUT /curriculum/:id/nodes/:nodeId (no topic segment)
   return fetchWithAuth<Node>(
-    `/curriculum/${curriculumId}/topics/${topicId}/nodes/${nodeId}`,
+    `/curriculum/${curriculumId}/nodes/${nodeId}`,
     {
       method: 'PUT',
       body: JSON.stringify(data),

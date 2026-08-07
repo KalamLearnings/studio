@@ -4,7 +4,7 @@
  * PageEditorDialog
  *
  * Create/edit a single book page: page number, layout, background image,
- * Arabic text, and narration audio (generate via TTS, pick from library,
+ * English text, and narration audio (generate via TTS, pick from library,
  * preview, or clear).
  */
 
@@ -169,12 +169,12 @@ export function PageEditorDialog({
           />
 
           <div className="space-y-2">
-            <Label>Page Text (Arabic)</Label>
+            <Label>Page Text (English)</Label>
             <VoiceTagsInput
               value={values.text}
               onChange={(v) => update("text", v)}
               placeholder="Enter the page text..."
-              dir="rtl"
+              dir="ltr"
               rows={3}
             />
           </div>

@@ -133,10 +133,7 @@ export function PagesManager({ bookId }: PagesManagerProps) {
                     <Volume2 className="h-3.5 w-3.5 text-primary" />
                   )}
                 </div>
-                <p
-                  className="truncate text-xs text-muted-foreground"
-                  dir="rtl"
-                >
+                <p className="truncate text-xs text-muted-foreground">
                   {page.text || "No text"}
                 </p>
               </div>

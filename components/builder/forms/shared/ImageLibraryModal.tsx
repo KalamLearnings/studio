@@ -81,7 +81,7 @@ export function ImageLibraryModal({
           />
         </div>
 
-        <ScrollArea className="flex-1 min-h-[300px] max-h-[400px]">
+        <ScrollArea className="h-[400px]">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

@@ -14,12 +14,10 @@ import {
   Ticket,
   ShoppingBag,
   Settings,
-  ExternalLink,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NavItem {
   title: string;
@@ -64,8 +62,8 @@ export function Sidebar({ onSignOut }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 py-4">
-        <nav className="flex flex-col items-center gap-1 px-2">
+      <div className="min-h-0 flex-1 py-3">
+        <nav className="flex flex-col items-center gap-0.5 px-2">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             const Icon = item.icon;
@@ -75,7 +73,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center transition-colors w-full",
+                  "flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors w-full",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -89,11 +87,11 @@ export function Sidebar({ onSignOut }: SidebarProps) {
             );
           })}
         </nav>
-      </ScrollArea>
+      </div>
 
       {/* Bottom Nav */}
-      <div className="border-t px-2 py-4">
-        <nav className="flex flex-col items-center gap-1">
+      <div className="border-t px-2 py-3">
+        <nav className="flex flex-col items-center gap-0.5">
           {bottomNavItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             const Icon = item.icon;
@@ -103,7 +101,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center transition-colors w-full",
+                  "flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors w-full",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -117,25 +115,11 @@ export function Sidebar({ onSignOut }: SidebarProps) {
             );
           })}
 
-          {/* Cross-link to the old v1 dashboard */}
-          <a
-            href="https://dashboard.kalamkidslearning.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open the old dashboard"
-            className="flex w-full flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <ExternalLink className="h-6 w-6 shrink-0" />
-            <span className="text-[10px] font-medium leading-tight">
-              Old Dashboard
-            </span>
-          </a>
-
           {/* Sign Out */}
           <Button
             variant="ghost"
             onClick={onSignOut}
-            className="flex flex-col items-center gap-1 h-auto px-2 py-2.5 w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex flex-col items-center gap-1 h-auto px-2 py-2 w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <LogOut className="h-6 w-6 shrink-0" />
             <span className="text-[10px] font-medium leading-tight">

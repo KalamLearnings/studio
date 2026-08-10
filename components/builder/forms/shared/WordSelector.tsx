@@ -84,6 +84,8 @@ export function WordSelector({
 
   const handleInputChange = (text: string) => {
     setInputValue(text);
+    // Commit on every keystroke so a Save click never races the blur commit.
+    onChange(text);
     setShowDropdown(true);
     setFocusedIndex(-1);
   };
@@ -99,11 +101,10 @@ export function WordSelector({
   };
 
   const handleInputBlur = () => {
+    // Delay only the dropdown close so dropdown clicks can land; the value
+    // itself is already committed on each keystroke.
     setTimeout(() => {
       setShowDropdown(false);
-      if (inputValue !== value) {
-        onChange(inputValue);
-      }
     }, 200);
   };
 

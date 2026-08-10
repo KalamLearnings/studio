@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Save, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -227,8 +226,10 @@ export function ActivityForm({
         </div>
       </div>
 
-      {/* Form Content */}
-      <ScrollArea className="flex-1">
+      {/* Form Content. Native scroll (not ScrollArea): Radix's display:table
+          wrapper lays content out at its min-content width, which overflows
+          horizontally on narrow panels instead of shrinking to fit. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
           {/* Instruction with TTS - hide for certain activity types */}
           {!formOptions.hideInstruction && (
@@ -272,7 +273,7 @@ export function ActivityForm({
             />
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Confirm removing audio when the instruction text was cleared. */}
       <Dialog open={confirmClearAudio} onOpenChange={setConfirmClearAudio}>

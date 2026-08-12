@@ -98,13 +98,24 @@ export function MultipleChoiceActivityForm({
   ) => {
     const newOptions = [...options];
     if (field === "text") {
-      newOptions[index].text = { en: "", ar: value as string };
+      // A word and a letter ref are mutually exclusive content for an option;
+      // a stale letter ref left behind makes the backend render the letter
+      // instead of the word on mobile.
+      newOptions[index] = {
+        ...newOptions[index],
+        text: { en: "", ar: value as string },
+        letter: undefined,
+      };
     } else if (field === "image") {
-      newOptions[index].image = value as string;
+      newOptions[index] = { ...newOptions[index], image: value as string };
     } else if (field === "isCorrect") {
-      newOptions[index].isCorrect = value as boolean;
+      newOptions[index] = { ...newOptions[index], isCorrect: value as boolean };
     } else if (field === "letter") {
-      newOptions[index].letter = value as LetterReference;
+      newOptions[index] = {
+        ...newOptions[index],
+        letter: value as LetterReference,
+        text: { en: "", ar: "" },
+      };
     }
     updateConfig({ options: newOptions });
   };

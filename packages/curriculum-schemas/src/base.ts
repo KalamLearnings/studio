@@ -313,6 +313,7 @@ export const ActivityTypeSchema = z.enum([
   'slingshot',
   'i_spy',
   'sound_blend',
+  'drive_to_sukoon',
   'match_pairs',
   'camel_narration',
 ]);
@@ -366,6 +367,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   slingshot: 'Slingshot Game',
   i_spy: 'I Spy (Find Letters)',
   sound_blend: 'Sound Blending',
+  drive_to_sukoon: 'Drive to Sukoon',
   match_pairs: 'Match Pairs (Draw Lines)',
   camel_narration: 'Camel Mascot Narration',
 };

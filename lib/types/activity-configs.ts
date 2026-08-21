@@ -340,6 +340,18 @@ export interface SoundSegment {
   duration: SoundDuration;
 }
 
+export interface DriveToSukoonConfig {
+  /** The word, as a curriculum_words reference. */
+  word: {
+    /** curriculum_words id — authoritative reference. */
+    wordId?: string;
+    /** The Arabic word, fully vowelled, carrying exactly one sukoon. */
+    text: string;
+  };
+  /** Show the stop sign above the sukoon letter on a correct release */
+  showStopSign?: boolean;
+}
+
 export interface SoundBlendConfig {
   /** Content type: letter or word */
   contentType?: BlendContentType;
@@ -496,6 +508,7 @@ export type ActivityConfig =
   | SlingshotConfig
   | ISpyConfig
   | SoundBlendConfig
+  | DriveToSukoonConfig
   | MatchPairsConfig
   | CamelNarrationConfig;
 
@@ -525,6 +538,7 @@ export type ActivityConfigMap = {
   slingshot: SlingshotConfig;
   i_spy: ISpyConfig;
   sound_blend: SoundBlendConfig;
+  drive_to_sukoon: DriveToSukoonConfig;
   match_pairs: MatchPairsConfig;
   camel_narration: CamelNarrationConfig;
 };

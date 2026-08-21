@@ -25,6 +25,7 @@ import { ActivityRequestForm } from "./ActivityRequestForm";
 import { DragHamzaToLetterForm } from "./DragHamzaToLetterForm";
 import { ISpyActivityForm } from "./ISpyActivityForm";
 import { SoundBlendActivityForm } from "./SoundBlendActivityForm";
+import { DriveToSukoonActivityForm } from './DriveToSukoonActivityForm';
 import { ContentWithCardsActivityForm } from "./ContentWithCardsActivityForm";
 import { MatchPairsActivityForm } from "./MatchPairsActivityForm";
 
@@ -268,6 +269,7 @@ const activityFormComponents: Partial<Record<ActivityType, FormComponent>> = {
   drag_hamza_to_letter: DragHamzaToLetterForm,
   i_spy: ISpyActivityForm,
   sound_blend: SoundBlendActivityForm,
+  drive_to_sukoon: DriveToSukoonActivityForm,
   match_pairs: MatchPairsActivityForm,
 
   // Target letter + distractor activities (using shared form)

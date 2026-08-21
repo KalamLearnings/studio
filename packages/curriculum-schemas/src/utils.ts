@@ -138,6 +138,7 @@ export function isValidActivityType(type: string): type is ActivityType {
     'slingshot',
     'i_spy',
     'sound_blend',
+    'drive_to_sukoon',
     'match_pairs',
     'camel_narration',
   ];
@@ -194,6 +195,7 @@ export function getActivityCategory(type: ActivityType): string {
     slingshot: 'Game',
     i_spy: 'Recognition',
     sound_blend: 'Phonics',
+    drive_to_sukoon: 'Phonics',
     match_pairs: 'Recognition',
     camel_narration: 'Introduction',
   };
@@ -250,6 +252,7 @@ export function getEstimatedDuration(type: ActivityType): number {
     slingshot: 45,
     i_spy: 45,
     sound_blend: 45,
+    drive_to_sukoon: 45,
     match_pairs: 45,
     camel_narration: 30,
   };
@@ -440,6 +443,10 @@ export function createDefaultConfig(type: ActivityType): Record<string, any> {
       targetCount: 5,
       totalLetters: 12,
       letterSize: 'medium',
+    },
+    drive_to_sukoon: {
+      word: { text: 'مَرْيَم' },
+      showStopSign: true,
     },
     sound_blend: {
       word: 'جَمَل',

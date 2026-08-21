@@ -68,6 +68,7 @@ const IMPLEMENTED_ACTIVITIES: string[] = [
   "slingshot",
   "i_spy",
   "sound_blend",
+  "drive_to_sukoon",
   "match_pairs",
   "camel_narration",
 ];

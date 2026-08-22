@@ -15,6 +15,7 @@ import { DragDropActivityForm } from "./DragDropActivityForm";
 import { SpeechPracticeActivityForm } from "./SpeechPracticeActivityForm";
 import { MemoryCardMatchActivityForm } from "./MemoryCardMatchActivityForm";
 import { DragHarakaToLetterForm } from "./DragHarakaToLetterForm";
+import { DragHarakaToWordActivityForm } from "./DragHarakaToWordActivityForm";
 import { CamelNarrationActivityForm } from "./CamelNarrationActivityForm";
 import { GenericActivityForm } from "./GenericActivityForm";
 import { TargetLetterWithDistractorsForm } from "./shared/TargetLetterWithDistractorsForm";
@@ -45,6 +46,7 @@ export { DragDropActivityForm } from "./DragDropActivityForm";
 export { SpeechPracticeActivityForm } from "./SpeechPracticeActivityForm";
 export { MemoryCardMatchActivityForm } from "./MemoryCardMatchActivityForm";
 export { DragHarakaToLetterForm } from "./DragHarakaToLetterForm";
+export { DragHarakaToWordActivityForm } from "./DragHarakaToWordActivityForm";
 export { CamelNarrationActivityForm } from "./CamelNarrationActivityForm";
 export { GenericActivityForm } from "./GenericActivityForm";
 export { DragDotsToLetterForm } from "./DragDotsToLetterForm";
@@ -258,6 +260,7 @@ const activityFormComponents: Partial<Record<ActivityType, FormComponent>> = {
   speech_practice: SpeechPracticeActivityForm,
   memory_card_match: MemoryCardMatchActivityForm,
   drag_haraka_to_letter: DragHarakaToLetterForm,
+  drag_haraka_to_word: DragHarakaToWordActivityForm,
   camel_narration: CamelNarrationActivityForm,
 
   // Custom forms for additional activities

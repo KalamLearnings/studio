@@ -284,6 +284,20 @@ export interface DragHamzaToLetterConfig {
  * - Single letter: Drag haraka to a specific letter
  * - Multi-letter: Choose the correct letter from scattered options
  */
+/**
+ * Drag Haraka to Word — place a missing haraka on a letter inside a word.
+ *
+ * The word is authored FULLY VOWELLED and is the answer key; blankIndices names
+ * only which letters' marks to hide. Letters are identified by INDEX, never by
+ * character, so a repeated letter stays distinguishable.
+ */
+export interface DragHarakaToWordConfig {
+  word?: { wordId?: string; text?: string };
+  arabicWord?: string;
+  blankIndices?: number[];
+  distractorHarakat?: Array<'fatha' | 'damma' | 'kasra' | 'sukoon' | 'shadda'>;
+}
+
 export interface DragHarakaToLetterConfig {
   /** The diacritic mark to drag (fatha, damma, kasra, sukoon, shadda) */
   harakaType: HarakaType;
@@ -505,6 +519,7 @@ export type ActivityConfig =
   | ContentWithCardsConfig
   | DragHamzaToLetterConfig
   | DragHarakaToLetterConfig
+  | DragHarakaToWordConfig
   | SlingshotConfig
   | ISpyConfig
   | SoundBlendConfig
@@ -535,6 +550,7 @@ export type ActivityConfigMap = {
   content_with_cards: ContentWithCardsConfig;
   drag_hamza_to_letter: DragHamzaToLetterConfig;
   drag_haraka_to_letter: DragHarakaToLetterConfig;
+  drag_haraka_to_word: DragHarakaToWordConfig;
   slingshot: SlingshotConfig;
   i_spy: ISpyConfig;
   sound_blend: SoundBlendConfig;

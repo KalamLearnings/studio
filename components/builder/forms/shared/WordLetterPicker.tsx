@@ -5,6 +5,12 @@ import { cn } from "@/lib/utils";
 
 /**
  * Extract letters from Arabic word, filtering out diacritics.
+ *
+ * Note: this picker identifies a letter by its CHARACTER. A word that repeats
+ * a letter (مَرْيَم, مُحَمَّد) cannot be represented — both occurrences select
+ * together and the stored value cannot say which was meant. For a word
+ * activity that needs to target one specific occurrence, identify letters by
+ * INDEX; see drive_to_sukoon and drag_haraka_to_word.
  */
 export function extractLettersFromWord(word: string): string[] {
   if (!word) return [];

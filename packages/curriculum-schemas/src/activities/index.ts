@@ -48,6 +48,7 @@ export * from './content_with_cards';
 export * from './i_spy';
 export * from './sound_blend';
 export * from './drive_to_sukoon';
+export * from './drag_haraka_to_word';
 export * from './camel_narration';
 
 // Import schemas for discriminated union
@@ -74,6 +75,7 @@ import { ContentWithCardsActivitySchema } from './content_with_cards';
 import { ISpyActivitySchema } from './i_spy';
 import { SoundBlendActivitySchema } from './sound_blend';
 import { DriveToSukoonActivitySchema } from './drive_to_sukoon';
+import { DragHarakaToWordActivitySchema } from './drag_haraka_to_word';
 import { CamelNarrationActivitySchema } from './camel_narration';
 
 // Import config schemas for helper function
@@ -100,6 +102,7 @@ import { ContentWithCardsConfigSchema } from './content_with_cards';
 import { ISpyConfigSchema } from './i_spy';
 import { SoundBlendConfigSchema } from './sound_blend';
 import { DriveToSukoonConfigSchema } from './drive_to_sukoon';
+import { DragHarakaToWordConfigSchema } from './drag_haraka_to_word';
 import { CamelNarrationConfigSchema } from './camel_narration';
 
 import type { ActivityType } from '../base';
@@ -142,6 +145,7 @@ export const ActivitySchema = z.discriminatedUnion('type', [
   ISpyActivitySchema,
   SoundBlendActivitySchema,
   DriveToSukoonActivitySchema,
+  DragHarakaToWordActivitySchema,
   CamelNarrationActivitySchema,
 ]);
 
@@ -174,6 +178,7 @@ const ACTIVITY_CONFIG_SCHEMAS = {
   i_spy: ISpyConfigSchema,
   sound_blend: SoundBlendConfigSchema,
   drive_to_sukoon: DriveToSukoonConfigSchema,
+  drag_haraka_to_word: DragHarakaToWordConfigSchema,
   camel_narration: CamelNarrationConfigSchema,
 } as const;
 

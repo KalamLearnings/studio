@@ -139,6 +139,7 @@ export function isValidActivityType(type: string): type is ActivityType {
     'i_spy',
     'sound_blend',
     'drive_to_sukoon',
+    'drag_haraka_to_word',
     'match_pairs',
     'camel_narration',
   ];
@@ -196,6 +197,7 @@ export function getActivityCategory(type: ActivityType): string {
     i_spy: 'Recognition',
     sound_blend: 'Phonics',
     drive_to_sukoon: 'Phonics',
+    drag_haraka_to_word: 'Phonics',
     match_pairs: 'Recognition',
     camel_narration: 'Introduction',
   };
@@ -253,6 +255,7 @@ export function getEstimatedDuration(type: ActivityType): number {
     i_spy: 45,
     sound_blend: 45,
     drive_to_sukoon: 45,
+    drag_haraka_to_word: 45,
     match_pairs: 45,
     camel_narration: 30,
   };
@@ -447,6 +450,11 @@ export function createDefaultConfig(type: ActivityType): Record<string, any> {
     drive_to_sukoon: {
       word: { text: 'مَرْيَم' },
       showStopSign: true,
+    },
+    drag_haraka_to_word: {
+      word: { text: 'مَرْيَم' },
+      blankIndices: [0],
+      distractorHarakat: [],
     },
     sound_blend: {
       word: 'جَمَل',

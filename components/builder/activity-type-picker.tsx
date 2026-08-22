@@ -65,6 +65,7 @@ const IMPLEMENTED_ACTIVITIES: string[] = [
   "content_with_cards",
   "drag_hamza_to_letter",
   "drag_haraka_to_letter",
+  "drag_haraka_to_word",
   "slingshot",
   "i_spy",
   "sound_blend",

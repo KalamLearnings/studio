@@ -20,6 +20,10 @@ export type { ModeOption } from "./ModeToggle";
 export { ContentDisplayPicker } from "./ContentDisplayPicker";
 export type { ContentType } from "./ContentDisplayPicker";
 
+// Haraka chooser (vowel tiles + shadda toggle)
+export { HarakaChoiceGrid } from "./HarakaChoiceGrid";
+export type { HarakaChoiceGridProps } from "./HarakaChoiceGrid";
+
 // Option selector grid (for break types, colors, shapes, etc.)
 export { OptionSelector } from "./OptionSelector";
 

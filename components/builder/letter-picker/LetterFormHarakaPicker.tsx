@@ -9,6 +9,7 @@ import {
   type Letter,
 } from "@/lib/hooks/useLetters";
 import { HARAKA_META } from "@kalam/curriculum-schemas";
+import { HarakaChoiceGrid } from "../forms/shared/HarakaChoiceGrid";
 import type { LetterForm, LetterReference, HarakaType } from "../forms/types";
 
 /**
@@ -39,23 +40,6 @@ const FORM_LABELS: Record<LetterForm, string> = {
 
 // "none" is a UI-only sentinel for "no diacritic"; it never reaches a LetterReference.
 type HarakaChoice = HarakaType | "none";
-
-const HARAKA_CHOICES: { id: HarakaChoice; label: string }[] = [
-  { id: "none", label: "None" },
-  ...(Object.keys(HARAKA_META) as HarakaType[]).map((h) => ({
-    id: h,
-    label: HARAKA_META[h].label,
-  })),
-];
-
-const HARAKA_SHORT: Record<HarakaChoice, string> = {
-  none: "",
-  fatha: "F",
-  damma: "D",
-  kasra: "K",
-  sukoon: "S",
-  shadda: "Sh",
-};
 
 type LetterFilterFn = (letter: Letter) => boolean;
 
@@ -326,7 +310,7 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
                         <span className="absolute right-1 top-1 rounded bg-primary px-1 text-[8px] text-primary-foreground">
                           {harakat
                             .filter((h) => h !== "none")
-                            .map((h) => HARAKA_SHORT[h])
+                            .map((h) => HARAKA_META[h].short)
                             .join("+")}
                         </span>
                       )}
@@ -356,38 +340,15 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
                           Select multiple
                         </p>
                       )}
-                      <div className="grid grid-cols-3 gap-1">
-                        {HARAKA_CHOICES.map(({ id, label }) => {
-                          const isOn = harakat.includes(id);
-                          const ch =
-                            id === "none"
-                              ? "∅"
-                              : applyHaraka(formChar, id);
-                          return (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setHaraka(form, id);
-                              }}
-                              className={cn(
-                                "flex flex-col items-center justify-center rounded px-1 py-1 text-xs transition-all",
-                                isOn
-                                  ? "bg-primary text-primary-foreground"
-                                  : "border border-border bg-background hover:border-primary/50",
-                              )}
-                            >
-                              <div className="font-arabic text-sm leading-none">
-                                {ch}
-                              </div>
-                              <div className="mt-0.5 text-[8px] leading-none">
-                                {label}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <HarakaChoiceGrid
+                        size="sm"
+                        sampleLetter={formChar}
+                        value={harakat.filter((h): h is HarakaType => h !== "none")}
+                        allowNone
+                        noneSelected={harakat.includes("none")}
+                        onNone={() => setHaraka(form, "none")}
+                        onSelect={(id) => setHaraka(form, id)}
+                      />
                     </div>
                   )}
                 </div>

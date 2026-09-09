@@ -2,10 +2,15 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { FormField, WordSelector } from "./shared";
+import { FormField, WordSelector, HarakaChoiceGrid } from "./shared";
 import type { BaseActivityFormProps } from "./types";
 
-type HarakaType = "fatha" | "damma" | "kasra" | "sukoon" | "shadda";
+import {
+  HARAKA_META,
+  harakaFromMarks,
+  wordLetterUnits,
+  type HarakaType,
+} from "@kalam/curriculum-schemas";
 
 interface DragHarakaToWordConfig {
   word?: {
@@ -16,54 +21,7 @@ interface DragHarakaToWordConfig {
   distractorHarakat?: HarakaType[];
 }
 
-/** Combining marks, and the name shown to the author. */
-const HARAKA_MARKS: Record<HarakaType, string> = {
-  fatha: "َ",
-  damma: "ُ",
-  kasra: "ِ",
-  sukoon: "ْ",
-  shadda: "ّ",
-};
-
-const HARAKA_LABELS: Record<HarakaType, string> = {
-  fatha: "Fatha",
-  damma: "Damma",
-  kasra: "Kasra",
-  sukoon: "Sukoon",
-  shadda: "Shadda",
-};
-
-const MARK_TO_HARAKA: Record<string, HarakaType> = Object.fromEntries(
-  Object.entries(HARAKA_MARKS).map(([h, m]) => [m, h as HarakaType])
-) as Record<string, HarakaType>;
-
-/**
- * Split a word into per-letter units (base letter plus its combining marks) —
- * the same split the app performs at render time, so the positions the author
- * picks here are the positions the child sees.
- */
-function wordLetterUnits(text: string): string[] {
-  const units: string[] = [];
-  for (const ch of text.normalize("NFKC")) {
-    // A combining mark belongs to the preceding letter, so it doesn't advance.
-    if (/[ً-ٰٟ]/.test(ch) && units.length > 0) {
-      units[units.length - 1] += ch;
-    } else {
-      units.push(ch);
-    }
-  }
-  return units;
-}
-
-/** The haraka a unit carries, or null. Shadda pairs with a vowel; the vowel wins. */
-function harakaOfUnit(unit: string): HarakaType | null {
-  const found = unit
-    .split("")
-    .map((ch) => MARK_TO_HARAKA[ch])
-    .filter((h): h is HarakaType => Boolean(h));
-  if (found.length === 0) return null;
-  return found.find((h) => h !== "shadda") ?? found[0];
-}
+const MAX_DISTRACTORS = 4;
 
 export function DragHarakaToWordActivityForm({
   config,
@@ -119,11 +77,11 @@ export function DragHarakaToWordActivityForm({
   );
 
   const answers = blankIndices
-    .map((i) => harakaOfUnit(units[i] ?? ""))
+    .map((i) => harakaFromMarks(units[i] ?? ""))
     .filter((h): h is HarakaType => h !== null);
 
   const invalidBlanks = blankIndices.filter(
-    (i) => i >= units.length || harakaOfUnit(units[i] ?? "") === null
+    (i) => i >= units.length || harakaFromMarks(units[i] ?? "") === null
   );
 
   return (
@@ -155,7 +113,7 @@ export function DragHarakaToWordActivityForm({
           <div className="grid grid-cols-6 gap-2" dir="rtl">
             {displayOrder.map((index) => {
               const unit = units[index];
-              const haraka = harakaOfUnit(unit);
+              const haraka = harakaFromMarks(unit);
               const selected = blankIndices.includes(index);
               const selectable = haraka !== null;
 
@@ -167,7 +125,7 @@ export function DragHarakaToWordActivityForm({
                   onClick={() => toggleIndex(index)}
                   title={
                     selectable
-                      ? `Position ${index + 1} — ${HARAKA_LABELS[haraka]}`
+                      ? `Position ${index + 1} — ${HARAKA_META[haraka].label}`
                       : `Position ${index + 1} — no haraka to hide`
                   }
                   className={cn(
@@ -220,7 +178,7 @@ export function DragHarakaToWordActivityForm({
             <>
               The child will place{" "}
               <strong>
-                {answers.map((h) => HARAKA_LABELS[h]).join(", ")}
+                {answers.map((h) => HARAKA_META[h].label).join(", ")}
               </strong>{" "}
               on letter{blankIndices.length > 1 ? "s" : ""}{" "}
               <strong>
@@ -236,39 +194,25 @@ export function DragHarakaToWordActivityForm({
         label="Distractor harakat"
         hint="Extra marks offered in the tray alongside the correct one. Leave empty to offer only the answer."
       >
-        <div className="grid grid-cols-5 gap-2">
-          {(Object.keys(HARAKA_LABELS) as HarakaType[]).map((haraka) => {
-            const isAnswer = answers.includes(haraka);
-            const selected = distractorHarakat.includes(haraka);
-            return (
-              <button
-                key={haraka}
-                type="button"
-                disabled={isAnswer}
-                onClick={() => toggleDistractor(haraka)}
-                title={isAnswer ? "This is the correct haraka" : undefined}
-                className={cn(
-                  "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
-                  isAnswer
-                    ? "border-green-400 bg-green-50 dark:bg-green-900/20 opacity-60 cursor-not-allowed"
-                    : selected
-                      ? "border-primary bg-primary/10 shadow-md"
-                      : "border-border hover:border-primary/50 hover:bg-muted"
-                )}
-              >
-                <span className="text-3xl font-arabic mb-1">
-                  {"\u0628" + HARAKA_MARKS[haraka]}
-                </span>
-                <span className="text-xs font-medium">
-                  {HARAKA_LABELS[haraka]}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {isAnswer ? "answer" : selected ? "distractor" : ""}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <HarakaChoiceGrid
+          value={distractorHarakat}
+          onSelect={toggleDistractor}
+          disabledIds={[
+            ...answers,
+            ...(distractorHarakat.length >= MAX_DISTRACTORS
+              ? (Object.keys(HARAKA_META) as HarakaType[]).filter(
+                  (h) => !distractorHarakat.includes(h),
+                )
+              : []),
+          ]}
+          disabledHint={
+            distractorHarakat.length >= MAX_DISTRACTORS
+              ? `At most ${MAX_DISTRACTORS} distractors`
+              : "This is the correct haraka"
+          }
+          disabledCaption="answer"
+          selectedCaption="distractor"
+        />
       </FormField>
 
     </div>

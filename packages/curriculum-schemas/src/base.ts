@@ -6,6 +6,17 @@
  */
 
 import { z } from 'zod';
+import {
+  HARAKA_IDS,
+  HARAKA_CHARS,
+  HARAKA_META,
+  type HarakaType,
+  type OptionalHaraka,
+  type HarakaMeta,
+  type HarakaPlacement,
+  type HarakaComponent,
+  type HarakaBase,
+} from './harakat';
 
 // ============================================================================
 // LOCALIZED TEXT
@@ -506,44 +517,15 @@ export const HamzaPositionSchema = z.enum(['above', 'below', 'on_line'])
 export type HamzaPosition = z.infer<typeof HamzaPositionSchema>;
 
 /**
- * Arabic diacritical marks (harakat) for drag_haraka_to_letter activity
+ * Arabic diacritical marks (harakat). The id list, characters and display
+ * metadata come from ./harakat, the canonical definition shared with the
+ * backend and mobile app.
  */
-export const HarakaTypeSchema = z.enum([
-  'fatha',
-  'damma',
-  'kasra',
-  'sukoon',
-  'shadda',
-]).describe('Arabic diacritic mark to drag onto a letter');
+export const HarakaTypeSchema = z.enum(HARAKA_IDS)
+  .describe('Arabic diacritic id (simple mark, or shadda combined with a vowel)');
 
-export type HarakaType = z.infer<typeof HarakaTypeSchema>;
-
-/**
- * Unicode characters for harakat
- */
-export const HARAKA_CHARS: Record<HarakaType, string> = {
-  fatha: 'َ',
-  damma: 'ُ',
-  kasra: 'ِ',
-  sukoon: 'ْ',
-  shadda: 'ّ',
-};
-
-/**
- * Haraka metadata for UI display
- */
-export const HARAKA_META: Record<HarakaType, {
-  char: string;
-  label: string;
-  arabic: string;
-  position: 'above' | 'below';
-}> = {
-  fatha: { char: 'َ', label: 'Fatha', arabic: 'فَتْحَة', position: 'above' },
-  damma: { char: 'ُ', label: 'Damma', arabic: 'ضَمَّة', position: 'above' },
-  kasra: { char: 'ِ', label: 'Kasra', arabic: 'كَسْرَة', position: 'below' },
-  sukoon: { char: 'ْ', label: 'Sukoon', arabic: 'سُكُون', position: 'above' },
-  shadda: { char: 'ّ', label: 'Shadda', arabic: 'شَدَّة', position: 'above' },
-};
+export type { HarakaType, OptionalHaraka, HarakaMeta, HarakaPlacement, HarakaComponent, HarakaBase };
+export { HARAKA_IDS, HARAKA_CHARS, HARAKA_META };
 
 // ============================================================================
 // LETTER REFERENCE (Unified letter identification system)
@@ -564,18 +546,10 @@ export const LetterIdSchema = z.string()
 export type LetterId = z.infer<typeof LetterIdSchema>;
 
 /**
- * Extended HarakaType that includes 'none' for optional diacritics
+ * HarakaType plus 'none' for optional diacritics
  */
-export const OptionalHarakaSchema = z.enum([
-  'none',
-  'fatha',
-  'damma',
-  'kasra',
-  'sukoon',
-  'shadda',
-]).describe('Optional diacritic mark (none = no diacritic)');
-
-export type OptionalHaraka = z.infer<typeof OptionalHarakaSchema>;
+export const OptionalHarakaSchema = z.enum(['none', ...HARAKA_IDS])
+  .describe('Optional diacritic id (none = no diacritic)');
 
 /**
  * LetterReference - the unified way to identify an Arabic letter with its form

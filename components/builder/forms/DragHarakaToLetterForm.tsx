@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import { FormField, LetterSelector } from "./shared";
-import { useLetters, getLetterDisplayChar, applyHaraka } from "@/lib/hooks/useLetters";
+import { FormField, LetterSelector, HarakaChoiceGrid } from "./shared";
+import { useLetters, getLetterDisplayChar } from "@/lib/hooks/useLetters";
+import {
+  HARAKA_IDS,
+  HARAKA_META,
+  applyHaraka,
+  type HarakaType,
+} from "@kalam/curriculum-schemas";
 import type { BaseActivityFormProps, LetterReference } from "./types";
-
-type HarakaType = "fatha" | "damma" | "kasra" | "sukoon" | "shadda";
 
 interface DragHarakaConfig {
   targetLetter?: LetterReference | null;
@@ -16,18 +19,7 @@ interface DragHarakaConfig {
   distractorHarakat?: HarakaType[];
 }
 
-const HARAKA_OPTIONS: {
-  value: HarakaType;
-  label: string;
-  arabic: string;
-  char: string;
-}[] = [
-  { value: "fatha", label: "Fatha", arabic: "فَتْحَة", char: "َ" },
-  { value: "damma", label: "Damma", arabic: "ضَمَّة", char: "ُ" },
-  { value: "kasra", label: "Kasra", arabic: "كَسْرَة", char: "ِ" },
-  { value: "sukoon", label: "Sukoon", arabic: "سُكُون", char: "ْ" },
-  { value: "shadda", label: "Shadda", arabic: "شَدَّة", char: "ّ" },
-];
+const MAX_DISTRACTOR_HARAKAT = 4;
 
 export function DragHarakaToLetterForm({
   config,
@@ -41,7 +33,7 @@ export function DragHarakaToLetterForm({
   );
 
   const targetLetter = config?.targetLetter || null;
-  const harakaType = config?.harakaType || "fatha";
+  const harakaType: HarakaType = config?.harakaType || "fatha";
   const distractorLetters = config?.distractorLetters || [];
   const distractorHarakat = config?.distractorHarakat || [];
   const [useHarakaDistractors, setUseHarakaDistractors] = React.useState(
@@ -53,11 +45,9 @@ export function DragHarakaToLetterForm({
     onChange({ ...config, ...updates });
   };
 
-  // The Haraka Type selector shows 'fatha' pre-selected by default (above), but
-  // that default is display-only — it isn't written to the config until the
-  // author clicks a haraka. Persist it on mount so saving without an explicit
-  // click still captures harakaType. Only writes when it's actually missing, so
-  // existing activities and author selections are never overwritten.
+  // The grid shows 'fatha' pre-selected by default, but that default is
+  // display-only until persisted. Write it on mount so saving without an
+  // explicit click still captures harakaType; never overwrite an existing one.
   React.useEffect(() => {
     if (!config?.harakaType) {
       updateConfig({ harakaType });
@@ -69,8 +59,14 @@ export function DragHarakaToLetterForm({
     return getLetterDisplayChar(ref, getLetter);
   };
 
-  // Toggle a distractor haraka on/off. The target harakaType can never be a
-  // distractor, so it's excluded from the options below.
+  const selectTarget = (value: HarakaType) => {
+    const pruned = distractorHarakat.filter((h) => h !== value);
+    updateConfig({
+      harakaType: value,
+      distractorHarakat: pruned.length > 0 ? pruned : undefined,
+    });
+  };
+
   const toggleDistractorHaraka = (value: HarakaType) => {
     const next = distractorHarakat.includes(value)
       ? distractorHarakat.filter((h) => h !== value)
@@ -78,53 +74,25 @@ export function DragHarakaToLetterForm({
     updateConfig({ distractorHarakat: next.length > 0 ? next : undefined });
   };
 
+  const distractorsFull = distractorHarakat.length >= MAX_DISTRACTOR_HARAKAT;
+  const distractorDisabledIds: HarakaType[] = [
+    harakaType,
+    ...(distractorsFull
+      ? HARAKA_IDS.filter((h) => !distractorHarakat.includes(h))
+      : []),
+  ];
+
   const targetLetterDisplay = getLetterDisplay(targetLetter);
-  const harakaInfo = HARAKA_OPTIONS.find((h) => h.value === harakaType);
+  const harakaInfo = HARAKA_META[harakaType];
 
   return (
     <div className="space-y-6">
       <FormField
         label="Haraka Type"
-        hint="The diacritical mark students will drag onto the letter"
+        hint="The diacritical mark students will drag onto the letter. Turn on Shadda to offer a doubled letter with its vowel."
         required
       >
-        <div className="grid grid-cols-5 gap-2">
-          {HARAKA_OPTIONS.map((haraka) => (
-            <button
-              key={haraka.value}
-              type="button"
-              onClick={() =>
-                updateConfig({
-                  harakaType: haraka.value,
-                  // A haraka can't be both target and distractor — prune it.
-                  ...(distractorHarakat.includes(haraka.value)
-                    ? {
-                        distractorHarakat:
-                          distractorHarakat.filter((h) => h !== haraka.value)
-                            .length > 0
-                            ? distractorHarakat.filter((h) => h !== haraka.value)
-                            : undefined,
-                      }
-                    : {}),
-                })
-              }
-              className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
-                harakaType === haraka.value
-                  ? "border-primary bg-primary/10 shadow-md"
-                  : "border-border hover:border-primary/50 hover:bg-muted"
-              )}
-            >
-              <span className="text-3xl font-arabic mb-1">
-                {"ب" + haraka.char}
-              </span>
-              <span className="text-xs font-medium">{haraka.label}</span>
-              <span className="text-xs text-muted-foreground font-arabic">
-                {haraka.arabic}
-              </span>
-            </button>
-          ))}
-        </div>
+        <HarakaChoiceGrid value={[harakaType]} onSelect={selectTarget} />
       </FormField>
 
       <FormField
@@ -141,6 +109,7 @@ export function DragHarakaToLetterForm({
           }
           topic={topic}
           showFormSelector
+          showHarakaSelector={false}
         />
       </FormField>
 
@@ -188,6 +157,7 @@ export function DragHarakaToLetterForm({
             }
             multiSelect
             showFormSelector
+            showHarakaSelector={false}
             disabledLetterIds={targetLetter ? [targetLetter.letterId] : []}
           />
         </FormField>
@@ -195,7 +165,7 @@ export function DragHarakaToLetterForm({
 
       <FormField
         label="Haraka Options"
-        hint="Add wrong harakat so the student must pick the correct one to drag"
+        hint={`Add wrong harakat so the student must pick the correct one to drag (up to ${MAX_DISTRACTOR_HARAKAT})`}
       >
         <label className="flex items-center gap-2 cursor-pointer mb-3">
           <input
@@ -215,37 +185,18 @@ export function DragHarakaToLetterForm({
         </label>
 
         {useHarakaDistractors && (
-          <div className="grid grid-cols-5 gap-2">
-            {HARAKA_OPTIONS.map((haraka) => {
-              const isTarget = haraka.value === harakaType;
-              const selected = distractorHarakat.includes(haraka.value);
-              return (
-                <button
-                  key={haraka.value}
-                  type="button"
-                  disabled={isTarget}
-                  onClick={() => toggleDistractorHaraka(haraka.value)}
-                  title={isTarget ? "This is the target haraka" : undefined}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
-                    isTarget
-                      ? "border-green-400 bg-green-50 dark:bg-green-900/20 opacity-60 cursor-not-allowed"
-                      : selected
-                      ? "border-primary bg-primary/10 shadow-md"
-                      : "border-border hover:border-primary/50 hover:bg-muted"
-                  )}
-                >
-                  <span className="text-3xl font-arabic mb-1">
-                    {"ب" + haraka.char}
-                  </span>
-                  <span className="text-xs font-medium">{haraka.label}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {isTarget ? "target" : selected ? "distractor" : ""}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <HarakaChoiceGrid
+            value={distractorHarakat}
+            onSelect={toggleDistractorHaraka}
+            disabledIds={distractorDisabledIds}
+            disabledHint={
+              distractorsFull
+                ? `At most ${MAX_DISTRACTOR_HARAKAT} distractors`
+                : "This is the target haraka"
+            }
+            disabledCaption={distractorsFull ? undefined : "target"}
+            selectedCaption="distractor"
+          />
         )}
       </FormField>
 
@@ -256,10 +207,10 @@ export function DragHarakaToLetterForm({
             <div className="text-center">
               <p className="text-xs text-muted-foreground mb-1">Students drag</p>
               <span className="text-5xl font-arabic text-pink-500">
-                {harakaInfo?.char}
+                {"◌" + harakaInfo.marks}
               </span>
               <p className="text-xs text-muted-foreground mt-1">
-                {harakaInfo?.label}
+                {harakaInfo.label}
               </p>
             </div>
             <div className="text-2xl text-muted-foreground">→</div>

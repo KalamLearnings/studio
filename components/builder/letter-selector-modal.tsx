@@ -19,6 +19,7 @@ import {
   type Letter,
 } from "@/lib/hooks/useLetters";
 import { LetterFormHarakaPicker } from "@/components/builder/letter-picker";
+import { HARAKA_META } from "@kalam/curriculum-schemas";
 import type { LetterReference, HarakaType } from "@/components/builder/forms/types";
 
 export type LetterForm = "isolated" | "initial" | "medial" | "final";
@@ -200,7 +201,7 @@ export function LetterSelectorModal({
                         {selectedLetter.name_arabic} · {formLabels[selectedForm]}{" "}
                         form
                         {selectedHaraka !== "none" &&
-                          ` · ${selectedHaraka.charAt(0).toUpperCase() + selectedHaraka.slice(1)}`}
+                          ` · ${HARAKA_META[selectedHaraka].label}`}
                       </div>
                     </div>
                   </div>

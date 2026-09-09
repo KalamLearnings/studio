@@ -62,6 +62,10 @@ export {
   type HamzaPosition,
   type HarakaType,
   type OptionalHaraka,
+  type HarakaMeta,
+  type HarakaPlacement,
+  type HarakaComponent,
+  type HarakaBase,
   type LetterId,
   type LetterReference,
   type LetterReferenceArray,
@@ -81,9 +85,33 @@ export {
 
   // Constants
   ACTIVITY_TYPE_LABELS,
+  HARAKA_IDS,
   HARAKA_CHARS,
   HARAKA_META,
 } from './base';
+
+// ============================================================================
+// HARAKAT (canonical diacritic definitions, shared with backend and mobile)
+// ============================================================================
+
+export {
+  HARAKA_COMPONENTS,
+  HARAKA_COMPONENT_CHARS,
+  SIMPLE_HARAKA_IDS,
+  SHADDA_HARAKA_IDS,
+  ARABIC_MARK_RE,
+  TATWEEL,
+  isHarakaType,
+  isArabicMark,
+  applyHaraka,
+  stripHarakat,
+  harakaComponentsOf,
+  harakaFromMarks,
+  hasHaraka,
+  composeHaraka,
+  decomposeHaraka,
+  wordLetterUnits,
+} from './harakat';
 
 // ============================================================================
 // ACTIVITY SCHEMAS & TYPES

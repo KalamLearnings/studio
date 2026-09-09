@@ -7,6 +7,7 @@
 
 import type { ArticleType } from '@/lib/schemas/curriculum';
 import type { LetterReference as LetterRef } from '@/lib/utils/letterReference';
+import type { HarakaType } from '@kalam/curriculum-schemas';
 
 // Base types
 export type ContentType = 'letter' | 'word' | 'image';
@@ -14,7 +15,7 @@ export type LetterPosition = 'isolated' | 'initial' | 'medial' | 'final';
 export type BreakVariant = 'tracing_lines' | 'dot_tapping' | 'coloring' | 'memory_game' | 'tap_shapes';
 export type WritingMode = 'guided' | 'freehand';
 export type HamzaPosition = 'above' | 'below' | 'on_line';
-export type HarakaType = 'fatha' | 'damma' | 'kasra' | 'sukoon' | 'shadda';
+export type { HarakaType };
 export type ShapeType = 'circle' | 'square' | 'triangle' | 'star' | 'rectangle' | 'diamond' | 'oval' | 'heart';
 export type SoundDuration = 1 | 2 | 3;
 export type BlendContentType = 'letter' | 'word';
@@ -295,11 +296,11 @@ export interface DragHarakaToWordConfig {
   word?: { wordId?: string; text?: string };
   arabicWord?: string;
   blankIndices?: number[];
-  distractorHarakat?: Array<'fatha' | 'damma' | 'kasra' | 'sukoon' | 'shadda'>;
+  distractorHarakat?: HarakaType[];
 }
 
 export interface DragHarakaToLetterConfig {
-  /** The diacritic mark to drag (fatha, damma, kasra, sukoon, shadda) */
+  /** The diacritic id to drag */
   harakaType: HarakaType;
   /** The correct letter to place the haraka on */
   targetLetter: string;

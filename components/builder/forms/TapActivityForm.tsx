@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { FormField, WordSelector } from "./shared";
 import { useLetters } from "@/lib/hooks/useLetters";
 import { stripTatweel } from "@/lib/utils/letterReference";
+import { harakaFromMarks } from "@kalam/curriculum-schemas";
 import {
-  HARAKA_CHARS,
   isLetterReference,
   createLetterReference,
   type BaseActivityFormProps,
@@ -57,14 +57,9 @@ export function extractLettersFromWord(word: string): string[] {
   return result;
 }
 
-// Extract haraka from a character with diacritic
+// Extract the haraka id carried by a letter unit
 function extractHaraka(char: string): HarakaType | undefined {
-  for (const [harakaType, harakaChar] of Object.entries(HARAKA_CHARS)) {
-    if (harakaChar && char.includes(harakaChar)) {
-      return harakaType as HarakaType;
-    }
-  }
-  return undefined;
+  return harakaFromMarks(char) ?? undefined;
 }
 
 // Strip diacritics to get base letter

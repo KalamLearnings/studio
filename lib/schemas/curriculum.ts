@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  HARAKA_IDS,
   ActivityTypeSchema,
   type ActivityType,
   TapLetterInWordConfigSchema,
@@ -95,7 +96,7 @@ export const TopicTypeSchema = z.enum(['lesson', 'review', 'quiz', 'assessment']
 
 export const LetterFormSchema = z.enum(['isolated', 'initial', 'medial', 'final']);
 
-export const LetterHarakaSchema = z.enum(['fatha', 'damma', 'kasra', 'sukoon', 'shadda']);
+export const LetterHarakaSchema = z.enum(HARAKA_IDS);
 
 export const CreateTopicSchema = z.object({
   letter_id: z.string().optional(), // Letter ID reference (e.g., "jeem", "alif")

@@ -6,24 +6,30 @@
  */
 
 import type { Letter } from '@/lib/hooks/useLetters';
+import {
+  HARAKA_IDS,
+  HARAKA_META,
+  applyHaraka as applyHarakaMarks,
+  type HarakaType as CanonicalHarakaType,
+} from '@kalam/curriculum-schemas';
 
 export type LetterForm = 'isolated' | 'initial' | 'medial' | 'final';
 
 /**
- * Arabic diacritical marks (harakat)
+ * Arabic diacritical marks (harakat), including 'none' for the UI sentinel.
+ * The id list and display metadata are canonical in @kalam/curriculum-schemas.
  */
-export type HarakaType = 'none' | 'fatha' | 'damma' | 'kasra' | 'sukoon' | 'shadda';
+export type HarakaType = 'none' | CanonicalHarakaType;
 
 /**
- * Unicode characters for harakat
+ * Combining-mark sequence for each haraka id
  */
 export const HARAKA_CHARS: Record<HarakaType, string> = {
   none: '',
-  fatha: '\u064E',   // فَتْحَة - short 'a' sound
-  damma: '\u064F',   // ضَمَّة - short 'u' sound
-  kasra: '\u0650',   // كَسْرَة - short 'i' sound
-  sukoon: '\u0652',  // سُكُون - no vowel
-  shadda: '\u0651',  // شَدَّة - doubled consonant
+  ...(Object.fromEntries(HARAKA_IDS.map((id) => [id, HARAKA_META[id].marks])) as Record<
+    CanonicalHarakaType,
+    string
+  >),
 };
 
 /**
@@ -31,11 +37,10 @@ export const HARAKA_CHARS: Record<HarakaType, string> = {
  */
 export const HARAKA_LABELS: Record<HarakaType, string> = {
   none: 'None',
-  fatha: 'Fatha',
-  damma: 'Damma',
-  kasra: 'Kasra',
-  sukoon: 'Sukoon',
-  shadda: 'Shadda',
+  ...(Object.fromEntries(HARAKA_IDS.map((id) => [id, HARAKA_META[id].label])) as Record<
+    CanonicalHarakaType,
+    string
+  >),
 };
 
 /**
@@ -43,11 +48,10 @@ export const HARAKA_LABELS: Record<HarakaType, string> = {
  */
 export const HARAKA_ARABIC_NAMES: Record<HarakaType, string> = {
   none: '',
-  fatha: 'فَتْحَة',
-  damma: 'ضَمَّة',
-  kasra: 'كَسْرَة',
-  sukoon: 'سُكُون',
-  shadda: 'شَدَّة',
+  ...(Object.fromEntries(HARAKA_IDS.map((id) => [id, HARAKA_META[id].arabic])) as Record<
+    CanonicalHarakaType,
+    string
+  >),
 };
 
 /**
@@ -217,8 +221,7 @@ export function createLetterReference(
  * @returns The letter with haraka applied (e.g., 'ب' + 'fatha' → 'بَ')
  */
 export function applyHaraka(letter: string, haraka?: HarakaType): string {
-  if (!haraka || haraka === 'none') return letter;
-  return letter + HARAKA_CHARS[haraka];
+  return applyHarakaMarks(letter, haraka);
 }
 
 /**

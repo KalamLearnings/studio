@@ -7,6 +7,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient, getEnvironmentBaseUrl, getEdgeFunctionAuthHeaders } from '@/lib/supabase/client';
+import { HARAKA_CHARS, applyHaraka } from '@kalam/curriculum-schemas';
 
 export interface LetterForm {
   isolated: string;
@@ -68,27 +69,10 @@ async function fetchLetters(): Promise<Letter[]> {
 }
 
 /**
- * Letter filter functions for common use cases
+ * Haraka helpers are canonical in @kalam/curriculum-schemas; re-exported here
+ * for existing call sites.
  */
-/**
- * Haraka (diacritic) character map
- */
-export const HARAKA_CHARS: Record<string, string> = {
-  fatha: "َ",
-  damma: "ُ",
-  kasra: "ِ",
-  sukoon: "ْ",
-  shadda: "ّ",
-};
-
-/**
- * Apply a haraka (diacritic) to a letter character
- */
-export function applyHaraka(letter: string, haraka?: string): string {
-  if (!haraka || haraka === "none") return letter;
-  const char = HARAKA_CHARS[haraka];
-  return char ? letter + char : letter;
-}
+export { HARAKA_CHARS, applyHaraka };
 
 /**
  * Get display character for a letter reference

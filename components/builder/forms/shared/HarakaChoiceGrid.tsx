@@ -59,6 +59,8 @@ export interface HarakaChoiceGridProps {
   /** The letter the tiles preview on. */
   sampleLetter?: string;
   size?: "sm" | "md";
+  /** Tiles per row. 8 puts every base on one line. */
+  columns?: 4 | 8;
   className?: string;
 }
 
@@ -74,6 +76,7 @@ export function HarakaChoiceGrid({
   selectedCaption,
   sampleLetter = "ب",
   size = "md",
+  columns = 4,
   className,
 }: HarakaChoiceGridProps) {
   const [shaddaOn, setShaddaOn] = React.useState<boolean>(() =>
@@ -94,7 +97,7 @@ export function HarakaChoiceGrid({
         aria-pressed={shaddaOn}
         className={cn(
           "flex w-full items-center justify-between rounded-md border px-2 transition-all",
-          sm ? "py-1 text-[10px]" : "py-1.5 text-xs",
+          sm ? "py-1 text-[11px]" : "py-1.5 text-xs",
           shaddaOn
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border bg-background hover:border-primary/50",
@@ -122,7 +125,13 @@ export function HarakaChoiceGrid({
         )}
       </button>
 
-      <div className={cn("grid grid-cols-4", sm ? "gap-1" : "gap-2")}>
+      <div
+        className={cn(
+          "grid",
+          columns === 8 ? "grid-cols-8" : "grid-cols-4",
+          sm ? "gap-1.5" : "gap-2",
+        )}
+      >
         {BASES.map((base) => {
           const id = composeHaraka(base, shaddaOn);
           const isNoneTile = base === "none" && !shaddaOn;
@@ -169,17 +178,22 @@ export function HarakaChoiceGrid({
               }}
               className={cn(
                 "flex flex-col items-center justify-center rounded-md border transition-all",
-                sm ? "px-1 py-1" : "px-2 py-2.5",
+                sm ? "px-1 py-2" : "px-2 py-2.5",
                 isSelected
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background hover:border-primary/50 hover:bg-primary/5",
                 isDisabled && "cursor-not-allowed opacity-40 hover:border-border hover:bg-background",
               )}
             >
-              <span className={cn("font-arabic leading-none", sm ? "text-base" : "text-3xl")}>
+              <span className={cn("font-arabic leading-none", sm ? "text-2xl" : "text-3xl")}>
                 {glyph}
               </span>
-              <span className={cn("mt-1 leading-none", sm ? "text-[8px]" : "text-xs font-medium")}>
+              <span
+                className={cn(
+                  "mt-1 max-w-full truncate leading-none",
+                  sm ? "text-[10px]" : "text-xs font-medium",
+                )}
+              >
                 {label}
               </span>
               {!sm && (

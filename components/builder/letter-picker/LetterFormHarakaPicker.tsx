@@ -276,85 +276,95 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
               const isExpanded = expandedForm === form && isFormSelected;
 
               return (
-                <div key={form} className="flex flex-col">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleForm(form);
-                      if (showHarakaSelector && !isFormSelected) {
-                        setExpandedForm(form);
-                      } else if (isFormSelected && expandedForm === form) {
-                        setExpandedForm(null);
-                      }
-                    }}
-                    className={cn(
-                      "relative flex flex-col items-center justify-center rounded-t-md border px-3 py-3 transition-all",
-                      "hover:border-primary/50 hover:bg-primary/5",
-                      isFormSelected
-                        ? "border-primary bg-primary/10 ring-1 ring-primary"
-                        : "border-border bg-card",
-                      !isFormSelected && "rounded-b-md",
+                <button
+                  key={form}
+                  type="button"
+                  onClick={() => {
+                    toggleForm(form);
+                    if (showHarakaSelector && !isFormSelected) {
+                      setExpandedForm(form);
+                    } else if (isFormSelected && expandedForm === form) {
+                      setExpandedForm(null);
+                    }
+                  }}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center rounded-md border px-3 py-3 transition-all",
+                    "hover:border-primary/50 hover:bg-primary/5",
+                    isFormSelected
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-card",
+                  )}
+                >
+                  <div className="font-arabic text-xl">
+                    {applyHaraka(
+                      formChar,
+                      displayHaraka === "none" ? undefined : displayHaraka,
                     )}
-                  >
-                    <div className="font-arabic text-xl">
-                      {applyHaraka(
-                        formChar,
-                        displayHaraka === "none" ? undefined : displayHaraka,
-                      )}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {FORM_LABELS[form]}
-                    </div>
-                    {isFormSelected &&
-                      harakat.some((h) => h !== "none") && (
-                        <span className="absolute right-1 top-1 rounded bg-primary px-1 text-[8px] text-primary-foreground">
-                          {harakat
-                            .filter((h) => h !== "none")
-                            .map((h) => HARAKA_META[h].short)
-                            .join("+")}
-                        </span>
-                      )}
-                    {isFormSelected && showHarakaSelector && (
-                      <span
-                        role="button"
-                        tabIndex={-1}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedForm(isExpanded ? null : form);
-                        }}
-                        className="absolute -bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-primary p-0.5 text-primary-foreground hover:bg-primary/90"
-                      >
-                        {isExpanded ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {FORM_LABELS[form]}
+                  </div>
+                  {isFormSelected &&
+                    harakat.some((h) => h !== "none") && (
+                      <span className="absolute right-1 top-1 rounded bg-primary px-1 text-[8px] text-primary-foreground">
+                        {harakat
+                          .filter((h) => h !== "none")
+                          .map((h) => HARAKA_META[h].short)
+                          .join("+")}
                       </span>
                     )}
-                  </button>
-
-                  {isFormSelected && isExpanded && showHarakaSelector && (
-                    <div className="space-y-1 rounded-b-md border border-t-0 border-primary bg-primary/5 p-2">
-                      {multiForm && (
-                        <p className="mb-1 text-center text-[9px] text-muted-foreground">
-                          Select multiple
-                        </p>
+                  {isFormSelected && showHarakaSelector && (
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedForm(isExpanded ? null : form);
+                      }}
+                      className="absolute -bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-primary p-0.5 text-primary-foreground hover:bg-primary/90"
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="h-3 w-3" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3" />
                       )}
-                      <HarakaChoiceGrid
-                        size="sm"
-                        sampleLetter={formChar}
-                        value={harakat.filter((h): h is HarakaType => h !== "none")}
-                        allowNone
-                        noneSelected={harakat.includes("none")}
-                        onNone={() => setHaraka(form, "none")}
-                        onSelect={(id) => setHaraka(form, id)}
-                      />
-                    </div>
+                    </span>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
+
+          {/* Haraka panel for the expanded form, full width under the cards */}
+          {showHarakaSelector &&
+            expandedForm &&
+            formsFor(activeLetter.id).includes(expandedForm) && (() => {
+              const form = expandedForm;
+              const formChar = activeLetter.forms?.[form] || activeLetter.letter;
+              const harakat = harakatFor(activeLetter.id, form);
+              return (
+                <div className="mt-3 rounded-md border border-primary bg-primary/5 p-3">
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Harakat for the{" "}
+                    <span className="font-medium text-foreground">
+                      {FORM_LABELS[form]}
+                    </span>{" "}
+                    form{multiForm && " · select multiple"}
+                  </p>
+                  <HarakaChoiceGrid
+                    key={form}
+                    size="sm"
+                    columns={8}
+                    sampleLetter={formChar}
+                    value={harakat.filter((h): h is HarakaType => h !== "none")}
+                    allowNone
+                    noneSelected={harakat.includes("none")}
+                    onNone={() => setHaraka(form, "none")}
+                    onSelect={(id) => setHaraka(form, id)}
+                  />
+                </div>
+              );
+            })()}
           {showHarakaSelector && multiForm && (
             <p className="mt-2 text-xs text-muted-foreground">
               Click the arrow on a selected form to set its diacritics

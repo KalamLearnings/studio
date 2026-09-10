@@ -152,49 +152,6 @@ export const UpdateNodeSchema = CreateNodeSchema.extend({
 }).partial();
 
 // ============================================================================
-// ACTIVITY TEMPLATE
-// ============================================================================
-
-export const ActivityTemplateSchema = z.object({
-  id: z.string(),
-  name: LocalizedTextSchema,
-  description: LocalizedTextSchema.optional(),
-  type: ArticleTypeSchema,
-  preset_id: z.string().optional(),
-  instruction_template: LocalizedTextSchema,
-  config_template: z.record(z.any()),
-  required_fields: z.array(z.string()),
-  optional_fields: z.record(z.any()).optional(),
-  category: z.string().optional(),
-  tags: z.array(z.string()).default([]),
-  usage_count: z.number().int().nonnegative().default(0),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-});
-
-export const CreateActivityTemplateSchema = z.object({
-  id: z.string().optional(), // Auto-generated from name if not provided
-  name: LocalizedTextSchema,
-  description: LocalizedTextSchema.optional(),
-  type: ArticleTypeSchema,
-  preset_id: z.string().optional(),
-  instruction_template: LocalizedTextSchema,
-  config_template: z.record(z.any()),
-  required_fields: z.array(z.string()).default([]), // Auto-inferred from placeholders
-  optional_fields: z.record(z.any()).optional(),
-  category: z.string().optional(),
-  tags: z.array(z.string()).default([]),
-});
-
-export const UpdateActivityTemplateSchema = CreateActivityTemplateSchema.partial().omit({ id: true });
-
-export const InstantiateTemplateSchema = z.object({
-  template_id: z.string(),
-  variables: z.record(z.any()),
-  node_id: z.string().optional(),
-});
-
-// ============================================================================
 // ARTICLE (formerly "Activity")
 // ============================================================================
 
@@ -221,7 +178,6 @@ export const ArticleSchema = z.object({
   instruction: InstructionSchema,
   config: ArticleConfigSchema,
   is_published: z.boolean().default(true),
-  template_id: z.string().optional(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });
@@ -230,7 +186,6 @@ export const CreateArticleSchema = z.object({
   type: ArticleTypeSchema,
   instruction: InstructionSchema,
   config: ArticleConfigSchema,
-  template_id: z.string().optional(),
   sequence_number: z.number().int().positive().optional(),
   // Request-only flag: ask the backend to (re)generate instruction audio. The
   // backend always generates on create, so it is only meaningful on update.
@@ -270,11 +225,6 @@ export type TopicType = z.infer<typeof TopicTypeSchema>;
 export type Node = z.infer<typeof NodeSchema>;
 export type CreateNode = z.infer<typeof CreateNodeSchema>;
 export type UpdateNode = z.infer<typeof UpdateNodeSchema>;
-
-export type ActivityTemplate = z.infer<typeof ActivityTemplateSchema>;
-export type CreateActivityTemplate = z.infer<typeof CreateActivityTemplateSchema>;
-export type UpdateActivityTemplate = z.infer<typeof UpdateActivityTemplateSchema>;
-export type InstantiateTemplate = z.infer<typeof InstantiateTemplateSchema>;
 
 export type Article = z.infer<typeof ArticleSchema>;
 export type CreateArticle = z.infer<typeof CreateArticleSchema>;

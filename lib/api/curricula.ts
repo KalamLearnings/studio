@@ -17,10 +17,6 @@ import type {
   UpdateNode,
   UpdateArticle,
   BatchReorder,
-  ActivityTemplate,
-  CreateActivityTemplate,
-  UpdateActivityTemplate,
-  InstantiateTemplate,
 } from '@/lib/schemas/curriculum';
 
 // ============================================================================
@@ -389,80 +385,6 @@ export async function reorderArticles(
       body: JSON.stringify(data),
     }
   );
-}
-
-// ============================================================================
-// ACTIVITY TEMPLATES
-// ============================================================================
-
-/**
- * List all activity templates
- */
-export async function listActivityTemplates(params?: {
-  type?: string;
-  category?: string;
-}): Promise<ActivityTemplate[]> {
-  const searchParams = new URLSearchParams();
-  if (params?.type) searchParams.append('type', params.type);
-  if (params?.category) searchParams.append('category', params.category);
-
-  const query = searchParams.toString();
-  return fetchWithAuth<ActivityTemplate[]>(
-    `/curriculum/templates${query ? `?${query}` : ''}`
-  );
-}
-
-/**
- * Get a single activity template by ID
- */
-export async function getActivityTemplate(id: string): Promise<ActivityTemplate> {
-  return fetchWithAuth<ActivityTemplate>(`/curriculum/templates/${id}`);
-}
-
-/**
- * Create a new activity template
- */
-export async function createActivityTemplate(
-  data: CreateActivityTemplate
-): Promise<ActivityTemplate> {
-  return fetchWithAuth<ActivityTemplate>('/curriculum/templates', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update an existing activity template
- */
-export async function updateActivityTemplate(
-  id: string,
-  data: UpdateActivityTemplate
-): Promise<ActivityTemplate> {
-  return fetchWithAuth<ActivityTemplate>(`/curriculum/templates/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete an activity template
- */
-export async function deleteActivityTemplate(id: string): Promise<void> {
-  return fetchWithAuth<void>(`/curriculum/templates/${id}`, {
-    method: 'DELETE',
-  });
-}
-
-/**
- * Instantiate a template with variables
- */
-export async function instantiateTemplate(
-  data: InstantiateTemplate
-): Promise<Article> {
-  return fetchWithAuth<Article>('/curriculum/templates/instantiate', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
 }
 
 // ============================================================================

@@ -178,7 +178,6 @@ Every activity has:
   };
   config: ActivityConfig; // Type-specific config
   is_published: boolean;
-  template_id?: string;
   created_at: string;
   updated_at: string;
 }

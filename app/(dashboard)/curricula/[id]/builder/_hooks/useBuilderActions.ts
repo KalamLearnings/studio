@@ -4,7 +4,7 @@ import * as React from "react";
 import type { TreeNode } from "@/components/builder/curriculum-tree";
 import type { Letter } from "@/lib/hooks/useLetters";
 import type { LetterForm, TopicType, Haraka } from "@/components/builder/letter-selector-modal";
-import type { Topic, Node, Article, ActivityTemplate } from "@/lib/schemas/curriculum";
+import type { Topic, Node, Article } from "@/lib/schemas/curriculum";
 import {
   useCreateTopic,
   useUpdateTopic,
@@ -23,7 +23,6 @@ import {
 } from "@/lib/hooks/useActivities";
 import { useReorderTopics } from "@/lib/hooks/useTopics";
 import { reorderArticles } from "@/lib/api/curricula";
-import { useInstantiateTemplate } from "@/lib/hooks/useTemplates";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { NewActivityState } from "./useTreeState";
@@ -61,7 +60,6 @@ export function useBuilderActions({
   const deleteActivity = useDeleteActivity();
   const moveActivity = useMoveActivity();
   const reorderTopics = useReorderTopics();
-  const instantiateTemplate = useInstantiateTemplate();
   const queryClient = useQueryClient();
 
   // Modal state
@@ -162,22 +160,6 @@ export function useBuilderActions({
       setPendingTopicId(null);
     },
     [pendingParentId, pendingTopicId, setNewActivity, clearSelection]
-  );
-
-  const handleSelectTemplate = React.useCallback(
-    (template: ActivityTemplate, variables: Record<string, string>) => {
-      if (!pendingParentId) return;
-
-      instantiateTemplate.mutate({
-        template_id: template.id,
-        variables,
-        node_id: pendingParentId,
-      });
-
-      setPendingParentId(null);
-      setPendingTopicId(null);
-    },
-    [pendingParentId, instantiateTemplate]
   );
 
   const handleSaveNewActivity = React.useCallback(
@@ -426,7 +408,6 @@ export function useBuilderActions({
     handleConfirmAddNode,
     handleAddActivity,
     handleSelectActivityType,
-    handleSelectTemplate,
     handleSaveNewActivity,
     handleSaveActivity,
     handleCancelNewActivity,

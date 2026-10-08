@@ -93,7 +93,38 @@ export type BreakVariant =
   | "dot_tapping"
   | "coloring"
   | "memory_game"
-  | "tap_shapes";
+  | "tap_shapes"
+  | "odd_one_out"
+  | "attribute_tap"
+  | "match_two"
+  | "pattern_completion";
+
+export type OddAttribute = "shape" | "color";
+
+export type BreakColorName =
+  | "red"
+  | "orange"
+  | "yellow"
+  | "green"
+  | "blue"
+  | "purple"
+  | "pink";
+
+export type BreakContentKind = "letter" | "word" | "image" | "audio";
+
+export interface BreakContentItem {
+  id: string;
+  kind: BreakContentKind;
+  letter?: {
+    letterId: string;
+    form: "isolated" | "initial" | "medial" | "final";
+    haraka?: string;
+    display?: string;
+  };
+  word?: { wordId?: string; text?: string };
+  image?: { assetId?: string; url?: string; path?: string };
+  audio?: { assetId?: string; url?: string };
+}
 
 // Break activity config
 export interface BreakTimeMiniGameConfig extends ActivityConfig {
@@ -105,6 +136,19 @@ export interface BreakTimeMiniGameConfig extends ActivityConfig {
   targetShape?: ShapeType;
   targetCount?: number;
   totalShapes?: number;
+  oddAttribute?: OddAttribute;
+  commonShape?: ShapeType;
+  oddShape?: ShapeType;
+  commonColor?: BreakColorName;
+  oddColor?: BreakColorName;
+  groupCount?: number;
+  matchShape?: ShapeType;
+  matchColor?: BreakColorName;
+  patternColors?: BreakColorName[];
+  groupItem?: BreakContentItem;
+  oddItem?: BreakContentItem;
+  matchItem?: BreakContentItem;
+  distractors?: BreakContentItem[];
 }
 
 // Intro activity config

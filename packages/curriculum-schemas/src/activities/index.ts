@@ -47,7 +47,9 @@ export * from './activity_request';
 export * from './content_with_cards';
 export * from './i_spy';
 export * from './sound_blend';
+export * from './word_split_blend';
 export * from './drive_to_sukoon';
+export * from './drive_to_shadda';
 export * from './drag_haraka_to_word';
 export * from './camel_narration';
 
@@ -74,7 +76,9 @@ import { ActivityRequestActivitySchema } from './activity_request';
 import { ContentWithCardsActivitySchema } from './content_with_cards';
 import { ISpyActivitySchema } from './i_spy';
 import { SoundBlendActivitySchema } from './sound_blend';
+import { WordSplitBlendActivitySchema } from './word_split_blend';
 import { DriveToSukoonActivitySchema } from './drive_to_sukoon';
+import { DriveToShaddaActivitySchema } from './drive_to_shadda';
 import { DragHarakaToWordActivitySchema } from './drag_haraka_to_word';
 import { CamelNarrationActivitySchema } from './camel_narration';
 
@@ -101,7 +105,9 @@ import { ActivityRequestConfigSchema } from './activity_request';
 import { ContentWithCardsConfigSchema } from './content_with_cards';
 import { ISpyConfigSchema } from './i_spy';
 import { SoundBlendConfigSchema } from './sound_blend';
+import { WordSplitBlendConfigSchema } from './word_split_blend';
 import { DriveToSukoonConfigSchema } from './drive_to_sukoon';
+import { DriveToShaddaConfigSchema } from './drive_to_shadda';
 import { DragHarakaToWordConfigSchema } from './drag_haraka_to_word';
 import { CamelNarrationConfigSchema } from './camel_narration';
 
@@ -144,7 +150,9 @@ export const ActivitySchema = z.discriminatedUnion('type', [
   ContentWithCardsActivitySchema,
   ISpyActivitySchema,
   SoundBlendActivitySchema,
+  WordSplitBlendActivitySchema,
   DriveToSukoonActivitySchema,
+  DriveToShaddaActivitySchema,
   DragHarakaToWordActivitySchema,
   CamelNarrationActivitySchema,
 ]);
@@ -177,7 +185,9 @@ const ACTIVITY_CONFIG_SCHEMAS = {
   content_with_cards: ContentWithCardsConfigSchema,
   i_spy: ISpyConfigSchema,
   sound_blend: SoundBlendConfigSchema,
+  word_split_blend: WordSplitBlendConfigSchema,
   drive_to_sukoon: DriveToSukoonConfigSchema,
+  drive_to_shadda: DriveToShaddaConfigSchema,
   drag_haraka_to_word: DragHarakaToWordConfigSchema,
   camel_narration: CamelNarrationConfigSchema,
 } as const;

@@ -12,7 +12,32 @@ import type { HarakaType } from '@kalam/curriculum-schemas';
 // Base types
 export type ContentType = 'letter' | 'word' | 'image';
 export type LetterPosition = 'isolated' | 'initial' | 'medial' | 'final';
-export type BreakVariant = 'tracing_lines' | 'dot_tapping' | 'coloring' | 'memory_game' | 'tap_shapes';
+export type BreakVariant =
+  | 'tracing_lines'
+  | 'dot_tapping'
+  | 'coloring'
+  | 'memory_game'
+  | 'tap_shapes'
+  | 'odd_one_out'
+  | 'attribute_tap'
+  | 'match_two'
+  | 'pattern_completion';
+export type OddAttribute = 'shape' | 'color';
+export type BreakColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink';
+
+export interface BreakContentItem {
+  id: string;
+  kind: 'letter' | 'word' | 'image' | 'audio';
+  letter?: {
+    letterId: string;
+    form: 'isolated' | 'initial' | 'medial' | 'final';
+    haraka?: string;
+    display?: string;
+  };
+  word?: { wordId?: string; text?: string };
+  image?: { assetId?: string; url?: string; path?: string };
+  audio?: { assetId?: string; url?: string };
+}
 export type WritingMode = 'guided' | 'freehand';
 export type HamzaPosition = 'above' | 'below' | 'on_line';
 export type { HarakaType };
@@ -117,10 +142,26 @@ export interface BreakTimeMiniGameConfig {
   // Memory Game
   cardCount?: number;
   pairCount?: number; // deprecated, use cardCount
-  // Tap Shapes (tap all target shapes)
+  // Tap Shapes (tap all target shapes) and attribute_tap
   targetShape?: ShapeType;
   targetCount?: number;
   totalShapes?: number;
+  // Odd one out
+  oddAttribute?: OddAttribute;
+  commonShape?: ShapeType;
+  oddShape?: ShapeType;
+  commonColor?: BreakColorName;
+  oddColor?: BreakColorName;
+  groupCount?: number;
+  // Match two
+  matchShape?: ShapeType;
+  matchColor?: BreakColorName;
+  // Pattern completion. Last entry is the answer.
+  patternColors?: BreakColorName[];
+  groupItem?: BreakContentItem;
+  oddItem?: BreakContentItem;
+  matchItem?: BreakContentItem;
+  distractors?: BreakContentItem[];
 }
 
 /**
@@ -355,6 +396,17 @@ export interface SoundSegment {
   duration: SoundDuration;
 }
 
+export interface DriveToShaddaConfig {
+  /** The word, as a curriculum_words reference. */
+  word: {
+    wordId?: string;
+    /** The Arabic word, fully vowelled, carrying exactly one shadda. */
+    text: string;
+  };
+  /** How long the red light holds the car, in milliseconds. */
+  holdMs?: number;
+}
+
 export interface DriveToSukoonConfig {
   /** The word, as a curriculum_words reference. */
   word: {
@@ -365,6 +417,24 @@ export interface DriveToSukoonConfig {
   };
   /** Show the stop sign above the sukoon letter on a correct release */
   showStopSign?: boolean;
+}
+
+export interface WordSplitBlendChunk {
+  text: string;
+  audio_url?: string;
+}
+
+export interface WordSplitBlendConfig {
+  /** Full vowelled Arabic word */
+  word: string;
+  /** Optional curriculum_words id */
+  wordId?: string;
+  /** Chunks in reading order (2-6) */
+  chunks: WordSplitBlendChunk[];
+  /** Full-word audio */
+  wordAudioUrl?: string;
+  transliteration?: string;
+  meaning?: string;
 }
 
 export interface SoundBlendConfig {
@@ -524,7 +594,9 @@ export type ActivityConfig =
   | SlingshotConfig
   | ISpyConfig
   | SoundBlendConfig
+  | WordSplitBlendConfig
   | DriveToSukoonConfig
+  | DriveToShaddaConfig
   | MatchPairsConfig
   | CamelNarrationConfig;
 
@@ -555,7 +627,9 @@ export type ActivityConfigMap = {
   slingshot: SlingshotConfig;
   i_spy: ISpyConfig;
   sound_blend: SoundBlendConfig;
+  word_split_blend: WordSplitBlendConfig;
   drive_to_sukoon: DriveToSukoonConfig;
+  drive_to_shadda: DriveToShaddaConfig;
   match_pairs: MatchPairsConfig;
   camel_narration: CamelNarrationConfig;
 };

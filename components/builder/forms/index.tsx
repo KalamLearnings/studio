@@ -26,7 +26,9 @@ import { ActivityRequestForm } from "./ActivityRequestForm";
 import { DragHamzaToLetterForm } from "./DragHamzaToLetterForm";
 import { ISpyActivityForm } from "./ISpyActivityForm";
 import { SoundBlendActivityForm } from "./SoundBlendActivityForm";
+import { WordSplitBlendForm } from "./WordSplitBlendForm";
 import { DriveToSukoonActivityForm } from './DriveToSukoonActivityForm';
+import { DriveToShaddaActivityForm } from './DriveToShaddaActivityForm';
 import { ContentWithCardsActivityForm } from "./ContentWithCardsActivityForm";
 import { MatchPairsActivityForm } from "./MatchPairsActivityForm";
 
@@ -56,6 +58,7 @@ export { ActivityRequestForm } from "./ActivityRequestForm";
 export { DragHamzaToLetterForm } from "./DragHamzaToLetterForm";
 export { ISpyActivityForm } from "./ISpyActivityForm";
 export { SoundBlendActivityForm } from "./SoundBlendActivityForm";
+export { WordSplitBlendForm } from "./WordSplitBlendForm";
 export { ContentWithCardsActivityForm } from "./ContentWithCardsActivityForm";
 export { MatchPairsActivityForm } from "./MatchPairsActivityForm";
 
@@ -272,7 +275,9 @@ const activityFormComponents: Partial<Record<ActivityType, FormComponent>> = {
   drag_hamza_to_letter: DragHamzaToLetterForm,
   i_spy: ISpyActivityForm,
   sound_blend: SoundBlendActivityForm,
+  word_split_blend: WordSplitBlendForm,
   drive_to_sukoon: DriveToSukoonActivityForm,
+  drive_to_shadda: DriveToShaddaActivityForm,
   match_pairs: MatchPairsActivityForm,
 
   // Target letter + distractor activities (using shared form)

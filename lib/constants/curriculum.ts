@@ -99,7 +99,9 @@ export const ACTIVITY_TYPE_CATEGORIES: Record<ActivityTypeString, ActivityCatego
   slingshot: 'misc',
   i_spy: 'tap',
   sound_blend: 'learning',
+  word_split_blend: 'learning',
   drive_to_sukoon: 'learning',
+  drive_to_shadda: 'learning',
   match_pairs: 'drag',
 };
 
@@ -169,7 +171,9 @@ export const ACTIVITY_TYPES: { value: string; label: string }[] = [
   { value: 'slingshot', label: 'Slingshot Game' },
   { value: 'i_spy', label: 'I Spy (Find Letters)' },
   { value: 'sound_blend', label: 'Sound Blending' },
+  { value: 'word_split_blend', label: 'Word Split & Blend' },
   { value: 'drive_to_sukoon', label: 'Drive to Sukoon' },
+  { value: 'drive_to_shadda', label: 'Shadda Racetrack' },
   { value: 'match_pairs', label: 'Match Pairs (Draw Lines)' },
   { value: 'camel_narration', label: 'Camel Mascot Narration' },
 ];
@@ -221,7 +225,9 @@ export const ACTIVITY_ICONS: Record<string, string> = {
   slingshot: '🎯',
   i_spy: '👁️',
   sound_blend: '🐢',
+  word_split_blend: '🧩',
   drive_to_sukoon: '🚗',
+  drive_to_shadda: '🚦',
   match_pairs: '🔗',
   camel_narration: '🐪',
 };

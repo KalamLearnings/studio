@@ -12,8 +12,6 @@ import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const VOICE_TAGS = [
-  // Language
-  "[arabic]",
   // Emotions & Tones (for kids)
   "[excited]",
   "[happy]",

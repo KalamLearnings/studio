@@ -7,12 +7,15 @@ import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { EnvironmentBanner } from "./environment-banner";
 import { EnvironmentLoginModal } from "./environment-login-modal";
+import { NoAccessScreen } from "./no-access-screen";
 import {
   useEnvironmentStore,
   getPersistedEnvironment,
   type Environment,
 } from "@/lib/stores/environmentStore";
 import { getClientForEnv } from "@/lib/supabase/client";
+
+const STAFF_ROLE = "staff";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -26,6 +29,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
 
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [isStaff, setIsStaff] = React.useState(false);
   const [envReady, setEnvReady] = React.useState(false);
 
   // Environment login modal state
@@ -46,19 +50,32 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
   React.useEffect(() => {
     if (!envReady) return;
 
+    let cancelled = false;
     setLoading(true);
     setUser(null);
+    setIsStaff(false);
 
     const supabase = getClientForEnv(environment);
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (cancelled) return;
       if (!user) {
         router.push("/login");
         return;
       }
+      const { data: claimsData } = await supabase.auth.getClaims();
+      if (cancelled) return;
+      setIsStaff(claimsData?.claims?.app_metadata?.role === STAFF_ROLE);
       setUser(user);
       setLoading(false);
-    });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router, environment, envReady]);
 
   // Check if target environment has a valid session
@@ -116,6 +133,10 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
         <div className="text-muted-foreground">Loading...</div>
       </div>
     );
+  }
+
+  if (!isStaff) {
+    return <NoAccessScreen email={user?.email} onSignOut={handleSignOut} />;
   }
 
   return (

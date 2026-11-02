@@ -9,6 +9,18 @@
 import { getPersistedEnvironment, getConfigForEnvironment } from '@/lib/stores/environmentStore';
 import { getClientForEnv } from '@/lib/supabase/client';
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export async function fetchWithAuth<T>(
   path: string,
   options: RequestInit = {}
@@ -28,8 +40,13 @@ export async function fetchWithAuth<T>(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(error.message || `HTTP ${res.status}`);
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    const envelope = body?.error && typeof body.error === 'object' ? body.error : undefined;
+    throw new ApiError(
+      body?.message || envelope?.message || `HTTP ${res.status}`,
+      res.status,
+      envelope?.code ?? body?.code,
+    );
   }
 
   const json = await res.json();

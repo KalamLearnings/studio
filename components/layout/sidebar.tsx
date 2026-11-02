@@ -13,6 +13,7 @@ import {
   Gamepad2,
   Ticket,
   ShoppingBag,
+  Users,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { title: "Games", href: "/games", icon: Gamepad2 },
   { title: "Promos", href: "/promo-codes", icon: Ticket },
   { title: "Shop", href: "/shop-items", icon: ShoppingBag },
+  { title: "Team", href: "/team", icon: Users },
 ];
 
 const bottomNavItems: NavItem[] = [

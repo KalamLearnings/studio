@@ -19,6 +19,7 @@ export interface StaffMember {
 export interface AddStaffMemberResult {
   member: StaffMember;
   created: boolean;
+  alreadyStaff: boolean;
 }
 
 export type StaffErrorCode =

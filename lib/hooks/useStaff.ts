@@ -56,19 +56,12 @@ export function useAddStaffMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (email: string) => {
-      const normalized = normalizeEmail(email);
-      const existing = queryClient.getQueryData<StaffMember[]>(STAFF_QUERY_KEY);
-      const wasMember =
-        existing?.some((m) => normalizeEmail(m.email) === normalized) ?? false;
-      const result = await addStaffMember(normalized);
-      return { ...result, wasMember };
-    },
-    onSuccess: ({ created, wasMember }) => {
+    mutationFn: (email: string) => addStaffMember(normalizeEmail(email)),
+    onSuccess: ({ created, alreadyStaff }) => {
       queryClient.invalidateQueries({ queryKey: STAFF_QUERY_KEY });
       if (created) {
         toast.success('Added. They can sign in to Studio with this email.');
-      } else if (wasMember) {
+      } else if (alreadyStaff) {
         toast.info('Already on the team.');
       } else {
         toast.success(

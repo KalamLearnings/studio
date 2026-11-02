@@ -7,6 +7,7 @@ import type { ActivityConfig } from "@/components/builder/forms/types";
 interface FormPanelProps {
   /** Remounts the form when the edited entity changes, resetting its state. */
   formKey?: string;
+  activityId?: string;
   activityType?: string;
   config?: ActivityConfig;
   instruction?: string;
@@ -20,6 +21,7 @@ interface FormPanelProps {
 
 export function FormPanel({
   formKey,
+  activityId,
   activityType,
   config,
   instruction,
@@ -34,6 +36,7 @@ export function FormPanel({
     <div className="flex-1 overflow-hidden bg-background">
       <ActivityForm
         key={formKey}
+        activityId={activityId}
         activityType={activityType}
         config={config}
         instruction={instruction}

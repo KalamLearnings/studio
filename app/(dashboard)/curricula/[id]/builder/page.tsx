@@ -196,6 +196,7 @@ export default function BuilderPage() {
 
         <FormPanel
           formKey={newActivity ? "new-activity" : selectedActivity?.id}
+          activityId={newActivity ? undefined : selectedActivity?.id}
           activityType={formActivityType}
           config={newActivity ? undefined : (selectedActivity?.config as Record<string, unknown> | undefined)}
           instruction={newActivity ? undefined : selectedActivity?.instruction?.en}

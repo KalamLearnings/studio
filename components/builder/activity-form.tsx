@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { AudioInputField } from "@/components/audio/AudioInputField";
+import { TranslationsPanel } from "./TranslationsPanel";
 import {
   getActivityFormComponent,
   getActivityFormOptions,
@@ -23,6 +24,8 @@ import { ConditionalAudioSection } from "./forms/shared/ConditionalAudioSection"
 import { DEFAULT_VOICE } from "@/lib/constants/voices";
 
 interface ActivityFormProps {
+  /** Id of the saved activity being edited (absent when creating). */
+  activityId?: string;
   activityType?: string;
   config?: ActivityConfig;
   instruction?: string;
@@ -45,6 +48,7 @@ interface ActivityFormProps {
 }
 
 export function ActivityForm({
+  activityId,
   activityType,
   config = {},
   instruction: initialInstruction = "",
@@ -233,21 +237,24 @@ export function ActivityForm({
         <div className="p-4 space-y-4">
           {/* Instruction with TTS - hide for certain activity types */}
           {!formOptions.hideInstruction && (
-            <AudioInputField
-              mode="instruction"
-              value={instruction}
-              onChange={setInstruction}
-              letterData={letterData}
-              required={false}
-              existingAudioUrl={existingAudioUrl}
-              selectedVoice={selectedVoice}
-              onVoiceChange={setSelectedVoice}
-              // Regenerate is only meaningful when editing; on create the backend
-              // always generates, so hide the checkbox.
-              showRegenerate={!isNew}
-              regenerateAudio={regenerateAudio}
-              onRegenerateAudioChange={setRegenerateAudio}
-            />
+            <div className="space-y-2">
+              <AudioInputField
+                mode="instruction"
+                value={instruction}
+                onChange={setInstruction}
+                letterData={letterData}
+                required={false}
+                existingAudioUrl={existingAudioUrl}
+                selectedVoice={selectedVoice}
+                onVoiceChange={setSelectedVoice}
+                // Regenerate is only meaningful when editing; on create the backend
+                // always generates, so hide the checkbox.
+                showRegenerate={!isNew}
+                regenerateAudio={regenerateAudio}
+                onRegenerateAudioChange={setRegenerateAudio}
+              />
+              {!isNew && activityId && <TranslationsPanel activityId={activityId} />}
+            </div>
           )}
 
           {/* Activity-specific form */}

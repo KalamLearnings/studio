@@ -396,7 +396,7 @@ export interface ActivityByType {
   node_id: string;
   sequence_number: number;
   type: string;
-  instruction: { en: string; ar?: string; audio_url?: string };
+  instruction: { en: string; audio_url?: string };
   config: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -439,7 +439,7 @@ export interface GenerateTopicRequest {
 
 export interface GeneratedActivity {
   type: string;
-  instruction: { en: string; ar?: string };
+  instruction: { en: string };
   config: Record<string, unknown>;
 }
 

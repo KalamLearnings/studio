@@ -93,7 +93,6 @@ export function useSaveGeneratedTopic() {
             type: genActivity.type as any,
             instruction: {
               en: genActivity.instruction.en || '',
-              ar: genActivity.instruction.ar || '',
             },
             config: genActivity.config || {},
             // Backend assigns sequence_number (max+1); sequential awaited loop

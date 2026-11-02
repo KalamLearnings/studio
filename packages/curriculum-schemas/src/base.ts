@@ -46,6 +46,22 @@ export const LocalizedTextSchema = z.object({
 
 export type LocalizedText = z.infer<typeof LocalizedTextSchema>;
 
+/**
+ * Spoken instruction shown to the student (English only).
+ */
+export const InstructionSchema = z.object({
+  en: z.string()
+    .min(1, 'English text required')
+    .describe('English text'),
+
+  audio_url: z.string()
+    .url()
+    .optional()
+    .describe('URL to audio file (TTS-generated or uploaded)'),
+});
+
+export type Instruction = z.infer<typeof InstructionSchema>;
+
 // ============================================================================
 // CONDITIONAL AUDIO SYSTEM
 // ============================================================================
@@ -416,7 +432,7 @@ export const BaseActivitySchema = z.object({
     .positive()
     .describe('Order within the node (1, 2, 3...)'),
 
-  instruction: LocalizedTextSchema
+  instruction: InstructionSchema
     .describe('Instructions shown to the student'),
 
   created_at: z.string()

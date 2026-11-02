@@ -33,7 +33,6 @@ export const LocalizedTextSchema = z.object({
 // audio can be auto-generated on save.
 export const InstructionSchema = z.object({
   en: z.string().optional(),
-  ar: z.string().optional(),
   // Server-controlled: the backend owns instruction-audio generation and writes
   // this on save. Clients send intent (text + voiceId) and never an audio_url.
   audio_url: z.string().optional(),

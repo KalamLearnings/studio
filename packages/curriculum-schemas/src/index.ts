@@ -14,6 +14,7 @@
 export {
   // Schemas
   LocalizedTextSchema,
+  InstructionSchema,
   ActivityTypeSchema,
   BaseActivitySchema,
   ColorSchema,
@@ -54,6 +55,7 @@ export {
 
   // Types
   type LocalizedText,
+  type Instruction,
   type ActivityType,
   type BaseActivity,
   type LetterPosition,

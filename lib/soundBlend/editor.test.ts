@@ -9,8 +9,9 @@ import {
   currentEnding,
   previewV1Segments,
 } from './editor';
-import { buildWordPreview } from './preview';
-import { wordEditOf, type SoundBlendConfig } from './config';
+import { buildWordPreview } from '../blendWord/preview';
+import { wordEditOf } from '../blendWord/config';
+import type { SoundBlendConfig } from './config';
 
 const v1 = (c: SoundBlendConfig) => previewV1Segments(c, buildWordPreview(c.wordRef?.text ?? c.word ?? '', wordEditOf(c)));
 const sounds = (c: SoundBlendConfig) => v1(c).map((s) => s.sound).join('');

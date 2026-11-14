@@ -4,8 +4,8 @@ import * as React from "react";
 import { Scissors, Link2, RotateCcw, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import type { BlendFormPreview, PlainIssue, PreviewUnit } from "@/lib/soundBlend/preview";
-import { unitLetters } from "@/lib/soundBlend/override";
+import type { BlendFormPreview, PlainIssue, PreviewUnit } from "@/lib/blendWord/preview";
+import { unitLetters } from "@/lib/blendWord/override";
 
 /** The unit's bar, in the app's colours: blue short, sun long (madd), red closed. */
 export function kindBarClass(unit: Pick<PreviewUnit, "kind">): string {

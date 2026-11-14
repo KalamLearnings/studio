@@ -1,19 +1,19 @@
 /**
  * The word editor's "Suggest harakat" request (SB-S2). Glue only: the shapes,
- * messages and the Confirm edit live in lib/soundBlend/harakat.ts.
+ * messages live in lib/blendWord/harakat.ts, the Confirm edit in lib/blendWord/editor.ts.
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { suggestHarakat } from '@/lib/api/words';
-import type { BlendEnding } from '@/lib/soundBlend/config';
+import type { BlendEnding } from '@/lib/blendWord/config';
 import {
   harakatErrorView,
   offerMatchesWord,
   toHarakatOffer,
   type HarakatErrorView,
   type HarakatOffer,
-} from '@/lib/soundBlend/harakat';
+} from '@/lib/blendWord/harakat';
 
 export interface HarakatSuggestionState {
   /** The offer for the word in the editor; null once the author retypes it. */

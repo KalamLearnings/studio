@@ -11,7 +11,7 @@ import {
   type HarakatErrorView,
   type HarakatOffer,
   type HarakatOption,
-} from "@/lib/soundBlend/harakat";
+} from "@/lib/blendWord/harakat";
 import { IssueList, kindBarClass } from "./BlendFormColumn";
 
 interface HarakatSuggestionPanelProps {

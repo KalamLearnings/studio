@@ -26,6 +26,7 @@ describe('parseBlendSaveError', () => {
       details: [{ field: 'config.wordRef.wordId', message: 'no word with id w9' }],
     })!;
     expect(out.general).toEqual(['config.wordRef.wordId: no word with id w9']);
+    expect(out.entries).toEqual([{ field: 'config.wordRef.wordId', message: 'no word with id w9' }]);
   });
 
   it('says something when there are no details', () => {

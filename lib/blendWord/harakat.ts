@@ -19,15 +19,7 @@
  */
 
 import { normaliseBlendText, splitBlendWord, type BlendForm, type BlendIssue } from "@kalam/curriculum-schemas";
-import {
-  CLIENT_WORD_EDIT_KEY,
-  HARAKAT_SOURCE_SUGGESTED_CONFIRMED,
-  sourceWordText,
-  wordEditOf,
-  type BlendEnding,
-  type SoundBlendConfig,
-} from "./config";
-import { changePseudo, changeWord } from "./editor";
+import type { BlendEnding } from "./config";
 import { buildWordPreview, type BlendFormPreview, type PlainIssue, type WordPreview } from "./preview";
 
 // ---------------------------------------------------------------------------
@@ -260,29 +252,5 @@ export const NO_VALID_SUGGESTION_MESSAGE =
   "No reading passed the checks. Add the marks by hand. Any flagged readings are listed below.";
 export const COMPLETE_MESSAGE = "The word already has all its harakat. Nothing to suggest.";
 
-// ---------------------------------------------------------------------------
-// Confirm
-// ---------------------------------------------------------------------------
-
-/**
- * Applies a confirmed reading: its full form becomes the word's text, sent as
- * `wordRef.text` without a `wordId` (as SB-S1's "Use as the word"), so the
- * server resolves or creates the library word and splits it on save. The
- * pseudo-word flag is kept; any override is dropped (it was for the old text).
- * The edit is marked `harakatSource: 'suggested_confirmed'` for the save.
- */
-export function confirmHarakatSuggestion(config: SoundBlendConfig, fullText: string): SoundBlendConfig {
-  const text = normaliseBlendText(fullText);
-  if (!text || text === normaliseBlendText(sourceWordText(config))) return config;
-  const wasPseudo = !!wordEditOf(config)?.isPseudo;
-  const changed = changeWord(config, text);
-  const next = wasPseudo ? changePseudo(changed, true) : changed;
-  return markSuggestedConfirmed(next);
-}
-
-function markSuggestedConfirmed(config: SoundBlendConfig): SoundBlendConfig {
-  return {
-    ...config,
-    [CLIENT_WORD_EDIT_KEY]: { ...wordEditOf(config), harakatSource: HARAKAT_SOURCE_SUGGESTED_CONFIRMED },
-  };
-}
+// The Confirm edit itself is `confirmHarakatSuggestion` of the word editor
+// (editor.ts), bound to each activity type's config mapper.

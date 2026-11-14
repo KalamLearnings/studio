@@ -189,8 +189,8 @@ export const CreateArticleSchema = z.object({
   // Request-only flag: ask the backend to (re)generate instruction audio. The
   // backend always generates on create, so it is only meaningful on update.
   regenerateAudio: z.boolean().optional(),
-  // Request-only, sound_blend v2: word-level choices sent beside `config`
-  // (shape: WordBlendEdit in lib/soundBlend/config.ts). Never stored.
+  // Request-only, blend v2 (sound_blend, word_split_blend): word-level choices sent beside `config`
+  // (shape: WordBlendEdit in lib/blendWord/config.ts). Never stored.
   wordBlendEdit: z.record(z.unknown()).optional(),
 });
 

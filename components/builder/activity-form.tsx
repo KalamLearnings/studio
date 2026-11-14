@@ -20,8 +20,8 @@ import {
   type TopicContext,
 } from "./forms";
 import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
-import { toBlendSaveParts } from "@/lib/soundBlend/config";
-import { BLEND_INVALID } from "@/lib/soundBlend/saveErrors";
+import { toBlendSaveParts } from "@/lib/blendWord/config";
+import { BLEND_INVALID } from "@/lib/blendWord/saveErrors";
 import { ConditionalAudioSection } from "./forms/shared/ConditionalAudioSection";
 import { DEFAULT_VOICE } from "@/lib/constants/voices";
 
@@ -91,7 +91,7 @@ export function ActivityForm({
   // confirm before saving since saving will remove the audio (backend deletes it).
   const [confirmClearAudio, setConfirmClearAudio] = React.useState(false);
   // The last save's refusal, shown inline by forms that understand it
-  // (sound_blend BLEND_INVALID). Cleared on the next config edit.
+  // (the blend forms: BLEND_INVALID). Cleared on the next config edit.
   const [saveError, setSaveError] = React.useState<{ code?: string; details?: unknown } | null>(null);
 
   // Get letter data from topic if available
@@ -132,7 +132,7 @@ export function ActivityForm({
     if (isSaving) return;
     setIsSaving(true);
     try {
-      // sound_blend: the word-level edit leaves config for the body's top level.
+      // Blend v2 (sound_blend, word_split_blend): the word-level edit leaves config for the body's top level.
       const { config: configToSave, wordBlendEdit } = toBlendSaveParts(activityType, localConfig);
       setSaveError(null);
       const saved = await onSave?.({

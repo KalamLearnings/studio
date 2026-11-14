@@ -4,8 +4,8 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "../shared";
-import type { BlendEnding } from "@/lib/soundBlend/config";
-import { checkFullForm, plainIssue, type IssueLike, type WordPreview } from "@/lib/soundBlend/preview";
+import type { BlendEnding } from "@/lib/blendWord/config";
+import { checkFullForm, plainIssue, type IssueLike, type WordPreview } from "@/lib/blendWord/preview";
 import { BlendFormColumn, IssueList } from "./BlendFormColumn";
 
 interface BlendWordPanelProps {

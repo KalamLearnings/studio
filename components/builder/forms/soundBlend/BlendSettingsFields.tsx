@@ -5,14 +5,9 @@ import { cn } from "@/lib/utils";
 import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { FormField } from "../shared";
-import {
-  BLEND_ENDINGS,
-  BLEND_STAGE_ORDER,
-  ENDING_LABELS,
-  STAGE_LABELS,
-  type BlendEnding,
-  type BlendStage,
-} from "@/lib/soundBlend/config";
+import type { BlendEnding } from "@/lib/blendWord/config";
+import { BLEND_STAGE_ORDER, STAGE_LABELS, type BlendStage } from "@/lib/soundBlend/config";
+import { BlendEndingField } from "../blendWord/BlendEndingField";
 
 interface BlendSettingsFieldsProps {
   ending: BlendEnding;
@@ -25,7 +20,7 @@ interface BlendSettingsFieldsProps {
   onStageToggle: (stage: BlendStage, on: boolean) => void;
 }
 
-/** Per-activity settings: the ending form and the stages. */
+/** sound_blend's per-activity settings: the ending form (shared) and the stages. */
 export function BlendSettingsFields({
   ending,
   stages,
@@ -36,27 +31,7 @@ export function BlendSettingsFields({
 }: BlendSettingsFieldsProps) {
   return (
     <>
-      <FormField label="Ending" hint={ENDING_LABELS[ending].hint}>
-        <div className="flex gap-3">
-          {BLEND_ENDINGS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => onEndingChange(value)}
-              className={cn(
-                "flex min-w-[120px] flex-col items-center gap-1 rounded-lg border-2 px-4 py-2 transition-all",
-                ending === value ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
-              )}
-            >
-              <span className="font-medium">{ENDING_LABELS[value].label}</span>
-              <span className="font-arabic text-lg">{value === "pausal" ? "كِتَابْ" : "كِتَابٌ"}</span>
-            </button>
-          ))}
-        </div>
-        {endingWarning && (
-          <p className="text-sm text-amber-700 dark:text-amber-400">{endingWarning}</p>
-        )}
-      </FormField>
+      <BlendEndingField ending={ending} warning={endingWarning} onChange={onEndingChange} />
 
       <FormField
         label="Stages"

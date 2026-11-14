@@ -2,45 +2,30 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { FormField, TextInput, LetterSelector, Checkbox, WordSelector } from "./shared";
+import { FormField, TextInput, LetterSelector, Checkbox } from "./shared";
 import { useLetters, resolveLetterReference } from "@/lib/hooks/useLetters";
-import { useTopics } from "@/lib/hooks/useTopics";
+import { useBlendWord } from "@/lib/hooks/useBlendWord";
 import { applyHaraka } from "@/lib/utils/letterReference";
 import { detectLetterDuration } from "@/lib/utils/soundBlend";
 import {
   clearBlendFields,
-  ENDING_LABELS,
   resolveStages,
-  sourceWordText,
   toggleStage,
   validateStages,
-  wordEditOf,
   type BlendContentType,
   type BlendSpeed,
   type SoundBlendConfig,
   type SoundDuration,
   type SoundSegment,
 } from "@/lib/soundBlend/config";
-import { buildWordPreview, hasTanween } from "@/lib/soundBlend/preview";
-import { getEndingOrderWarning } from "@/lib/soundBlend/ending";
-import { parseBlendSaveError } from "@/lib/soundBlend/saveErrors";
-import { confirmHarakatSuggestion, harakatSuggestionReason } from "@/lib/soundBlend/harakat";
-import { useHarakatSuggestion } from "@/lib/hooks/useHarakatSuggestion";
 import {
-  changeEnding,
-  changeOverride,
-  changePseudo,
   changeSpeed,
   changeStages,
-  changeWord,
-  currentEnding,
-  mergeFormUnits,
   previewV1Segments,
-  splitFormUnit,
+  soundBlendWordEditor,
 } from "@/lib/soundBlend/editor";
-import { BlendWordPanel } from "./soundBlend/BlendWordPanel";
+import { BlendWordSection } from "./blendWord/BlendWordSection";
 import { BlendSettingsFields } from "./soundBlend/BlendSettingsFields";
-import { HarakatSuggestionPanel } from "./soundBlend/HarakatSuggestionPanel";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
 const DURATION_LABELS: Record<SoundDuration, { label: string; icon: string; color: string }> = {
@@ -71,13 +56,10 @@ export function SoundBlendActivityForm({
   saveError,
 }: BaseActivityFormProps<SoundBlendConfig>) {
   const { letters } = useLetters();
-  const { data: topics } = useTopics(topic?.curriculum_id ?? null);
 
   const cfg = React.useMemo<SoundBlendConfig>(() => config ?? {}, [config]);
   const contentType: BlendContentType = cfg.contentType || "word";
   const word = cfg.word || "";
-  const wordEdit = wordEditOf(cfg);
-  const sourceText = sourceWordText(cfg);
 
   // In letter mode the picked letter is stored only as the `word` glyph (e.g.
   // "مَ"). Resolve it back to a LetterReference so the picker pre-selects when
@@ -94,34 +76,17 @@ export function SoundBlendActivityForm({
   const transliteration = cfg.transliteration || "";
   const meaning = cfg.meaning || "";
 
-  // The word editor reads everything from pure modules (lib/soundBlend).
-  const preview = React.useMemo(
-    () => (contentType === "word" && sourceText ? buildWordPreview(sourceText, wordEdit) : null),
-    [contentType, sourceText, wordEdit]
-  );
-  const ending = currentEnding(cfg);
+  // The word editor reads everything from pure modules (lib/blendWord, lib/soundBlend).
+  const blend = useBlendWord(cfg, { enabled: contentType === "word", topic, saveError });
+  const { preview, ending, endingWarning } = blend;
   const stages = resolveStages(cfg);
   const stageProblems = cfg.stages ? validateStages(cfg.stages) : [];
-  const endingWarning = React.useMemo(
-    () =>
-      preview
-        ? getEndingOrderWarning({ ending, topic, topics, wordHasTanween: hasTanween(preview) })
-        : null,
-    [preview, ending, topic, topics]
-  );
 
   // v1 preview only: derived from the splitter for v2 rows, never saved.
   const segments: SoundSegment[] = React.useMemo(
     () => (contentType === "word" ? previewV1Segments(cfg, preview) : cfg.segments || []),
     [contentType, cfg, preview]
   );
-  const blendSaveErrors = React.useMemo(() => parseBlendSaveError(saveError), [saveError]);
-
-  // Harakat suggestion (SB-S2): offered for missing marks, or a pausal-only
-  // word in a full-ending activity. Nothing changes until Confirm.
-  const harakatReason = harakatSuggestionReason(preview, ending);
-  const harakat = useHarakatSuggestion(sourceText, ending);
-  const showHarakat = !!(harakatReason || harakat.offer || harakat.error || harakat.pending);
 
   const updateConfig = React.useCallback(
     (updates: Partial<SoundBlendConfig>) => {
@@ -224,60 +189,22 @@ export function SoundBlendActivityForm({
       )}
 
       {contentType === "word" && (
-        <WordSelector
-          value={sourceText}
-          onChange={(value, wordData) =>
-            onChange(changeWord(cfg, value, wordData ? { id: wordData.id, is_pseudo: wordData.is_pseudo } : undefined))
+        <BlendWordSection
+          config={cfg}
+          editor={soundBlendWordEditor}
+          state={blend}
+          onChange={onChange}
+          onWordChange={(value, wordData) =>
+            onChange(
+              soundBlendWordEditor.changeWord(
+                cfg,
+                value,
+                wordData ? { id: wordData.id, is_pseudo: wordData.is_pseudo } : undefined
+              )
+            )
           }
-          label="Arabic Word"
-          required
-          placeholder="Type to search word library..."
+          generalErrors={blend.saveErrors?.general ?? []}
         />
-      )}
-
-      {contentType === "word" && showHarakat && (
-        <HarakatSuggestionPanel
-          reason={harakatReason ?? "Ask for the word's harakat."}
-          disabledReason={harakat.disabledReason}
-          pending={harakat.pending}
-          offer={harakat.offer}
-          error={harakat.error}
-          formLabel={ENDING_LABELS[ending].label}
-          onSuggest={harakat.request}
-          onConfirm={(text) => {
-            onChange(confirmHarakatSuggestion(cfg, text));
-            harakat.dismiss();
-          }}
-          onDismiss={harakat.dismiss}
-        />
-      )}
-
-      {preview && (
-        <FormField
-          label="Syllables"
-          hint="Split by the shared rules, the same as the server. The server splits again on save."
-        >
-          <BlendWordPanel
-            preview={preview}
-            ending={ending}
-            sourceText={sourceText}
-            isPseudo={!!wordEdit?.isPseudo}
-            serverIssues={blendSaveErrors?.byForm}
-            onUseFullForm={(text) => onChange(changeWord(cfg, text))}
-            onPseudoChange={(on) => onChange(changePseudo(cfg, on))}
-            onSplit={(form, i, at) => onChange(splitFormUnit(cfg, form, i, at))}
-            onMerge={(form, i) => onChange(mergeFormUnits(cfg, form, i))}
-            onReset={(form) => onChange(changeOverride(cfg, form, null))}
-          />
-        </FormField>
-      )}
-
-      {blendSaveErrors && blendSaveErrors.general.length > 0 && (
-        <ul className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive">
-          {blendSaveErrors.general.map((m) => (
-            <li key={m}>The server refused the save: {m}</li>
-          ))}
-        </ul>
       )}
 
       {contentType === "word" && (
@@ -286,7 +213,7 @@ export function SoundBlendActivityForm({
           stages={stages}
           endingWarning={endingWarning}
           stageProblems={stageProblems}
-          onEndingChange={(value) => onChange(changeEnding(cfg, value))}
+          onEndingChange={(value) => onChange(soundBlendWordEditor.changeEnding(cfg, value))}
           onStageToggle={(stage, on) => onChange(changeStages(cfg, toggleStage(stages, stage, on)))}
         />
       )}

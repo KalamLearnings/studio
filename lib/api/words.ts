@@ -3,7 +3,7 @@
  */
 
 import { fetchWithAuth } from '@/lib/api/client';
-import { suggestHarakatRequest, type SuggestHarakatResponse } from '@/lib/soundBlend/harakat';
+import { suggestHarakatRequest, type SuggestHarakatResponse } from '@/lib/blendWord/harakat';
 
 /**
  * `POST /words/suggest-harakat` (staff only, SB-B8). Writes nothing. Throws

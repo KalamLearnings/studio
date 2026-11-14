@@ -6,28 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField, TextInput, WordSelector, AudioPickerField } from "./shared";
 import { parseWordIntoSegments } from "@/lib/utils/soundBlend";
+import { isBlendV2 } from "@/lib/blendWord/config";
+import {
+  convertToWordModel,
+  hasHandMadeChunks,
+  type WordSplitBlendFormConfig,
+  type WordSplitChunk as Chunk,
+} from "@/lib/wordSplitBlend/config";
+import { WordSplitBlendV2Form } from "./wordSplitBlend/WordSplitBlendV2Form";
+import { UseWordModelAction } from "./wordSplitBlend/UseWordModelAction";
 import type { BaseActivityFormProps } from "./types";
 
 const MIN_CHUNKS = 2;
 const MAX_CHUNKS = 6;
-
-interface Chunk {
-  text: string;
-  audio_url?: string;
-}
-
-interface WordSplitBlendFormConfig {
-  word?: string;
-  wordId?: string;
-  chunks?: Chunk[];
-  wordAudioUrl?: string;
-  transliteration?: string;
-  meaning?: string;
-  // Blend v2 (server-written; no authoring UI yet). Kept as read, never dropped.
-  blendVersion?: 2;
-  wordRef?: { wordId: string; text: string };
-  ending?: "pausal" | "full";
-}
 
 /** Compare form: NFKC, strip harakat, tatweel, ZWJ/ZWNJ and whitespace. */
 function normalizeForCompare(text: string): string {
@@ -39,7 +30,18 @@ function normalizeForCompare(text: string): string {
 
 const EMPTY_CHUNKS: Chunk[] = [{ text: "" }, { text: "" }, { text: "" }];
 
-export function WordSplitBlendForm({
+/**
+ * word_split_blend. A v2 row (`blendVersion: 2`) always opens the word-model
+ * form, whose chunks are the server's and read-only; it never opens in the
+ * hand-made chunk editor. A legacy row keeps that editor and saves as before,
+ * unless the author converts it with "Use the word model".
+ */
+export function WordSplitBlendForm(props: BaseActivityFormProps<WordSplitBlendFormConfig>) {
+  if (isBlendV2(props.config)) return <WordSplitBlendV2Form {...props} />;
+  return <LegacyWordSplitBlendForm {...props} />;
+}
+
+function LegacyWordSplitBlendForm({
   config,
   onChange,
 }: BaseActivityFormProps<WordSplitBlendFormConfig>) {
@@ -89,6 +91,11 @@ export function WordSplitBlendForm({
 
   return (
     <div className="space-y-6">
+      <UseWordModelAction
+        hasHandMadeChunks={hasHandMadeChunks(config ?? {})}
+        onConvert={() => onChange(convertToWordModel(config ?? {}))}
+      />
+
       <WordSelector
         value={word}
         onChange={(value, wordData) =>

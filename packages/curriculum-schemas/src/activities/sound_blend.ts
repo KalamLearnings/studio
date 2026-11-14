@@ -65,6 +65,17 @@ export const BlendSpeedSchema = z
 export type BlendSpeed = z.infer<typeof BlendSpeedSchema>;
 
 /**
+ * A word in the library. `wordId` is authoritative; `text` is the word as
+ * written (the server fills it from the library row on save).
+ */
+export const BlendWordReferenceSchema = z.object({
+  wordId: z.string().min(1),
+  text: z.string().min(1),
+});
+
+export type BlendWordReference = z.infer<typeof BlendWordReferenceSchema>;
+
+/**
  * Configuration for Sound Blend activity
  */
 export const SoundBlendConfigSchema = z.object({

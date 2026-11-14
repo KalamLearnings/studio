@@ -134,6 +134,20 @@ describe('toBlendSaveParts (the save body)', () => {
     expect(out).toEqual({ config: { word: 'بَ' } });
   });
 
+  it('sends harakatSource with a v2 row', () => {
+    const out = toBlendSaveParts('sound_blend', {
+      blendVersion: 2,
+      wordRef: { text: 'كِتَابٌ' },
+      [CLIENT_WORD_EDIT_KEY]: { harakatSource: 'suggested_confirmed' },
+    });
+    expect(out.wordBlendEdit).toEqual({ harakatSource: 'suggested_confirmed' });
+  });
+
+  it('keeps only the one harakatSource value the server accepts', () => {
+    expect(compactWordBlendEdit({ harakatSource: 'suggested_confirmed' })).toEqual({ harakatSource: 'suggested_confirmed' });
+    expect(compactWordBlendEdit({ harakatSource: 'typed' as never })).toBeUndefined();
+  });
+
   it('drops an empty edit', () => {
     const out = toBlendSaveParts('sound_blend', { blendVersion: 2, [CLIENT_WORD_EDIT_KEY]: { isPseudo: false } });
     expect(out).toEqual({ config: { blendVersion: 2 } });

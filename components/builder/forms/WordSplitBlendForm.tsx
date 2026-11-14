@@ -23,6 +23,10 @@ interface WordSplitBlendFormConfig {
   wordAudioUrl?: string;
   transliteration?: string;
   meaning?: string;
+  // Blend v2 (server-written; no authoring UI yet). Kept as read, never dropped.
+  blendVersion?: 2;
+  wordRef?: { wordId: string; text: string };
+  ending?: "pausal" | "full";
 }
 
 /** Compare form: NFKC, strip harakat, tatweel, ZWJ/ZWNJ and whitespace. */

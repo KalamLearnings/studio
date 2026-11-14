@@ -11,14 +11,22 @@
  * core/domain/blend/harakat-suggestion.ts). They are parsed defensively: a
  * malformed answer is treated as no suggestion.
  *
- * NOT SENT: the backend defers `harakat_source = 'suggested_confirmed'` on
- * save, and the SB-B3 save contract (core/contracts/sound-blend-save.ts) has no
- * field for it (`wordBlendEdit` is strict). A confirmed suggestion saves as an
- * ordinary new word text until a backend ticket adds that field.
+ * SENT: a confirmed suggestion marks the word edit with
+ * `harakatSource: 'suggested_confirmed'` (SB-B9, the backend's
+ * `wordBlendEdit.harakatSource` in core/contracts/sound-blend-save.ts), which
+ * `toBlendSaveParts` sends beside the config with `blendVersion: 2` only. A
+ * word the author then types or picks by hand starts a fresh edit, without it.
  */
 
 import { normaliseBlendText, splitBlendWord, type BlendForm, type BlendIssue } from "@kalam/curriculum-schemas";
-import { sourceWordText, wordEditOf, type BlendEnding, type SoundBlendConfig } from "./config";
+import {
+  CLIENT_WORD_EDIT_KEY,
+  HARAKAT_SOURCE_SUGGESTED_CONFIRMED,
+  sourceWordText,
+  wordEditOf,
+  type BlendEnding,
+  type SoundBlendConfig,
+} from "./config";
 import { changePseudo, changeWord } from "./editor";
 import { buildWordPreview, type BlendFormPreview, type PlainIssue, type WordPreview } from "./preview";
 
@@ -261,11 +269,20 @@ export const COMPLETE_MESSAGE = "The word already has all its harakat. Nothing t
  * `wordRef.text` without a `wordId` (as SB-S1's "Use as the word"), so the
  * server resolves or creates the library word and splits it on save. The
  * pseudo-word flag is kept; any override is dropped (it was for the old text).
+ * The edit is marked `harakatSource: 'suggested_confirmed'` for the save.
  */
 export function confirmHarakatSuggestion(config: SoundBlendConfig, fullText: string): SoundBlendConfig {
   const text = normaliseBlendText(fullText);
   if (!text || text === normaliseBlendText(sourceWordText(config))) return config;
   const wasPseudo = !!wordEditOf(config)?.isPseudo;
-  const next = changeWord(config, text);
-  return wasPseudo ? changePseudo(next, true) : next;
+  const changed = changeWord(config, text);
+  const next = wasPseudo ? changePseudo(changed, true) : changed;
+  return markSuggestedConfirmed(next);
+}
+
+function markSuggestedConfirmed(config: SoundBlendConfig): SoundBlendConfig {
+  return {
+    ...config,
+    [CLIENT_WORD_EDIT_KEY]: { ...wordEditOf(config), harakatSource: HARAKAT_SOURCE_SUGGESTED_CONFIRMED },
+  };
 }

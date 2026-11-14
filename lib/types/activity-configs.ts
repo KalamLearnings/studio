@@ -435,6 +435,12 @@ export interface WordSplitBlendConfig {
   wordAudioUrl?: string;
   transliteration?: string;
   meaning?: string;
+  /** Blend v2 (written by the server): 2 when the row points at a library word and its split */
+  blendVersion?: 2;
+  /** Blend v2: the library word whose split and audio this activity uses */
+  wordRef?: { wordId: string; text: string };
+  /** Blend v2: which form the activity shows and plays; pausal when absent */
+  ending?: "pausal" | "full";
 }
 
 export interface SoundBlendConfig {

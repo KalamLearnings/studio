@@ -78,7 +78,18 @@ export interface WordBlendEdit {
   isPseudo?: boolean;
   /** Per-form overrides of the split; saved as `override: true`, needs review. */
   override?: Partial<Record<BlendEnding, BlendOverrideUnit[]>>;
+  /**
+   * Set when the word's text is a harakat suggestion the author confirmed
+   * (SB-S2, `confirmHarakatSuggestion`); stored as the blend rows'
+   * `harakat_source`. The only value the server accepts. A new word, typed or
+   * picked, clears it (`changeWord` starts a fresh edit).
+   */
+  harakatSource?: HarakatSource;
 }
+
+/** `wordBlendEdit.harakatSource`: the backend accepts only this value. */
+export type HarakatSource = "suggested_confirmed";
+export const HARAKAT_SOURCE_SUGGESTED_CONFIRMED: HarakatSource = "suggested_confirmed";
 
 /** The client-only config key that holds the word edit until the save. Never sent in `config`. */
 export const CLIENT_WORD_EDIT_KEY = "__wordBlendEdit" as const;
@@ -216,6 +227,7 @@ export function compactWordBlendEdit(edit: WordBlendEdit | undefined): WordBlend
     if (units && units.length > 0) override[form] = units;
   }
   if (Object.keys(override).length > 0) out.override = override;
+  if (edit.harakatSource === HARAKAT_SOURCE_SUGGESTED_CONFIRMED) out.harakatSource = edit.harakatSource;
   return Object.keys(out).length > 0 ? out : undefined;
 }
 

@@ -21,6 +21,8 @@
 
 import { z } from 'zod';
 import { BaseActivitySchema } from '../base';
+import { BlendFormSchema } from '../blend';
+import { BlendWordReferenceSchema } from './sound_blend';
 
 export const WORD_SPLIT_BLEND_MIN_CHUNKS = 2;
 export const WORD_SPLIT_BLEND_MAX_CHUNKS = 6;
@@ -72,6 +74,21 @@ export const WordSplitBlendConfigSchema = z.object({
   meaning: z.string()
     .optional()
     .describe('Optional English meaning (e.g., "school")'),
+
+  // Blend v2 (ADR 0078, SB-B10), all optional: a row with none of them is a
+  // legacy row. The server writes them on save, together with `word`,
+  // `wordId` and `chunks` derived from the word's stored split.
+  blendVersion: z.literal(2)
+    .optional()
+    .describe('2 when the row points at a library word and its split'),
+
+  wordRef: BlendWordReferenceSchema
+    .optional()
+    .describe('The library word whose split and audio this activity uses'),
+
+  ending: BlendFormSchema
+    .optional()
+    .describe('Which form the activity shows and plays; pausal when absent'),
 }).superRefine((config, ctx) => {
   const complete = config.word.trim() !== '' &&
     config.chunks.every((c) => c.text.trim() !== '');

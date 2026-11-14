@@ -56,15 +56,22 @@ export interface WordPreview {
   pausal: BlendFormPreview;
   full: BlendFormPreview;
   /**
-   * The full form is known: the word has a final vowel or tanween, or the
-   * author typed the full form. When false the word field holds a pausal or
-   * unmarked ending, and the full column asks for the full form.
+   * The full form is known: the word has a final vowel or tanween. When false
+   * the word field holds a pausal or unmarked ending, and the full column
+   * offers to switch to the full form (a library word of its own).
    */
   fullKnown: boolean;
   /** Both forms read the same (a word with no final vowel, e.g. قَمَرْ). */
   sameText: boolean;
-  /** Problems with the typed full form itself. */
-  fullTextIssues: PlainIssue[];
+}
+
+/** An issue as the splitter or the server's save (BLEND_INVALID) reports it. */
+export interface IssueLike {
+  code: string;
+  severity?: "error" | "warning";
+  message: string;
+  letter?: number;
+  unit?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +109,7 @@ function unitName(units: readonly { text: string }[], index: number | undefined)
 
 /** One splitter issue in plain words for an author. */
 export function plainIssue(
-  issue: BlendIssue,
+  issue: BlendIssue | IssueLike,
   split: Pick<BlendSplit, "letters">,
   units: readonly { text: string }[] = [],
 ): PlainIssue {
@@ -134,13 +141,16 @@ export function plainIssue(
     case "empty":
       message = "Type or pick a word.";
       break;
+    case "unit_not_syllable":
+      message = `The syllable${unit} is not one syllable. Split or join it again.`;
+      break;
     case "inferred_sukoon":
       message = `The last letter${at} has no mark, so it is read with a sukoon. Add the sukoon (or a vowel) to say so.`;
       break;
     default:
       message = issue.message;
   }
-  return { severity: issue.severity, message };
+  return { severity: issue.severity ?? "error", message };
 }
 
 // ---------------------------------------------------------------------------
@@ -184,34 +194,39 @@ function formPreview(
 }
 
 /**
- * Both forms of a word. The full form is the typed full text when the author
- * gave one, else the word as written. The pausal form is derived from it by the
- * splitter's `pausal()` rule.
+ * Both forms of a word. The full form is the word as written (its library
+ * text); the pausal form is derived from it by the splitter's `pausal()` rule.
  */
 export function buildWordPreview(sourceText: string, edit?: WordBlendEdit): WordPreview {
   const source = normaliseBlendText(sourceText);
-  const typedFull = edit?.fullText ? normaliseBlendText(edit.fullText) : "";
-  const fullSource = typedFull || source;
-  const fullTextIssues: PlainIssue[] = [];
-
-  if (typedFull && source && pausal(typedFull) !== pausal(source)) {
-    fullTextIssues.push({
-      severity: "error",
-      message: `The full form must be the same word. Paused, it reads "${pausal(typedFull)}", but the word reads "${pausal(source)}".`,
-    });
-  }
-
-  const full = formPreview(fullSource, "full", edit?.override?.full);
-  const pausalPreview = formPreview(fullSource, "pausal", edit?.override?.pausal);
-  const fullKnown = !!typedFull || (!!source && pausal(source) !== source);
-
+  const full = formPreview(source, "full", edit?.override?.full);
+  const pausalPreview = formPreview(source, "pausal", edit?.override?.pausal);
   return {
     pausal: pausalPreview,
     full,
-    fullKnown,
+    fullKnown: !!source && pausal(source) !== source,
     sameText: pausalPreview.text === full.text,
-    fullTextIssues,
   };
+}
+
+/**
+ * Problems with a full form the author offers for a pausal-only word: it must
+ * be the same word when paused, and it must add a final vowel or tanween.
+ */
+export function checkFullForm(sourceText: string, fullText: string): PlainIssue[] {
+  const source = normaliseBlendText(sourceText);
+  const full = normaliseBlendText(fullText);
+  if (!full) return [];
+  if (pausal(full) !== pausal(source)) {
+    return [{
+      severity: "error",
+      message: `The full form must be the same word. Paused, it reads "${pausal(full)}", but the word reads "${pausal(source)}".`,
+    }];
+  }
+  if (pausal(full) === full) {
+    return [{ severity: "error", message: "The full form needs its case ending or tanween on the last letter." }];
+  }
+  return [];
 }
 
 /** True when the word has tanween in its full form (for the curriculum-order warning). */

@@ -188,6 +188,8 @@ export function useBuilderActions({
             ...(voiceId ? { voiceId } : {}),
           },
           config: (data.config || {}) as any,
+          // sound_blend v2: word-level choices travel beside config.
+          ...(data.wordBlendEdit ? { wordBlendEdit: data.wordBlendEdit as Record<string, unknown> } : {}),
         },
       });
 
@@ -240,6 +242,7 @@ export function useBuilderActions({
           config: (data.config ?? activity.config ?? {}) as any,
           instruction,
           regenerateAudio,
+          ...(data.wordBlendEdit ? { wordBlendEdit: data.wordBlendEdit as Record<string, unknown> } : {}),
         },
       });
     },

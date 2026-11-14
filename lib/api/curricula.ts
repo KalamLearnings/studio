@@ -24,6 +24,7 @@ import type {
 // ============================================================================
 
 import { getPersistedEnvironment, getConfigForEnvironment } from '@/lib/stores/environmentStore';
+import { ApiError } from '@/lib/api/client';
 import { getClientForEnv } from '@/lib/supabase/client';
 
 async function fetchWithAuth<T>(
@@ -45,8 +46,15 @@ async function fetchWithAuth<T>(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(error.message || `HTTP ${res.status}`);
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    // Keep the error envelope's code and details (e.g. sound_blend BLEND_INVALID).
+    const envelope = body?.error && typeof body.error === 'object' ? body.error : undefined;
+    throw new ApiError(
+      body?.message || envelope?.message || `HTTP ${res.status}`,
+      res.status,
+      envelope?.code ?? body?.code,
+      envelope?.details ?? body?.details,
+    );
   }
 
   const json = await res.json();

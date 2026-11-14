@@ -2,17 +2,23 @@
  * sound_blend config shape (SB-S1, TECH-DESIGN 1.1 and 1.5).
  *
  * This is the ONE Studio module that names the fields the sound_blend form
- * writes. The backend's Zod schema for them lands in SB-B3; when it does, align
- * the names and shapes here and nowhere else.
+ * writes, aligned with the backend's save contract (SB-B3,
+ * `core/contracts/sound-blend-save.ts`).
  *
- * Legacy fields keep their meaning so v1 renders exactly as today. The new
- * fields are all optional: a row with none of them is a legacy row.
- *
- * ASSUMPTION (until SB-B3 merges): the word-level choices (the pseudo-word
- * flag, the full form, a split override) travel with the activity save under
- * `wordBlendEdit`. The backend reads it, writes `curriculum_words` and
- * `curriculum_word_blend`, and strips it from the stored config. The activity
- * itself keeps no split (TECH-DESIGN 1.1, "No split in the activity").
+ * - A config with `blendVersion: 2` takes the server's blend save path. Studio
+ *   sends `wordRef`, `ending`, `stages` and the pass-through fields
+ *   (`contentType`, `speed`, `requiredSlides`, `showBothSpeeds`,
+ *   `transliteration`, `meaning`). The SERVER writes `word`, `segments`,
+ *   `contentType`, `blendVersion` and `wordRef`; Studio writes no `segments`
+ *   for these rows.
+ * - A config without `blendVersion` is a legacy row and is stored as sent.
+ * - Word-level choices (`wordBlendEdit`: the pseudo-word flag and split
+ *   overrides) go at the TOP LEVEL of the request body, beside `config`, never
+ *   inside it, and only with `blendVersion: 2`. While the author edits, Studio
+ *   keeps them in the local config under a client-only key, and
+ *   `toBlendSaveParts` moves them out before the save.
+ * - A word's full form is its library text. A pausal-only word gets its full
+ *   form by sending the full text as `wordRef.text` (a new library word).
  */
 
 import type { BlendUnitTag } from "@kalam/curriculum-schemas";
@@ -51,10 +57,13 @@ export interface SoundSegment {
   duration: SoundDuration;
 }
 
-/** `WordReference` of CONTENT_ITEM_DESIGN.md. A typed new word has no `wordId` yet. */
+/**
+ * `WordReference` of CONTENT_ITEM_DESIGN.md: at least one of the two. `wordId`
+ * is authoritative; a text alone is looked up or created on the server.
+ */
 export interface SoundBlendWordRef {
   wordId?: string;
-  text: string;
+  text?: string;
 }
 
 /** One unit of an author's override: the spelling and the tags. */
@@ -63,15 +72,16 @@ export interface BlendOverrideUnit {
   tags: BlendUnitTag[];
 }
 
-/** Word-level choices sent with the save (ASSUMPTION, see the header). */
+/** Word-level choices, sent beside `config` in the save body (see the header). */
 export interface WordBlendEdit {
   /** `curriculum_words.is_pseudo`. */
   isPseudo?: boolean;
-  /** The full form, when the word field holds the pausal form only. */
-  fullText?: string;
   /** Per-form overrides of the split; saved as `override: true`, needs review. */
   override?: Partial<Record<BlendEnding, BlendOverrideUnit[]>>;
 }
+
+/** The client-only config key that holds the word edit until the save. Never sent in `config`. */
+export const CLIENT_WORD_EDIT_KEY = "__wordBlendEdit" as const;
 
 export interface SoundBlendConfig {
   // LEGACY: unchanged meaning; v1 reads segments, speed, showBothSpeeds, requiredSlides.
@@ -89,7 +99,9 @@ export interface SoundBlendConfig {
   wordRef?: SoundBlendWordRef;
   ending?: BlendEnding;
   stages?: BlendStage[];
-  wordBlendEdit?: WordBlendEdit;
+
+  /** CLIENT-ONLY: moved to the request body's top level by `toBlendSaveParts`. */
+  [CLIENT_WORD_EDIT_KEY]?: WordBlendEdit;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +111,16 @@ export interface SoundBlendConfig {
 /** The word text the author works on: the reference's text, else the legacy `word`. */
 export function sourceWordText(config: SoundBlendConfig | undefined): string {
   return config?.wordRef?.text ?? config?.word ?? "";
+}
+
+/** The author's word-level edit held in the local config. */
+export function wordEditOf(config: SoundBlendConfig | undefined): WordBlendEdit | undefined {
+  return config?.[CLIENT_WORD_EDIT_KEY];
+}
+
+/** True for a row the server's blend save path owns. */
+export function isBlendV2(config: SoundBlendConfig | undefined): boolean {
+  return config?.blendVersion === BLEND_CONFIG_VERSION;
 }
 
 /**
@@ -188,7 +210,6 @@ export function compactWordBlendEdit(edit: WordBlendEdit | undefined): WordBlend
   if (!edit) return undefined;
   const out: WordBlendEdit = {};
   if (edit.isPseudo) out.isPseudo = true;
-  if (edit.fullText && edit.fullText.trim()) out.fullText = edit.fullText.trim();
   const override: WordBlendEdit["override"] = {};
   for (const form of BLEND_ENDINGS) {
     const units = edit.override?.[form];
@@ -200,7 +221,8 @@ export function compactWordBlendEdit(edit: WordBlendEdit | undefined): WordBlend
 
 /**
  * Stamp the v2 fields on a word config: the version, the word reference, the
- * ending and the stages. Called when the author edits the word or a blend
+ * ending and the stages. The server-owned `word` and `segments` are dropped:
+ * the server derives them. Called when the author edits the word or a blend
  * setting, never on open, so an untouched legacy row is saved unchanged.
  */
 export function stampBlendFields(
@@ -214,15 +236,18 @@ export function stampBlendFields(
 ): SoundBlendConfig {
   const next: SoundBlendConfig = {
     ...config,
+    contentType: "word",
     blendVersion: BLEND_CONFIG_VERSION,
     ending: parts.ending,
     stages: [...parts.stages],
   };
-  if (parts.wordRef && parts.wordRef.text) next.wordRef = parts.wordRef;
+  delete next.word;
+  delete next.segments;
+  if (parts.wordRef && (parts.wordRef.wordId || parts.wordRef.text)) next.wordRef = parts.wordRef;
   else delete next.wordRef;
   const edit = compactWordBlendEdit(parts.wordBlendEdit);
-  if (edit) next.wordBlendEdit = edit;
-  else delete next.wordBlendEdit;
+  if (edit) next[CLIENT_WORD_EDIT_KEY] = edit;
+  else delete next[CLIENT_WORD_EDIT_KEY];
   return next;
 }
 
@@ -233,6 +258,22 @@ export function clearBlendFields(config: SoundBlendConfig): SoundBlendConfig {
   delete next.wordRef;
   delete next.ending;
   delete next.stages;
-  delete next.wordBlendEdit;
+  delete next[CLIENT_WORD_EDIT_KEY];
   return next;
+}
+
+/**
+ * Split a config into the save body's parts: the `config` to send and the
+ * top-level `wordBlendEdit`. The client-only key never leaves in `config`, and
+ * a word edit is sent only with `blendVersion: 2` (the server refuses it
+ * otherwise). Any other activity type passes through.
+ */
+export function toBlendSaveParts(
+  activityType: string | undefined,
+  config: Record<string, unknown>,
+): { config: Record<string, unknown>; wordBlendEdit?: WordBlendEdit } {
+  if (activityType !== "sound_blend" || !(CLIENT_WORD_EDIT_KEY in config)) return { config };
+  const { [CLIENT_WORD_EDIT_KEY]: edit, ...rest } = config as SoundBlendConfig & Record<string, unknown>;
+  const wordBlendEdit = isBlendV2(rest) ? compactWordBlendEdit(edit as WordBlendEdit | undefined) : undefined;
+  return wordBlendEdit ? { config: rest, wordBlendEdit } : { config: rest };
 }

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  CLIENT_WORD_EDIT_KEY,
   DEFAULT_STAGES,
+  toBlendSaveParts,
   clearBlendFields,
   compactWordBlendEdit,
   resolveEnding,
@@ -98,7 +100,7 @@ describe('stamping', () => {
       },
     );
     expect(out).toEqual({
-      word: 'كِتَابٌ',
+      contentType: 'word',
       speed: 'segmented',
       blendVersion: 2,
       wordRef: { wordId: 'w1', text: 'كِتَابٌ' },
@@ -108,13 +110,39 @@ describe('stamping', () => {
   });
 
   it('compacts the word edit', () => {
-    expect(compactWordBlendEdit({ isPseudo: true, fullText: '  ', override: { full: [] } })).toEqual({ isPseudo: true });
+    expect(compactWordBlendEdit({ isPseudo: true, override: { full: [] } })).toEqual({ isPseudo: true });
     expect(compactWordBlendEdit({})).toBeUndefined();
   });
 
   it('clears every v2 field for letter mode', () => {
     expect(
-      clearBlendFields({ word: 'بَ', blendVersion: 2, ending: 'full', stages: ['together', 'alone'], wordRef: { text: 'x' }, wordBlendEdit: { isPseudo: true } }),
+      clearBlendFields({ word: 'بَ', blendVersion: 2, ending: 'full', stages: ['together', 'alone'], wordRef: { text: 'x' }, [CLIENT_WORD_EDIT_KEY]: { isPseudo: true } }),
     ).toEqual({ word: 'بَ' });
+  });
+});
+
+describe('toBlendSaveParts (the save body)', () => {
+  const edit = { isPseudo: true, override: { pausal: [{ text: 'كِتَابْ', tags: ['madd' as const] }] } };
+
+  it('moves the word edit beside config for a v2 row', () => {
+    const out = toBlendSaveParts('sound_blend', { blendVersion: 2, wordRef: { text: 'كِتَابٌ' }, [CLIENT_WORD_EDIT_KEY]: edit });
+    expect(out).toEqual({ config: { blendVersion: 2, wordRef: { text: 'كِتَابٌ' } }, wordBlendEdit: edit });
+  });
+
+  it('never sends a word edit without blendVersion 2', () => {
+    const out = toBlendSaveParts('sound_blend', { word: 'بَ', [CLIENT_WORD_EDIT_KEY]: edit });
+    expect(out).toEqual({ config: { word: 'بَ' } });
+  });
+
+  it('drops an empty edit', () => {
+    const out = toBlendSaveParts('sound_blend', { blendVersion: 2, [CLIENT_WORD_EDIT_KEY]: { isPseudo: false } });
+    expect(out).toEqual({ config: { blendVersion: 2 } });
+  });
+
+  it('passes a legacy row and other types through untouched', () => {
+    const legacy = { word: 'بَابْ', segments: [{ sound: 'ﺏَ', duration: 3 }] };
+    expect(toBlendSaveParts('sound_blend', legacy).config).toBe(legacy);
+    const other = { [CLIENT_WORD_EDIT_KEY]: 1 };
+    expect(toBlendSaveParts('tap_letter_in_word', other).config).toBe(other);
   });
 });

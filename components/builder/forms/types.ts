@@ -85,6 +85,8 @@ export interface BaseActivityFormProps<T extends ActivityConfig = ActivityConfig
   onChange: (config: T) => void;
   /** Optional topic data for auto-populating fields */
   topic?: TopicContext | null;
+  /** The last save's refusal (code and details), for forms that show it inline. */
+  saveError?: { code?: string; details?: unknown } | null;
 }
 
 // Alias for backward compatibility

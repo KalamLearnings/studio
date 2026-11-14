@@ -1,25 +1,28 @@
 /**
  * The word editor's state changes (SB-S1), as pure functions of the config.
  *
- * Each edit returns the next config: the v2 fields stamped (config.ts), and the
- * legacy `segments` rewritten from the shared splitter so v1 keeps rendering
- * (until SB-B3 derives them on the server). Opening a row changes nothing; only
- * an edit does.
+ * Each word edit returns the next config with the v2 fields stamped
+ * (config.ts). The server derives `word` and `segments` for these rows, so
+ * Studio writes neither. Opening a row changes nothing; only an edit does, and
+ * an untouched legacy row saves exactly as before.
  */
 
 import {
+  isBlendV2,
   resolveEnding,
   resolveStages,
   sourceWordText,
   stampBlendFields,
+  wordEditOf,
   type BlendEnding,
   type BlendOverrideUnit,
   type BlendSpeed,
   type BlendStage,
   type SoundBlendConfig,
+  type SoundSegment,
   type WordBlendEdit,
 } from "./config";
-import { buildWordPreview, inferEndingFromText } from "./preview";
+import { buildWordPreview, inferEndingFromText, type WordPreview } from "./preview";
 import { mergeWithNext, sameUnits, splitUnit, toOverrideUnits } from "./override";
 import { legacySegmentsFromSplit, remapSegmentForm } from "../utils/soundBlend";
 
@@ -33,7 +36,6 @@ export function currentEnding(config: SoundBlendConfig): BlendEnding {
   return resolveEnding(config, inferEndingFromText);
 }
 
-/** The word-level edit, with the ending/stages read through the defaults. */
 function commit(
   config: SoundBlendConfig,
   patch: {
@@ -46,23 +48,19 @@ function commit(
 ): SoundBlendConfig {
   const text = patch.text ?? sourceWordText(config);
   const wordId = patch.wordId === null ? undefined : patch.wordId ?? config.wordRef?.wordId;
-  const ending = patch.ending ?? currentEnding(config);
-  const stages = patch.stages ?? resolveStages(config);
-  const wordBlendEdit = patch.wordBlendEdit ?? config.wordBlendEdit;
-
-  const preview = buildWordPreview(text, wordBlendEdit);
-  const split = preview[ending].split;
-  const segments = text ? legacySegmentsFromSplit(split, usesIsolatedForms(config.speed)) : [];
-
-  return stampBlendFields(
-    { ...config, contentType: "word", word: text, segments },
-    { wordRef: text ? { ...(wordId ? { wordId } : {}), text } : undefined, ending, stages, wordBlendEdit },
-  );
+  return stampBlendFields(config, {
+    wordRef: text || wordId ? { ...(wordId ? { wordId } : {}), ...(text ? { text } : {}) } : undefined,
+    ending: patch.ending ?? currentEnding(config),
+    stages: patch.stages ?? resolveStages(config),
+    wordBlendEdit: patch.wordBlendEdit ?? wordEditOf(config),
+  });
 }
 
 /**
  * A new word, typed or picked from the library. A new word drops the previous
- * word's override and full form; the pseudo flag comes from the library row.
+ * word's override; the pseudo flag comes from the library row. Giving a
+ * pausal-only word its full form is also a new word: its full text, sent
+ * without a `wordId`, becomes a library word of its own on the server.
  */
 export function changeWord(
   config: SoundBlendConfig,
@@ -85,15 +83,7 @@ export function changeStages(config: SoundBlendConfig, stages: BlendStage[]): So
 }
 
 export function changePseudo(config: SoundBlendConfig, isPseudo: boolean): SoundBlendConfig {
-  return commit(config, { wordBlendEdit: { ...config.wordBlendEdit, isPseudo } });
-}
-
-/** The full form, typed when the word field holds only the pausal form. Clears a full-form override. */
-export function changeFullText(config: SoundBlendConfig, fullText: string): SoundBlendConfig {
-  const override = { ...config.wordBlendEdit?.override };
-  delete override.full;
-  delete override.pausal;
-  return commit(config, { wordBlendEdit: { ...config.wordBlendEdit, fullText, override } });
+  return commit(config, { wordBlendEdit: { ...wordEditOf(config), isPseudo } });
 }
 
 /**
@@ -105,19 +95,20 @@ export function changeOverride(
   form: BlendEnding,
   units: BlendOverrideUnit[] | null,
 ): SoundBlendConfig {
-  const preview = buildWordPreview(sourceWordText(config), config.wordBlendEdit);
+  const edit = wordEditOf(config);
+  const preview = buildWordPreview(sourceWordText(config), edit);
   const own = preview[form].split.units;
-  const override = { ...config.wordBlendEdit?.override };
+  const override = { ...edit?.override };
   if (!units || sameUnits(units, own)) delete override[form];
   else override[form] = units;
-  return commit(config, { wordBlendEdit: { ...config.wordBlendEdit, override } });
+  return commit(config, { wordBlendEdit: { ...edit, override } });
 }
 
 /** The units an override edit starts from: the current override, else the splitter's. */
 function overrideBase(config: SoundBlendConfig, form: BlendEnding): BlendOverrideUnit[] {
-  const current = config.wordBlendEdit?.override?.[form];
+  const current = wordEditOf(config)?.override?.[form];
   if (current && current.length > 0) return current;
-  const preview = buildWordPreview(sourceWordText(config), config.wordBlendEdit);
+  const preview = buildWordPreview(sourceWordText(config), wordEditOf(config));
   return toOverrideUnits(preview[form].split.units);
 }
 
@@ -131,12 +122,27 @@ export function mergeFormUnits(config: SoundBlendConfig, form: BlendEnding, inde
   return changeOverride(config, form, mergeWithNext(overrideBase(config, form), index));
 }
 
-/** v1 reading mode: only the glyph forms of the segments change; durations stay. */
+/**
+ * v1 reading mode. A legacy row re-maps its stored segments' glyphs (durations
+ * stay); a v2 row only stores the speed, the server derives the segments.
+ */
 export function changeSpeed(config: SoundBlendConfig, speed: BlendSpeed): SoundBlendConfig {
+  if (isBlendV2(config)) return { ...config, speed };
   const isolated = usesIsolatedForms(speed);
   return {
     ...config,
     speed,
     segments: (config.segments ?? []).map((s) => remapSegmentForm(s, isolated)),
   };
+}
+
+/**
+ * What v1 will show, for display only (never saved). A v2 row: derived from
+ * the splitter's split of the activity's form, as the server will. A legacy
+ * row: its stored segments.
+ */
+export function previewV1Segments(config: SoundBlendConfig, preview: WordPreview | null): SoundSegment[] {
+  if (!isBlendV2(config)) return config.segments ?? [];
+  if (!preview) return [];
+  return legacySegmentsFromSplit(preview[currentEnding(config)].split, usesIsolatedForms(config.speed));
 }

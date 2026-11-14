@@ -13,6 +13,7 @@ import {
   sourceWordText,
   toggleStage,
   validateStages,
+  wordEditOf,
   type BlendContentType,
   type BlendSpeed,
   type SoundBlendConfig,
@@ -21,9 +22,9 @@ import {
 } from "@/lib/soundBlend/config";
 import { buildWordPreview, hasTanween } from "@/lib/soundBlend/preview";
 import { getEndingOrderWarning } from "@/lib/soundBlend/ending";
+import { parseBlendSaveError } from "@/lib/soundBlend/saveErrors";
 import {
   changeEnding,
-  changeFullText,
   changeOverride,
   changePseudo,
   changeSpeed,
@@ -31,6 +32,7 @@ import {
   changeWord,
   currentEnding,
   mergeFormUnits,
+  previewV1Segments,
   splitFormUnit,
 } from "@/lib/soundBlend/editor";
 import { BlendWordPanel } from "./soundBlend/BlendWordPanel";
@@ -62,6 +64,7 @@ export function SoundBlendActivityForm({
   config,
   onChange,
   topic,
+  saveError,
 }: BaseActivityFormProps<SoundBlendConfig>) {
   const { letters } = useLetters();
   const { data: topics } = useTopics(topic?.curriculum_id ?? null);
@@ -69,7 +72,7 @@ export function SoundBlendActivityForm({
   const cfg = React.useMemo<SoundBlendConfig>(() => config ?? {}, [config]);
   const contentType: BlendContentType = cfg.contentType || "word";
   const word = cfg.word || "";
-  const segments: SoundSegment[] = cfg.segments || [];
+  const wordEdit = wordEditOf(cfg);
   const sourceText = sourceWordText(cfg);
 
   // In letter mode the picked letter is stored only as the `word` glyph (e.g.
@@ -89,8 +92,8 @@ export function SoundBlendActivityForm({
 
   // The word editor reads everything from pure modules (lib/soundBlend).
   const preview = React.useMemo(
-    () => (contentType === "word" && sourceText ? buildWordPreview(sourceText, cfg.wordBlendEdit) : null),
-    [contentType, sourceText, cfg.wordBlendEdit]
+    () => (contentType === "word" && sourceText ? buildWordPreview(sourceText, wordEdit) : null),
+    [contentType, sourceText, wordEdit]
   );
   const ending = currentEnding(cfg);
   const stages = resolveStages(cfg);
@@ -102,6 +105,13 @@ export function SoundBlendActivityForm({
         : null,
     [preview, ending, topic, topics]
   );
+
+  // v1 preview only: derived from the splitter for v2 rows, never saved.
+  const segments: SoundSegment[] = React.useMemo(
+    () => (contentType === "word" ? previewV1Segments(cfg, preview) : cfg.segments || []),
+    [contentType, cfg, preview]
+  );
+  const blendSaveErrors = React.useMemo(() => parseBlendSaveError(saveError), [saveError]);
 
   const updateConfig = React.useCallback(
     (updates: Partial<SoundBlendConfig>) => {
@@ -223,15 +233,24 @@ export function SoundBlendActivityForm({
           <BlendWordPanel
             preview={preview}
             ending={ending}
-            fullText={cfg.wordBlendEdit?.fullText ?? ""}
-            isPseudo={!!cfg.wordBlendEdit?.isPseudo}
-            onFullTextChange={(text) => onChange(changeFullText(cfg, text))}
+            sourceText={sourceText}
+            isPseudo={!!wordEdit?.isPseudo}
+            serverIssues={blendSaveErrors?.byForm}
+            onUseFullForm={(text) => onChange(changeWord(cfg, text))}
             onPseudoChange={(on) => onChange(changePseudo(cfg, on))}
             onSplit={(form, i, at) => onChange(splitFormUnit(cfg, form, i, at))}
             onMerge={(form, i) => onChange(mergeFormUnits(cfg, form, i))}
             onReset={(form) => onChange(changeOverride(cfg, form, null))}
           />
         </FormField>
+      )}
+
+      {blendSaveErrors && blendSaveErrors.general.length > 0 && (
+        <ul className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive">
+          {blendSaveErrors.general.map((m) => (
+            <li key={m}>The server refused the save: {m}</li>
+          ))}
+        </ul>
       )}
 
       {contentType === "word" && (
@@ -248,7 +267,7 @@ export function SoundBlendActivityForm({
       {segments.length > 0 && (
         <FormField
           label="v1 slider"
-          hint="What the v1 app shows, derived from the syllables: stop (sukoon), short, long (madd)."
+          hint="What the v1 app will show: stop (sukoon), short, long (madd). Preview only; for a word the server writes these on save."
         >
           <div className="flex flex-wrap justify-end gap-2" dir="rtl">
             {segments.map((segment, index) => (

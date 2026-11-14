@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWordPreview, hasTanween, inferEndingFromText, plainIssue } from './preview';
+import { buildWordPreview, checkFullForm, hasTanween, inferEndingFromText, plainIssue } from './preview';
 import { splitBlendWord } from '@kalam/curriculum-schemas';
 
 const texts = (units: { text: string }[]) => units.map((u) => u.text);
@@ -29,18 +29,11 @@ describe('buildWordPreview: both forms side by side', () => {
     expect(p.sameText).toBe(true);
   });
 
-  it('uses a typed full form for both columns', () => {
-    const p = buildWordPreview('كِتَابْ', { fullText: 'كِتَابٌ' });
-    expect(p.fullKnown).toBe(true);
-    expect(texts(p.full.units)).toEqual(['كِ', 'تَا', 'بٌ']);
-    expect(texts(p.pausal.units)).toEqual(['كِ', 'تَابْ']);
-    expect(p.fullTextIssues).toEqual([]);
-  });
-
-  it('refuses a full form that is another word', () => {
-    const p = buildWordPreview('كِتَابْ', { fullText: 'قَمَرٌ' });
-    expect(p.fullTextIssues).toHaveLength(1);
-    expect(p.fullTextIssues[0]!.severity).toBe('error');
+  it('checks a full form offered for a pausal-only word', () => {
+    expect(checkFullForm('كِتَابْ', 'كِتَابٌ')).toEqual([]);
+    expect(checkFullForm('كِتَابْ', '')).toEqual([]);
+    expect(checkFullForm('كِتَابْ', 'قَمَرٌ')[0]!.message).toMatch(/same word/);
+    expect(checkFullForm('كِتَابْ', 'كِتَابْ')[0]!.message).toMatch(/case ending or tanween/);
   });
 
   it('shows the splitter issues in plain words', () => {
@@ -83,6 +76,12 @@ describe('inferEndingFromText', () => {
 });
 
 describe('plainIssue', () => {
+  it('words the server-only unit_not_syllable', () => {
+    const split = splitBlendWord('كِتَابْ', 'pausal');
+    const out = plainIssue({ code: 'unit_not_syllable', severity: 'error', unit: 0, message: 'x' }, split, [{ text: 'كِتَابْ' }]);
+    expect(out.message).toMatch(/"كِتَابْ" is not one syllable/);
+  });
+
   it('names the letter', () => {
     const split = splitBlendWord('كَتب', 'full');
     const missing = split.issues.find((i) => i.code === 'missing_haraka')!;

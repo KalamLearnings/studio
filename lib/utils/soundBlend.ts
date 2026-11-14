@@ -1,15 +1,12 @@
 /**
- * Legacy `segments` for v1 (sound_blend).
+ * v1 `segments` helpers (sound_blend).
  *
- * The syllable split, the madd and long-vowel rules and the warnings now come
- * from the shared splitter (`splitBlendWord` in `@kalam/curriculum-schemas`,
- * SB-B1). This file only turns that split into v1's per-letter `segments`
- * (sound + duration 1 stop / 2 short / 3 long) and maps glyphs for v1's
- * reading modes.
- *
- * Studio writes `segments` until the backend's save path (SB-B3) derives them
- * on the server from the word's units with the same rule (TECH-DESIGN 1.1,
- * 3.3). Delete `legacySegmentsFromSplit` once that has merged.
+ * The syllable split, the madd and long-vowel rules and the warnings come from
+ * the shared splitter (`splitBlendWord` in `@kalam/curriculum-schemas`).
+ * For v2 rows (`blendVersion: 2`) the SERVER writes `segments` (SB-B3);
+ * `legacySegmentsFromSplit` only previews them in the form and is never saved.
+ * Legacy rows keep their stored segments; letter mode and the reading-mode
+ * glyph re-map still write them.
  */
 
 import type { BlendDraftUnit, BlendLetter } from "@kalam/curriculum-schemas";

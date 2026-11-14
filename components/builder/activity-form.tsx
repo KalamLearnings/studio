@@ -20,6 +20,8 @@ import {
   type TopicContext,
 } from "./forms";
 import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
+import { toBlendSaveParts } from "@/lib/soundBlend/config";
+import { BLEND_INVALID } from "@/lib/soundBlend/saveErrors";
 import { ConditionalAudioSection } from "./forms/shared/ConditionalAudioSection";
 import { DEFAULT_VOICE } from "@/lib/constants/voices";
 
@@ -88,6 +90,9 @@ export function ActivityForm({
   // When the author clears the instruction text but a clip still exists, we
   // confirm before saving since saving will remove the audio (backend deletes it).
   const [confirmClearAudio, setConfirmClearAudio] = React.useState(false);
+  // The last save's refusal, shown inline by forms that understand it
+  // (sound_blend BLEND_INVALID). Cleared on the next config edit.
+  const [saveError, setSaveError] = React.useState<{ code?: string; details?: unknown } | null>(null);
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
@@ -109,6 +114,7 @@ export function ActivityForm({
   // Handle config changes
   const handleConfigChange = (newConfig: ActivityConfig) => {
     setLocalConfig(newConfig);
+    setSaveError(null);
     onConfigChange?.(newConfig);
   };
 
@@ -126,8 +132,12 @@ export function ActivityForm({
     if (isSaving) return;
     setIsSaving(true);
     try {
+      // sound_blend: the word-level edit leaves config for the body's top level.
+      const { config: configToSave, wordBlendEdit } = toBlendSaveParts(activityType, localConfig);
+      setSaveError(null);
       const saved = await onSave?.({
-        config: localConfig,
+        config: configToSave,
+        ...(wordBlendEdit ? { wordBlendEdit } : {}),
         instruction,
         voiceId: selectedVoice,
         regenerateAudio,
@@ -141,6 +151,12 @@ export function ActivityForm({
       setRegenerateAudio(false);
     } catch (error) {
       console.error("Error saving activity:", error);
+      const apiError = error as { code?: string; details?: unknown };
+      if (apiError?.code === BLEND_INVALID) {
+        // Shown inline in the form, next to the split it is about.
+        setSaveError({ code: apiError.code, details: apiError.details });
+        return;
+      }
       // Surface the failure so the creator can retry.
       const message = error instanceof Error ? error.message : "Failed to save";
       window.alert(`Could not save activity: ${message}`);
@@ -264,6 +280,7 @@ export function ActivityForm({
                 config={localConfig}
                 onChange={handleConfigChange}
                 topic={topic}
+                saveError={saveError}
               />
             </div>
           )}

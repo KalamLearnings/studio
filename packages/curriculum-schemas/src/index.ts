@@ -116,6 +116,48 @@ export {
 } from './harakat';
 
 // ============================================================================
+// SOUND BLEND (syllable splitter and stored shapes, byte-identical copies of
+// the backend's; synced by kalam-readers-backend scripts/sync-blend-word.ts)
+// ============================================================================
+
+export {
+  BLEND_SPLITTER_VERSION,
+  normaliseBlendText,
+  pausal,
+  checkBlendUnits,
+  splitBlendWord,
+  type BlendForm,
+  type BlendUnitKind,
+  type BlendUnitTag,
+  type BlendVowel,
+  type BlendUnitSpan,
+  type BlendUnitOnset,
+  type BlendUnitCoda,
+  type BlendUnit,
+  type BlendIssueCode,
+  type BlendIssueSeverity,
+  type BlendIssue,
+  type BlendLetter,
+  type BlendDraftUnit,
+  type BlendSplit,
+} from './blend-word';
+
+// The contract's inferred types share names with the splitter's types above and
+// describe the same shapes, so only the schemas and PhaseMark are exported here.
+export {
+  BlendFormSchema,
+  BlendUnitKindSchema,
+  BlendUnitTagSchema,
+  BlendVowelSchema,
+  BlendUnitSpanSchema,
+  BlendUnitSchema,
+  BlendUnitsSchema,
+  PhaseMarkSchema,
+  blendMarksSchema,
+  type PhaseMark,
+} from './blend';
+
+// ============================================================================
 // ACTIVITY SCHEMAS & TYPES
 // ============================================================================
 

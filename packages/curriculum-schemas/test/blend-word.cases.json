@@ -1,0 +1,1742 @@
+{
+  "splitterVersion": "blend-word@1",
+  "description": "Shared test table for blend-word.ts. Studio and the backend both run every row. splits: splitBlendWord(input, form) must give exactly text, ok, issues (codes, in order) and units (text, kind, tags, span). overrides: checkBlendUnits(text, units) must give exactly issues.",
+  "splits": [
+    {
+      "input": "كَتَبَ",
+      "form": "full",
+      "source": "prod fixture",
+      "note": "three open CV syllables",
+      "text": "كَتَبَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "بَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "كَتَبَ",
+      "form": "pausal",
+      "source": "prod fixture",
+      "note": "pausal: the final fatha becomes sukoon and closes تَبْ (qalqala)",
+      "text": "كَتَبْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَبْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon",
+            "qalqala"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "أَبْ",
+      "form": "full",
+      "source": "prod fixture",
+      "note": "sukoon joins the syllable before it; never a unit alone",
+      "text": "أَبْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "أَبْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon",
+            "qalqala"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "input": "عَبْدِهِ",
+      "form": "full",
+      "source": "prod fixture",
+      "note": "sukoon ب closes عَبْ with qalqala",
+      "text": "عَبْدِهِ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "عَبْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon",
+            "qalqala"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "دِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        },
+        {
+          "text": "هِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 3,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "هِرُّ",
+      "form": "full",
+      "source": "prod fixture",
+      "note": "shadda on a continuant splits across two units",
+      "text": "هِرُّ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "هِرْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "رُ",
+          "kind": "cv",
+          "tags": [
+            "shaddaSecond"
+          ],
+          "span": {
+            "from": 1,
+            "to": 1,
+            "startsMid": true
+          }
+        }
+      ]
+    },
+    {
+      "input": "هِرُّ",
+      "form": "pausal",
+      "source": "prod fixture",
+      "note": "pausal final shadda: one doubled coda, CVCC",
+      "text": "هِرّْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "هِرّْ",
+          "kind": "cvcc",
+          "tags": [
+            "sukoon"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "input": "غَفَرَ",
+      "form": "full",
+      "source": "prod fixture",
+      "note": "three open CV syllables",
+      "text": "غَفَرَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "غَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "فَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "رَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "ضُرِبَ",
+      "form": "full",
+      "source": "prod fixture",
+      "note": "three open CV syllables",
+      "text": "ضُرِبَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "ضُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "رِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "بَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "رَبِّ",
+      "form": "full",
+      "source": "concept",
+      "note": "shadda on a stop splits: رَبْ | بِ",
+      "text": "رَبِّ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "رَبْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "بِ",
+          "kind": "cv",
+          "tags": [
+            "shaddaSecond"
+          ],
+          "span": {
+            "from": 1,
+            "to": 1,
+            "startsMid": true
+          }
+        }
+      ]
+    },
+    {
+      "input": "رَبِّ",
+      "form": "pausal",
+      "source": "concept",
+      "note": "pausal final shadda on a stop: doubled coda with qalqala",
+      "text": "رَبّْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "رَبّْ",
+          "kind": "cvcc",
+          "tags": [
+            "sukoon",
+            "qalqala"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِتَابْ",
+      "form": "full",
+      "source": "concept",
+      "note": "madd stays inside its syllable; written pausal, same in both forms",
+      "text": "كِتَابْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَابْ",
+          "kind": "cvvc",
+          "tags": [
+            "sukoon",
+            "madd",
+            "qalqala"
+          ],
+          "span": {
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِتَابٌ",
+      "form": "full",
+      "source": "concept D4",
+      "note": "tanween is the vowel plus a nun coda: بٌ is one CVC unit",
+      "text": "كِتَابٌ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        },
+        {
+          "text": "بٌ",
+          "kind": "cvc",
+          "tags": [
+            "tanween"
+          ],
+          "span": {
+            "from": 3,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِتَابٌ",
+      "form": "pausal",
+      "source": "concept D4",
+      "note": "pausal of كِتَابٌ is كِتَابْ",
+      "text": "كِتَابْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَابْ",
+          "kind": "cvvc",
+          "tags": [
+            "sukoon",
+            "madd",
+            "qalqala"
+          ],
+          "span": {
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِتَابًا",
+      "form": "full",
+      "source": "concept D4",
+      "note": "the fathatan seat alif is silent and rides with بًا",
+      "text": "كِتَابًا",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        },
+        {
+          "text": "بًا",
+          "kind": "cvc",
+          "tags": [
+            "tanween",
+            "seatAlif"
+          ],
+          "span": {
+            "from": 3,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِتَابًا",
+      "form": "pausal",
+      "source": "concept D4",
+      "note": "pausal fathatan with a seat becomes a long a: كِتَابَا",
+      "text": "كِتَابَا",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        },
+        {
+          "text": "بَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 3,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِتَابُ",
+      "form": "full",
+      "source": "audit B9",
+      "note": "the madd alif is not its own segment",
+      "text": "كِتَابُ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        },
+        {
+          "text": "بُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 3,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "ظَاهِرْ",
+      "form": "full",
+      "source": "audit B9",
+      "note": "madd alif stays in ظَا",
+      "text": "ظَاهِرْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "ظَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "هِرْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon"
+          ],
+          "span": {
+            "from": 2,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "قِفِيَ",
+      "form": "full",
+      "source": "audit B8 wrong madd",
+      "note": "ي with its own fatha is a consonant, not madd",
+      "text": "قِفِيَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "قِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "فِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "يَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "يَيِيُ",
+      "form": "full",
+      "source": "audit B8 wrong madd",
+      "note": "each ي carries a vowel: three consonant onsets",
+      "text": "يَيِيُ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "يَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "يِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "يُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "عُوِّ",
+      "form": "full",
+      "source": "audit B8 wrong madd",
+      "note": "و with shadda is a consonant split across units, not madd",
+      "text": "عُوِّ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "عُوْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "وِ",
+          "kind": "cv",
+          "tags": [
+            "shaddaSecond"
+          ],
+          "span": {
+            "from": 1,
+            "to": 1,
+            "startsMid": true
+          }
+        }
+      ]
+    },
+    {
+      "input": "عُوِّضَ",
+      "form": "full",
+      "source": "audit B8 wrong madd",
+      "note": "و with shadda is a consonant split across units, not madd",
+      "text": "عُوِّضَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "عُوْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "وِ",
+          "kind": "cv",
+          "tags": [
+            "shaddaSecond"
+          ],
+          "span": {
+            "from": 1,
+            "to": 1,
+            "startsMid": true
+          }
+        },
+        {
+          "text": "ضَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "غَوِيَ",
+      "form": "full",
+      "source": "audit B8 wrong madd",
+      "note": "و with its own kasra is a consonant, not madd",
+      "text": "غَوِيَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "غَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "وِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "يَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "قَوِيَ",
+      "form": "full",
+      "source": "audit B8 wrong madd",
+      "note": "و and ي with vowels are consonants: قَ | وِ | يَ",
+      "text": "قَوِيَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "قَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "وِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "يَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "قَمَرْ",
+      "form": "full",
+      "source": "concept",
+      "note": "sukoon on a continuant: مَرْ is one held unit",
+      "text": "قَمَرْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "قَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "مَرْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "بَابٌ",
+      "form": "full",
+      "source": "concept",
+      "note": "tanween voiced \"bun\"",
+      "text": "بَابٌ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "بَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "بٌ",
+          "kind": "cvc",
+          "tags": [
+            "tanween"
+          ],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "مُحَمَّدٌ",
+      "form": "full",
+      "source": "concept README",
+      "note": "shadda split plus tanween",
+      "text": "مُحَمَّدٌ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "مُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "حَمْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "مَ",
+          "kind": "cv",
+          "tags": [
+            "shaddaSecond"
+          ],
+          "span": {
+            "from": 2,
+            "to": 2,
+            "startsMid": true
+          }
+        },
+        {
+          "text": "دٌ",
+          "kind": "cvc",
+          "tags": [
+            "tanween"
+          ],
+          "span": {
+            "from": 3,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "مُحَمَّدٌ",
+      "form": "pausal",
+      "source": "concept README",
+      "note": "pausal tanween becomes sukoon on a stop (qalqala)",
+      "text": "مُحَمَّدْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "مُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "حَمْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "مَدْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaSecond",
+            "sukoon",
+            "qalqala"
+          ],
+          "span": {
+            "from": 2,
+            "to": 3,
+            "startsMid": true
+          }
+        }
+      ]
+    },
+    {
+      "input": "الشَّمْسُ",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "al- with a sun letter: silent lam, the doubled ش closes the first unit",
+      "text": "الشَّمْسُ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "الشْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaFirst",
+            "wasl",
+            "sunLam"
+          ],
+          "span": {
+            "from": 0,
+            "to": 2,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "شَمْ",
+          "kind": "cvc",
+          "tags": [
+            "shaddaSecond",
+            "sukoon"
+          ],
+          "span": {
+            "from": 2,
+            "to": 3,
+            "startsMid": true
+          }
+        },
+        {
+          "text": "سُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 4,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "input": "الْقَمَرُ",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "al- with a moon letter: the lam closes the first unit",
+      "text": "الْقَمَرُ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "الْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon",
+            "wasl"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "قَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        },
+        {
+          "text": "مَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 3,
+            "to": 3
+          }
+        },
+        {
+          "text": "رُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 4,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "input": "اَلْقَمَرُ",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "a wasl alif written with fatha is still wasl",
+      "text": "اَلْقَمَرُ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "الْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon",
+            "wasl"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "قَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        },
+        {
+          "text": "مَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 3,
+            "to": 3
+          }
+        },
+        {
+          "text": "رُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 4,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "input": "يَوْمْ",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "و with sukoon after fatha is a coda (diphthong), not madd",
+      "text": "يَوْمْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "يَوْمْ",
+          "kind": "cvcc",
+          "tags": [
+            "sukoon"
+          ],
+          "span": {
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "آمَنَ",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "آ is hamza plus long a",
+      "text": "آمَنَ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "آ",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "مَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "نَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "هٰذَا",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "the dagger alif lengthens its letter",
+      "text": "هٰذَا",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "هٰ",
+          "kind": "cvv",
+          "tags": [
+            "madd:dagger"
+          ],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "ذَا",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "مُوسَى",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "و after damma and ى after fatha are madd",
+      "text": "مُوسَى",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "مُو",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "سَى",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 2,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "فِي",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "ي after kasra is madd",
+      "text": "فِي",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "فِي",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "input": "نُورٌ",
+      "form": "full",
+      "source": "TECH-DESIGN 3.1",
+      "note": "madd و then tanween",
+      "text": "نُورٌ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "نُو",
+          "kind": "cvv",
+          "tags": [
+            "madd"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "text": "رٌ",
+          "kind": "cvc",
+          "tags": [
+            "tanween"
+          ],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "كُرَةٌ",
+      "form": "full",
+      "source": "pausal rules",
+      "note": "tanween on ta marbuta",
+      "text": "كُرَةٌ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "رَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        },
+        {
+          "text": "ةٌ",
+          "kind": "cvc",
+          "tags": [
+            "tanween"
+          ],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "كُرَةٌ",
+      "form": "pausal",
+      "source": "pausal rules",
+      "note": "pausal ta marbuta takes sukoon and is read h (no qalqala, not a stop)",
+      "text": "كُرَةْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كُ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "رَةْ",
+          "kind": "cvc",
+          "tags": [
+            "sukoon"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "سَمَاءً",
+      "form": "pausal",
+      "source": "pausal rules",
+      "note": "fathatan with no seat alif becomes sukoon",
+      "text": "سَمَاءْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "سَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "مَاءْ",
+          "kind": "cvvc",
+          "tags": [
+            "sukoon",
+            "madd"
+          ],
+          "span": {
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "جَمَل",
+      "form": "full",
+      "source": "createDefaultConfig word",
+      "note": "a bare final letter is read as sukoon, with a warning",
+      "text": "جَمَل",
+      "ok": true,
+      "issues": [
+        "inferred_sukoon"
+      ],
+      "units": [
+        {
+          "text": "جَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "مَل",
+          "kind": "cvc",
+          "tags": [
+            "sukoon"
+          ],
+          "span": {
+            "from": 1,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "ﻛِﺘَﺎﺏْ",
+      "form": "full",
+      "source": "audit B14",
+      "note": "presentation forms fold to plain letters (NFKC)",
+      "text": "كِتَابْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَابْ",
+          "kind": "cvvc",
+          "tags": [
+            "sukoon",
+            "madd",
+            "qalqala"
+          ],
+          "span": {
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "كِـتَـابْ",
+      "form": "full",
+      "source": "normalise",
+      "note": "tatweel is removed",
+      "text": "كِتَابْ",
+      "ok": true,
+      "issues": [],
+      "units": [
+        {
+          "text": "كِ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "تَابْ",
+          "kind": "cvvc",
+          "tags": [
+            "sukoon",
+            "madd",
+            "qalqala"
+          ],
+          "span": {
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "input": "كتب",
+      "form": "full",
+      "source": "error",
+      "note": "unvowelised text: missing_haraka; the author needs the harakat suggestion",
+      "text": "كتب",
+      "ok": false,
+      "issues": [
+        "missing_haraka",
+        "missing_haraka",
+        "inferred_sukoon",
+        "lone_consonant",
+        "unit_without_vowel"
+      ],
+      "units": [
+        {
+          "text": "كتب",
+          "kind": "invalid",
+          "tags": [
+            "sukoon",
+            "qalqala"
+          ],
+          "span": {
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "رَبّكَ",
+      "form": "full",
+      "source": "error",
+      "note": "a shadda with no vowel inside the word",
+      "text": "رَبّكَ",
+      "ok": false,
+      "issues": [
+        "shadda_without_vowel"
+      ],
+      "units": [
+        {
+          "text": "رَبْب",
+          "kind": "cvcc",
+          "tags": [
+            "shaddaFirst",
+            "qalqala"
+          ],
+          "span": {
+            "from": 0,
+            "to": 1,
+            "endsMid": true
+          }
+        },
+        {
+          "text": "كَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "input": "بِا",
+      "form": "full",
+      "source": "error",
+      "note": "a bare alif after kasra",
+      "text": "بِا",
+      "ok": false,
+      "issues": [
+        "stray_alif"
+      ],
+      "units": [
+        {
+          "text": "بِا",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "input": "بْكَ",
+      "form": "full",
+      "source": "error",
+      "note": "sukoon at word start: a consonant with no vowel before it",
+      "text": "بْكَ",
+      "ok": false,
+      "issues": [
+        "lone_consonant",
+        "unit_without_vowel"
+      ],
+      "units": [
+        {
+          "text": "بْ",
+          "kind": "invalid",
+          "tags": [],
+          "span": {
+            "from": 0,
+            "to": 0
+          }
+        },
+        {
+          "text": "كَ",
+          "kind": "cv",
+          "tags": [],
+          "span": {
+            "from": 1,
+            "to": 1
+          }
+        }
+      ]
+    },
+    {
+      "input": "",
+      "form": "full",
+      "source": "error",
+      "note": "empty input",
+      "text": "",
+      "ok": false,
+      "issues": [
+        "empty"
+      ],
+      "units": []
+    }
+  ],
+  "overrides": [
+    {
+      "text": "رَبِّ",
+      "units": [
+        {
+          "text": "رَبْ",
+          "tags": [
+            "shaddaFirst"
+          ]
+        },
+        {
+          "text": "بِ",
+          "tags": [
+            "shaddaSecond"
+          ]
+        }
+      ],
+      "note": "the splitter output itself passes",
+      "issues": []
+    },
+    {
+      "text": "كِتَابْ",
+      "units": [
+        {
+          "text": "كِتَ",
+          "tags": []
+        },
+        {
+          "text": "ابْ",
+          "tags": [
+            "sukoon"
+          ]
+        }
+      ],
+      "note": "an override that rebuilds the word but leaves ابْ with no vowel",
+      "issues": [
+        "unit_without_vowel"
+      ]
+    },
+    {
+      "text": "كِتَابْ",
+      "units": [
+        {
+          "text": "كِ",
+          "tags": []
+        },
+        {
+          "text": "تَبْ",
+          "tags": [
+            "sukoon"
+          ]
+        }
+      ],
+      "note": "an override that drops the alif fails the rebuild",
+      "issues": [
+        "rebuild"
+      ]
+    },
+    {
+      "text": "رَبِّ",
+      "units": [
+        {
+          "text": "رَبْ",
+          "tags": [
+            "shaddaFirst"
+          ]
+        },
+        {
+          "text": "كِ",
+          "tags": []
+        }
+      ],
+      "note": "a shaddaFirst unit not followed by its shaddaSecond",
+      "issues": [
+        "rebuild",
+        "shadda_unpaired"
+      ]
+    },
+    {
+      "text": "قَمَرْ",
+      "units": [],
+      "note": "no units",
+      "issues": [
+        "empty"
+      ]
+    }
+  ]
+}

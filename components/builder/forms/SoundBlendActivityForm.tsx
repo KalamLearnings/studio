@@ -9,6 +9,7 @@ import { applyHaraka } from "@/lib/utils/letterReference";
 import { detectLetterDuration } from "@/lib/utils/soundBlend";
 import {
   clearBlendFields,
+  ENDING_LABELS,
   resolveStages,
   sourceWordText,
   toggleStage,
@@ -23,6 +24,8 @@ import {
 import { buildWordPreview, hasTanween } from "@/lib/soundBlend/preview";
 import { getEndingOrderWarning } from "@/lib/soundBlend/ending";
 import { parseBlendSaveError } from "@/lib/soundBlend/saveErrors";
+import { confirmHarakatSuggestion, harakatSuggestionReason } from "@/lib/soundBlend/harakat";
+import { useHarakatSuggestion } from "@/lib/hooks/useHarakatSuggestion";
 import {
   changeEnding,
   changeOverride,
@@ -37,6 +40,7 @@ import {
 } from "@/lib/soundBlend/editor";
 import { BlendWordPanel } from "./soundBlend/BlendWordPanel";
 import { BlendSettingsFields } from "./soundBlend/BlendSettingsFields";
+import { HarakatSuggestionPanel } from "./soundBlend/HarakatSuggestionPanel";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
 const DURATION_LABELS: Record<SoundDuration, { label: string; icon: string; color: string }> = {
@@ -112,6 +116,12 @@ export function SoundBlendActivityForm({
     [contentType, cfg, preview]
   );
   const blendSaveErrors = React.useMemo(() => parseBlendSaveError(saveError), [saveError]);
+
+  // Harakat suggestion (SB-S2): offered for missing marks, or a pausal-only
+  // word in a full-ending activity. Nothing changes until Confirm.
+  const harakatReason = harakatSuggestionReason(preview, ending);
+  const harakat = useHarakatSuggestion(sourceText, ending);
+  const showHarakat = !!(harakatReason || harakat.offer || harakat.error || harakat.pending);
 
   const updateConfig = React.useCallback(
     (updates: Partial<SoundBlendConfig>) => {
@@ -222,6 +232,23 @@ export function SoundBlendActivityForm({
           label="Arabic Word"
           required
           placeholder="Type to search word library..."
+        />
+      )}
+
+      {contentType === "word" && showHarakat && (
+        <HarakatSuggestionPanel
+          reason={harakatReason ?? "Ask for the word's harakat."}
+          disabledReason={harakat.disabledReason}
+          pending={harakat.pending}
+          offer={harakat.offer}
+          error={harakat.error}
+          formLabel={ENDING_LABELS[ending].label}
+          onSuggest={harakat.request}
+          onConfirm={(text) => {
+            onChange(confirmHarakatSuggestion(cfg, text));
+            harakat.dismiss();
+          }}
+          onDismiss={harakat.dismiss}
         />
       )}
 

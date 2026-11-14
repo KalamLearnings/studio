@@ -8,7 +8,7 @@ import type { BlendFormPreview, PlainIssue, PreviewUnit } from "@/lib/soundBlend
 import { unitLetters } from "@/lib/soundBlend/override";
 
 /** The unit's bar, in the app's colours: blue short, sun long (madd), red closed. */
-function kindBarClass(unit: PreviewUnit): string {
+export function kindBarClass(unit: Pick<PreviewUnit, "kind">): string {
   if (unit.kind === "invalid") return "bg-destructive";
   if (unit.kind === null) return "bg-muted-foreground/40";
   if (unit.kind === "cvv" || unit.kind === "cvvc") return "bg-amber-400";

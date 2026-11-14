@@ -48,6 +48,7 @@ export async function fetchWithAuth<T>(
       body?.message || envelope?.message || `HTTP ${res.status}`,
       res.status,
       envelope?.code ?? body?.code,
+      envelope?.details ?? body?.details,
     );
   }
 

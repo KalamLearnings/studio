@@ -8,6 +8,8 @@ import { ENDING_LABELS, type BlendWordConfig } from "@/lib/blendWord/config";
 import type { WordEditor } from "@/lib/blendWord/editor";
 import { BlendWordPanel } from "./BlendWordPanel";
 import { HarakatSuggestionPanel } from "./HarakatSuggestionPanel";
+import { WordAudioSection } from "./audio/WordAudioSection";
+import { audioUnavailableReason } from "@/lib/blendWord/review";
 
 interface BlendWordSectionProps<C extends BlendWordConfig> {
   config: C;
@@ -35,6 +37,8 @@ export function BlendWordSection<C extends BlendWordConfig>({
   generalErrors,
 }: BlendWordSectionProps<C>) {
   const { sourceText, wordEdit, preview, ending, saveErrors, harakat, harakatReason, showHarakat } = state;
+  const wordId = config.wordRef?.wordId;
+  const audioNote = audioUnavailableReason(wordId, !!(wordEdit?.override || wordEdit?.harakatSource));
   return (
     <>
       <WordSelector
@@ -79,6 +83,22 @@ export function BlendWordSection<C extends BlendWordConfig>({
             onMerge={(form, i) => onChange(editor.mergeFormUnits(config, form, i))}
             onReset={(form) => onChange(editor.changeOverride(config, form, null))}
           />
+        </FormField>
+      )}
+
+      {preview && (
+        <FormField
+          label="Word audio"
+          hint="Generated takes for both forms. Approve, reject or regenerate them, and fix the syllable marks."
+        >
+          {audioNote && <p className="text-xs text-muted-foreground">{audioNote}</p>}
+          {wordId && (
+            <WordAudioSection
+              wordId={wordId}
+              ending={ending}
+              unitsByForm={{ pausal: preview.pausal.units, full: preview.full.units }}
+            />
+          )}
         </FormField>
       )}
 

@@ -7,6 +7,9 @@ import { useLetters, resolveLetterReference } from "@/lib/hooks/useLetters";
 import { applyHaraka } from "@/lib/utils/letterReference";
 import {
   autoDetectSegments,
+  detectLetterDuration,
+  getSoundBlendWarnings,
+  remapSegmentForm,
   type SoundDuration,
   type SoundSegment,
 } from "@/lib/utils/soundBlend";
@@ -93,13 +96,24 @@ export function SoundBlendActivityForm({
     // Auto-detect only when the word itself changes.
   }, [word]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When the reading mode changes, re-map only the glyph forms (isolated vs
+  // connected). The durations the author set stay. Skip the first render so
+  // opening an activity does not rewrite its segments.
+  const previousSpeed = React.useRef(speed);
   React.useEffect(() => {
+    if (previousSpeed.current === speed) return;
+    previousSpeed.current = speed;
     if (word && segments.length > 0 && contentType === "word") {
-      const detected = autoDetectSegments(word, useIsolatedForms);
-      updateConfig({ segments: detected });
+      updateConfig({
+        segments: segments.map((segment) => remapSegmentForm(segment, useIsolatedForms)),
+      });
     }
-    // Re-detect only when the reading mode changes (isolated vs connected forms).
   }, [speed]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const warnings = React.useMemo(
+    () => (contentType === "word" && word ? getSoundBlendWarnings(word) : []),
+    [contentType, word]
+  );
 
   const handleContentTypeChange = (newContentType: BlendContentType) => {
     if (newContentType === "letter") {
@@ -137,7 +151,8 @@ export function SoundBlendActivityForm({
     // letter renders bare in the app.
     const baseChar = letterData.forms?.[ref.form] || letterData.letter;
     const letterChar = applyHaraka(baseChar, ref.haraka);
-    const segment: SoundSegment = { sound: letterChar, duration: 2 };
+    // A sukoon is a stop (1); the apps reject a sukoon with a longer duration.
+    const segment: SoundSegment = { sound: letterChar, duration: detectLetterDuration(letterChar) };
 
     updateConfig({
       word: letterChar,
@@ -261,6 +276,14 @@ export function SoundBlendActivityForm({
                 </div>
               ))}
             </div>
+
+            {warnings.length > 0 && (
+              <ul className="text-sm text-amber-700 dark:text-amber-400 space-y-1">
+                {warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            )}
 
             {contentType === "word" && (
               <button

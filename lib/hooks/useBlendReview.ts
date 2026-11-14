@@ -1,11 +1,11 @@
 /**
- * The blend review queue and the word-audio actions (SB-S3, SB-S4). Glue
- * only: the shapes and the plain-word messages live in lib/blendWord/takes.ts,
- * review.ts and marks.ts.
+ * The blend review queue, one word's blend for the word editor, and the
+ * word-audio actions (SB-S3, SB-S4). Glue only: the shapes and the plain-word
+ * messages live in lib/blendWord/takes.ts, review.ts and marks.ts.
  *
  * Every action answers with an `ActionResult`, so a component shows the
- * refusal where the reviewer acted. After a write the queue is read again
- * (the backend's answers carry no playable URLs).
+ * refusal where the reviewer acted. After a write the queue and the word are
+ * read again (the backend's answers carry no playable URLs).
  */
 
 import { useCallback, useState } from 'react';
@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   correctTakeMarks,
   generateWordAudio,
+  getWordBlend,
   listBlendReview,
   reviewTake,
   reviewWordBlend,
@@ -26,11 +27,14 @@ import {
   aiCheckSummary,
   type BlendReviewList,
   type SplitReviewBody,
+  wordBlendPending,
 } from '@/lib/blendWord/review';
 
 export const BLEND_REVIEW_KEY = ['blend-review'] as const;
+/** Prefix of every word's blend read; one word's key is `[...WORD_BLEND_KEY, wordId]`. */
+export const WORD_BLEND_KEY = ['word-blend'] as const;
 
-/** How often the queue is read again while a take is being made. */
+/** How often the queue or the word is read again while a take is being made. */
 const POLL_MS = 10_000;
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string; lines?: string[] };
@@ -45,6 +49,15 @@ export function useBlendReviewQueue(enabled = true) {
     queryFn: () => listBlendReview(200),
     enabled,
     refetchInterval: (query) => (hasPending(query.state.data) ? POLL_MS : false),
+  });
+}
+
+/** One saved word's splits and takes (the word editor's audio); read again every 10 s only while a take is pending. */
+export function useWordBlend(wordId: string) {
+  return useQuery({
+    queryKey: [...WORD_BLEND_KEY, wordId],
+    queryFn: () => getWordBlend(wordId),
+    refetchInterval: (query) => (wordBlendPending(query.state.data) ? POLL_MS : false),
   });
 }
 
@@ -65,7 +78,10 @@ export function useBlendAudioActions(): BlendAudioActions {
     async (call: () => Promise<unknown>, onError?: (e: unknown) => ActionResult | null): Promise<ActionResult> => {
       try {
         await call();
-        await queryClient.invalidateQueries({ queryKey: BLEND_REVIEW_KEY });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: BLEND_REVIEW_KEY }),
+          queryClient.invalidateQueries({ queryKey: WORD_BLEND_KEY }),
+        ]);
         return { ok: true };
       } catch (e) {
         const special = onError?.(e);

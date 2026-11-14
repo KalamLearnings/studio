@@ -5,17 +5,20 @@ import {
   audioUnavailableReason,
   filterCounts,
   filterQueue,
-  findReviewWord,
   harakatSourceLabel,
   overrideDiff,
   pseudoProposals,
+  savedWordLine,
   qaFlagView,
   reviewFormPreview,
   sortedForms,
   splitReviewBody,
   splitReviewLine,
+  wordBlendForm,
+  wordBlendPending,
   type BlendReviewForm,
   type BlendReviewWord,
+  type WordBlend,
 } from './review';
 import type { BlendReviewTake } from './takes';
 
@@ -80,9 +83,7 @@ describe('queue filters', () => {
     expect(filterQueue(items, 'not_voiceable').map((w) => w.wordId)).toEqual(['nv']);
     expect(filterCounts(items)).toEqual({ all: 5, needs_review: 2, failed: 1, not_voiceable: 1 });
   });
-  it('finds a word and sorts its forms', () => {
-    expect(findReviewWord({ items }, 'nv')?.wordId).toBe('nv');
-    expect(findReviewWord({ items }, undefined)).toBeNull();
+  it('sorts the forms of a word', () => {
     expect(sortedForms(word('w', [form({ form: 'full' }), form()])).map((f) => f.form)).toEqual(['pausal', 'full']);
   });
 });
@@ -190,5 +191,33 @@ describe('audioUnavailableReason', () => {
     expect(audioUnavailableReason(undefined, false)).toMatch(/Save the activity first/);
     expect(audioUnavailableReason('w', true)).toMatch(/saved word/);
     expect(audioUnavailableReason('w', false)).toBeNull();
+  });
+});
+
+describe('one saved word (GET /words/:wordId/blend)', () => {
+  const blend = (over: Partial<WordBlend> = {}): WordBlend => ({
+    wordId: 'kitab',
+    text: 'كِتَابٌ',
+    meaning: 'book',
+    isPseudo: false,
+    forms: [form({ takes: [take('ready')] }), form({ form: 'full' })],
+    ...over,
+  });
+  it('gives each stored form, with its real takes, and null for a form with no split', () => {
+    expect(wordBlendForm(blend(), 'pausal')?.takes.map((t) => t.status)).toEqual(['ready']);
+    expect(wordBlendForm(blend(), 'full')?.takes).toEqual([]);
+    expect(wordBlendForm(blend({ forms: [] }), 'pausal')).toBeNull();
+    expect(wordBlendForm(undefined, 'pausal')).toBeNull();
+  });
+  it('reads again only while a take is pending', () => {
+    expect(wordBlendPending(blend())).toBe(false);
+    expect(wordBlendPending(blend({ forms: [form(), form({ form: 'full', takes: [take('ready'), take('pending')] })] }))).toBe(true);
+    expect(wordBlendPending(blend({ forms: [form({ takes: [take('needs_review'), take('failed')] })] }))).toBe(false);
+    expect(wordBlendPending(undefined)).toBe(false);
+  });
+  it('names the saved word the audio belongs to', () => {
+    expect(savedWordLine(blend())).toBe('Audio of the saved word كِتَابٌ (book).');
+    expect(savedWordLine(blend({ meaning: null, isPseudo: true }))).toBe('Audio of the saved word كِتَابٌ, a practice word.');
+    expect(savedWordLine(blend({ meaning: '  ' }))).toBe('Audio of the saved word كِتَابٌ.');
   });
 });

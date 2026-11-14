@@ -1,18 +1,19 @@
 /**
  * The blend review queue (SB-S4, TECH-DESIGN 3.4): the backend's
- * `GET /words/blend/review` read arranged for the `/review/blend` page and the
- * word editor's audio section. Filters, QA flags and pseudo-word proposals in
- * plain words, the override diff, and the split review's request body.
+ * `GET /words/blend/review` read arranged for the `/review/blend` page, and
+ * the one-word read `GET /words/:wordId/blend` for the word editor's audio
+ * section. Filters, QA flags and pseudo-word proposals in plain words, the
+ * override diff, and the split review's request body.
  *
  * The shapes mirror `BlendReviewWord` / `BlendReviewForm` of the backend's
- * core/application/words/list-blend-review.ts and `BlendQaFlag` of
- * core/domain/blend/blend-qa.ts. Pure.
+ * core/application/words/list-blend-review.ts, `WordBlendView` of
+ * get-word-blend.ts and `BlendQaFlag` of core/domain/blend/blend-qa.ts. Pure.
  */
 
 import { checkBlendUnits, splitBlendWord, type BlendUnitKind, type BlendUnitTag } from "@kalam/curriculum-schemas";
 import type { BlendEnding } from "./config";
 import { describeTags, plainIssue, type BlendFormPreview } from "./preview";
-import type { BlendReviewTake, TakeStatus } from "./takes";
+import { anyPending, type BlendReviewTake, type TakeStatus } from "./takes";
 
 // ---------------------------------------------------------------------------
 // Shapes (the backend's)
@@ -77,6 +78,16 @@ export interface BlendReviewList {
   items: BlendReviewWord[];
 }
 
+/** `GET /words/:wordId/blend`: one saved word and every stored form, whether or not anything waits for review. */
+export interface WordBlend {
+  wordId: string;
+  text: string;
+  meaning: string | null;
+  isPseudo: boolean;
+  /** Pausal first; empty when no split is stored. */
+  forms: BlendReviewForm[];
+}
+
 // ---------------------------------------------------------------------------
 // Filters
 // ---------------------------------------------------------------------------
@@ -125,10 +136,26 @@ export function sortedForms(word: BlendReviewWord): BlendReviewForm[] {
   return [...word.forms].sort((a, b) => order[a.form] - order[b.form]);
 }
 
-/** One word's review entry from the queue, or null when it is not in it. */
-export function findReviewWord(list: BlendReviewList | null | undefined, wordId: string | null | undefined): BlendReviewWord | null {
-  if (!wordId || !list || !Array.isArray(list.items)) return null;
-  return list.items.find((w) => w.wordId === wordId) ?? null;
+// ---------------------------------------------------------------------------
+// One word (the word editor's audio section)
+// ---------------------------------------------------------------------------
+
+/** The stored form of the word, or null when the backend has no split for it. */
+export function wordBlendForm(blend: WordBlend | null | undefined, form: BlendEnding): BlendReviewForm | null {
+  if (!blend || !Array.isArray(blend.forms)) return null;
+  return blend.forms.find((f) => f.form === form) ?? null;
+}
+
+/** True while a take of any form is being made: the editor reads the word again until none is. */
+export function wordBlendPending(blend: WordBlend | null | undefined): boolean {
+  return !!blend && Array.isArray(blend.forms) && blend.forms.some((f) => anyPending(f.takes));
+}
+
+/** Which saved word the audio belongs to, in a line: its text, meaning and whether it is a practice word. */
+export function savedWordLine(blend: WordBlend): string {
+  const meaning = blend.meaning?.trim() ? ` (${blend.meaning.trim()})` : "";
+  const pseudo = blend.isPseudo ? ", a practice word" : "";
+  return `Audio of the saved word ${blend.text}${meaning}${pseudo}.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -348,10 +375,6 @@ export function aiCheckErrorView(error: unknown): { message: string; disable: bo
 export function aiCheckWordIds(items: readonly BlendReviewWord[]): string[] {
   return items.map((w) => w.wordId).slice(0, 50);
 }
-
-/** Shown for a word that is not in the review queue (the read lists only words waiting for a person). */
-export const NOT_IN_QUEUE_MESSAGE =
-  "Nothing of this word waits for review: its takes are ready, or none were made yet. Generate makes only the missing takes.";
 
 /** Why the word editor shows no audio controls, or null when it can show them. */
 export function audioUnavailableReason(wordId: string | null | undefined, edited: boolean): string | null {

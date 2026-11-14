@@ -5,7 +5,7 @@
 import { fetchWithAuth } from '@/lib/api/client';
 import { suggestHarakatRequest, type SuggestHarakatResponse } from '@/lib/blendWord/harakat';
 import type { BlendEnding } from '@/lib/blendWord/config';
-import type { AiCheckResult, BlendReviewList, SplitReviewBody } from '@/lib/blendWord/review';
+import type { AiCheckResult, BlendReviewList, SplitReviewBody, WordBlend } from '@/lib/blendWord/review';
 import type { GenerateAudioInput, TakeReviewBody } from '@/lib/blendWord/takes';
 
 /**
@@ -31,6 +31,11 @@ const enc = encodeURIComponent;
 /** `GET /words/blend/review`: the words with a split or a take waiting for a person. */
 export async function listBlendReview(limit = 200): Promise<BlendReviewList> {
   return fetchWithAuth<BlendReviewList>(`/words/blend/review?limit=${limit}`);
+}
+
+/** `GET /words/:wordId/blend`: one saved word's splits and every take, whatever their status (404 for an unknown word). */
+export async function getWordBlend(wordId: string): Promise<WordBlend> {
+  return fetchWithAuth<WordBlend>(`/words/${enc(wordId)}/blend`);
 }
 
 /** `POST /words/blend/:wordId/:form/review`: approve or reject a split. */

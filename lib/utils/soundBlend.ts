@@ -1,22 +1,21 @@
 /**
- * Sound Blend Authoring Utilities
+ * Legacy `segments` for v1 (sound_blend).
  *
- * Helpers for parsing Arabic words into sound segments and auto-detecting each
- * segment's duration (stop / short / long) for the sound_blend activity. Kept
- * out of the form component so the logic is unit-testable and reusable.
+ * The syllable split, the madd and long-vowel rules and the warnings now come
+ * from the shared splitter (`splitBlendWord` in `@kalam/curriculum-schemas`,
+ * SB-B1). This file only turns that split into v1's per-letter `segments`
+ * (sound + duration 1 stop / 2 short / 3 long) and maps glyphs for v1's
+ * reading modes.
  *
- * Interim (SB-S0): the madd / duration rules here are a minimal stop-gap so
- * Studio stops writing wrong `segments` now. The backend's rule-based splitter
- * (`blend-word.ts`, SB-B1) owns this logic; SB-S1 removes the detection here
- * and imports that shared module instead. Do not extend these rules.
+ * Studio writes `segments` until the backend's save path (SB-B3) derives them
+ * on the server from the word's units with the same rule (TECH-DESIGN 1.1,
+ * 3.3). Delete `legacySegmentsFromSplit` once that has merged.
  */
 
-export type SoundDuration = 1 | 2 | 3;
+import type { BlendDraftUnit, BlendLetter } from "@kalam/curriculum-schemas";
+import type { SoundDuration, SoundSegment } from "../soundBlend/config";
 
-export interface SoundSegment {
-  sound: string;
-  duration: SoundDuration;
-}
+export type { SoundDuration, SoundSegment } from "../soundBlend/config";
 
 /** A base letter together with the harakat that follow it in the word. */
 export interface ParsedSegment {
@@ -30,24 +29,8 @@ const HARAKAT = new Set([
   "ّ", "ْ", "ٓ", "ٔ", "ٕ", "ٰ",
 ]);
 
-const FATHA = "\u064E";
-const DAMMA = "\u064F";
-const KASRA = "\u0650";
-const SUKUN = "\u0652";
-const SHADDA = "\u0651";
-const FATHATAN = "\u064B";
-const DAGGER_ALEF = "\u0670";
-const MADDAH_ABOVE = "\u0653";
-const ALEF = "\u0627";
-const ALEF_MADDA = "\u0622";
-const ALEF_MAKSURA = "\u0649";
-const WAW = "\u0648";
-const YA = "\u064A";
-
-/** Marks that give a letter its own sound: a short vowel, a tanween, a sukoon or a dagger alif. */
-const SOUND_MARKS = new Set([
-  "\u064B", "\u064C", "\u064D", FATHA, DAMMA, KASRA, SUKUN, DAGGER_ALEF,
-]);
+const SUKUN = "ْ";
+const SHADDA = "ّ";
 
 /** Isolated presentation forms, used when authoring in "segmented" mode. */
 const ISOLATED_FORMS: Record<string, string> = {
@@ -91,54 +74,30 @@ export function parseWordIntoSegments(word: string): ParsedSegment[] {
 }
 
 /**
- * True when `carrier` is a madd letter that lengthens the vowel of `previous`:
- * ا or ى after a fatha, و after a damma, ي after a kasra. The carrier must not
- * carry its own vowel, tanween, shadda or hamza; a sukoon is allowed on و and ي.
- * A letter with a shadda never has a madd after it.
- */
-export function isMaddCarrier(previous: ParsedSegment, carrier: ParsedSegment): boolean {
-  if (previous.harakat.includes(SHADDA)) return false;
-
-  const marks = Array.from(carrier.harakat);
-  const letter = carrier.baseLetter;
-
-  if (letter === ALEF || letter === ALEF_MAKSURA) {
-    return marks.length === 0 && previous.harakat.includes(FATHA);
-  }
-  if (letter === WAW || letter === YA) {
-    if (!marks.every((mark) => mark === SUKUN)) return false;
-    return letter === WAW
-      ? previous.harakat.includes(DAMMA)
-      : previous.harakat.includes(KASRA);
-  }
-  return false;
-}
-
-/** True when the letter is long by itself: آ, or a dagger alif on the letter. */
-function isLongByItself(segment: ParsedSegment): boolean {
-  if (segment.harakat.includes(SHADDA)) return false;
-  if (segment.baseLetter === ALEF_MADDA) return true;
-  if (segment.baseLetter === ALEF && segment.harakat.includes(MADDAH_ABOVE)) return true;
-  return segment.harakat.includes(DAGGER_ALEF);
-}
-
-/**
- * Infer a segment's duration from its harakat and the following segment:
- * sukoon → stop (1), a madd → long (3), anything else → short (2).
+ * v1 `segments` from a split: one segment per letter of the split text.
  *
- * A stop is given only for a sukoon: the apps read duration 1 as a sukoon, so
- * a bare final letter is short and is reported by `getSoundBlendWarnings`.
- * `isLast` is kept for callers; a last segment has no next segment.
+ * The duration rule (TECH-DESIGN 3.3), read from the splitter's units:
+ * - a letter with a sukoon is a stop (1);
+ * - the letter that opens a long-vowel unit (madd, dagger alif, آ) is long (3),
+ *   unless it has a shadda;
+ * - every other letter is short (2). A bare final letter is short, and the
+ *   splitter reports it (`inferred_sukoon`).
  */
-export function detectDuration(
-  segment: ParsedSegment,
-  isLast: boolean,
-  nextSegment?: ParsedSegment
-): SoundDuration {
-  if (segment.harakat.includes(SUKUN)) return 1;
-  if (isLongByItself(segment)) return 3;
-  if (!isLast && nextSegment && isMaddCarrier(segment, nextSegment)) return 3;
-  return 2;
+export function legacySegmentsFromSplit(
+  split: { letters: readonly BlendLetter[]; units: readonly BlendDraftUnit[] },
+  useIsolated = false,
+): SoundSegment[] {
+  const longOnsets = new Set<number>();
+  for (const unit of split.units) {
+    if (unit.vowel?.long && !unit.span.startsMid) longOnsets.add(unit.span.from);
+  }
+  return split.letters.map((l, i) => {
+    let duration: SoundDuration = 2;
+    if (l.marks.includes(SUKUN)) duration = 1;
+    else if (longOnsets.has(i) && !l.marks.includes(SHADDA)) duration = 3;
+    const letter = useIsolated ? toIsolatedForm(l.letter) : l.letter;
+    return { sound: letter + l.marks, duration };
+  });
 }
 
 /** Duration for a single letter (Letter mode): a stop with a sukoon, otherwise short. */
@@ -146,31 +105,6 @@ export function detectLetterDuration(glyph: string): SoundDuration {
   const parsed = parseWordIntoSegments(glyph);
   const last = parsed[parsed.length - 1];
   return last && last.harakat.includes(SUKUN) ? 1 : 2;
-}
-
-/**
- * Author-facing warnings for a word. A bare final letter (no vowel, tanween or
- * sukoon) is ambiguous: the apps cannot tell a stop from a short sound. A final
- * madd letter (بَا, نُو) and a silent seat alif (كِتَابًا) are fine bare.
- */
-export function getSoundBlendWarnings(word: string): string[] {
-  const parsed = parseWordIntoSegments(word);
-  if (parsed.length === 0) return [];
-
-  const last = parsed[parsed.length - 1];
-  const previous = parsed.length > 1 ? parsed[parsed.length - 2] : undefined;
-  const hasSoundMark = Array.from(last.harakat).some((mark) => SOUND_MARKS.has(mark));
-  if (hasSoundMark || isLongByItself(last)) return [];
-  if (previous && isMaddCarrier(previous, last)) return [];
-  const isSeatAlif =
-    (last.baseLetter === ALEF || last.baseLetter === ALEF_MAKSURA) &&
-    last.harakat === "" &&
-    previous?.harakat.includes(FATHATAN);
-  if (isSeatAlif) return [];
-
-  return [
-    `The last letter "${last.baseLetter}" has no mark: add a sukoon or a vowel.`,
-  ];
 }
 
 const FROM_ISOLATED_FORMS: Record<string, string> = Object.fromEntries(
@@ -186,23 +120,4 @@ export function remapSegmentForm(segment: SoundSegment, useIsolated: boolean): S
     .map((char) => (useIsolated ? toIsolatedForm(char) : FROM_ISOLATED_FORMS[char] || char))
     .join("");
   return { ...segment, sound };
-}
-
-/** Build sound segments for a word, optionally rendering letters in isolated form. */
-export function autoDetectSegments(word: string, useIsolated = false): SoundSegment[] {
-  if (!word) return [];
-
-  const parsed = parseWordIntoSegments(word);
-  const segments: SoundSegment[] = [];
-
-  for (let i = 0; i < parsed.length; i++) {
-    const segment = parsed[i];
-    const isLast = i === parsed.length - 1;
-    const nextSegment = i < parsed.length - 1 ? parsed[i + 1] : undefined;
-    const duration = detectDuration(segment, isLast, nextSegment);
-    const letter = useIsolated ? toIsolatedForm(segment.baseLetter) : segment.baseLetter;
-    segments.push({ sound: letter + segment.harakat, duration });
-  }
-
-  return segments;
 }

@@ -27,6 +27,8 @@ export interface Word {
   category: string | null;
   difficulty: number | null;
   usage_count: number;
+  /** Pseudo-word flag (SB-B2 `curriculum_words.is_pseudo`); absent until that column ships. */
+  is_pseudo?: boolean | null;
   created_at: string;
   updated_at: string;
 }

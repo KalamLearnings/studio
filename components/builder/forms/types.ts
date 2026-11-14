@@ -54,6 +54,9 @@ export type ActivityConfig = Record<string, any>;
 // Compatible with the Topic type from the API
 export interface TopicContext {
   id: string;
+  /** Present when the builder passes a full Topic; used for curriculum-order checks. */
+  curriculum_id?: string;
+  sequence_number?: number;
   title: {
     en: string;
     ar?: string;

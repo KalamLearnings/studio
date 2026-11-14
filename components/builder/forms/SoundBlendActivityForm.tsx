@@ -4,35 +4,43 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FormField, TextInput, LetterSelector, Checkbox, WordSelector } from "./shared";
 import { useLetters, resolveLetterReference } from "@/lib/hooks/useLetters";
+import { useTopics } from "@/lib/hooks/useTopics";
 import { applyHaraka } from "@/lib/utils/letterReference";
+import { detectLetterDuration } from "@/lib/utils/soundBlend";
 import {
-  autoDetectSegments,
-  detectLetterDuration,
-  getSoundBlendWarnings,
-  remapSegmentForm,
+  clearBlendFields,
+  resolveStages,
+  sourceWordText,
+  toggleStage,
+  validateStages,
+  type BlendContentType,
+  type BlendSpeed,
+  type SoundBlendConfig,
   type SoundDuration,
   type SoundSegment,
-} from "@/lib/utils/soundBlend";
+} from "@/lib/soundBlend/config";
+import { buildWordPreview, hasTanween } from "@/lib/soundBlend/preview";
+import { getEndingOrderWarning } from "@/lib/soundBlend/ending";
+import {
+  changeEnding,
+  changeFullText,
+  changeOverride,
+  changePseudo,
+  changeSpeed,
+  changeStages,
+  changeWord,
+  currentEnding,
+  mergeFormUnits,
+  splitFormUnit,
+} from "@/lib/soundBlend/editor";
+import { BlendWordPanel } from "./soundBlend/BlendWordPanel";
+import { BlendSettingsFields } from "./soundBlend/BlendSettingsFields";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
-type BlendSpeed = "none" | "slow" | "fast" | "segmented" | "blended" | "fluent";
-type BlendContentType = "letter" | "word";
-
-interface SoundBlendConfig {
-  contentType?: BlendContentType;
-  word?: string;
-  segments?: SoundSegment[];
-  speed?: BlendSpeed;
-  requiredSlides?: number;
-  showBothSpeeds?: boolean;
-  transliteration?: string;
-  meaning?: string;
-}
-
 const DURATION_LABELS: Record<SoundDuration, { label: string; icon: string; color: string }> = {
-  1: { label: "Stop", icon: "●", color: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700" },
-  2: { label: "Short", icon: "▬", color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700" },
-  3: { label: "Long", icon: "▬▬", color: "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700" },
+  1: { label: "Stop", icon: "●", color: "text-red-600 dark:text-red-400" },
+  2: { label: "Short", icon: "▬", color: "text-blue-600 dark:text-blue-400" },
+  3: { label: "Long", icon: "▬▬", color: "text-amber-600 dark:text-amber-400" },
 };
 
 type ReadingMode = "segmented" | "blended" | "fluent";
@@ -56,10 +64,13 @@ export function SoundBlendActivityForm({
   topic,
 }: BaseActivityFormProps<SoundBlendConfig>) {
   const { letters } = useLetters();
+  const { data: topics } = useTopics(topic?.curriculum_id ?? null);
 
-  const contentType: BlendContentType = config?.contentType || "word";
-  const word = config?.word || "";
-  const segments = config?.segments || [];
+  const cfg = React.useMemo<SoundBlendConfig>(() => config ?? {}, [config]);
+  const contentType: BlendContentType = cfg.contentType || "word";
+  const word = cfg.word || "";
+  const segments: SoundSegment[] = cfg.segments || [];
+  const sourceText = sourceWordText(cfg);
 
   // In letter mode the picked letter is stored only as the `word` glyph (e.g.
   // "مَ"). Resolve it back to a LetterReference so the picker pre-selects when
@@ -69,74 +80,45 @@ export function SoundBlendActivityForm({
     const bareGlyph = word.replace(/[ً-ْٰ]/g, "");
     return resolveLetterReference(bareGlyph, letters) as LetterReference | null;
   }, [contentType, word, letters]);
-  const speed: BlendSpeed = config?.speed || (contentType === "letter" ? "none" : "segmented");
+  const speed: BlendSpeed = cfg.speed || (contentType === "letter" ? "none" : "segmented");
   // Treat legacy values as their modern equivalents for the picker UI.
   const normalizedSpeed = normalizeSpeed(speed);
-  // Segmented mode shows letters in isolated forms; blended/fluent keep the
-  // connected/contextual word.
-  const useIsolatedForms = normalizedSpeed === "segmented";
-  const showBothSpeeds = config?.showBothSpeeds || false;
-  const transliteration = config?.transliteration || "";
-  const meaning = config?.meaning || "";
+  const showBothSpeeds = cfg.showBothSpeeds || false;
+  const transliteration = cfg.transliteration || "";
+  const meaning = cfg.meaning || "";
+
+  // The word editor reads everything from pure modules (lib/soundBlend).
+  const preview = React.useMemo(
+    () => (contentType === "word" && sourceText ? buildWordPreview(sourceText, cfg.wordBlendEdit) : null),
+    [contentType, sourceText, cfg.wordBlendEdit]
+  );
+  const ending = currentEnding(cfg);
+  const stages = resolveStages(cfg);
+  const stageProblems = cfg.stages ? validateStages(cfg.stages) : [];
+  const endingWarning = React.useMemo(
+    () =>
+      preview
+        ? getEndingOrderWarning({ ending, topic, topics, wordHasTanween: hasTanween(preview) })
+        : null,
+    [preview, ending, topic, topics]
+  );
 
   const updateConfig = React.useCallback(
     (updates: Partial<SoundBlendConfig>) => {
-      onChange({ ...config, ...updates });
+      onChange({ ...cfg, ...updates });
     },
-    [config, onChange]
-  );
-
-  React.useEffect(() => {
-    if (word && segments.length === 0 && contentType === "word") {
-      const detected = autoDetectSegments(word, useIsolatedForms);
-      if (detected.length > 0) {
-        updateConfig({ segments: detected });
-      }
-    }
-    // Auto-detect only when the word itself changes.
-  }, [word]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // When the reading mode changes, re-map only the glyph forms (isolated vs
-  // connected). The durations the author set stay. Skip the first render so
-  // opening an activity does not rewrite its segments.
-  const previousSpeed = React.useRef(speed);
-  React.useEffect(() => {
-    if (previousSpeed.current === speed) return;
-    previousSpeed.current = speed;
-    if (word && segments.length > 0 && contentType === "word") {
-      updateConfig({
-        segments: segments.map((segment) => remapSegmentForm(segment, useIsolatedForms)),
-      });
-    }
-  }, [speed]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const warnings = React.useMemo(
-    () => (contentType === "word" && word ? getSoundBlendWarnings(word) : []),
-    [contentType, word]
+    [cfg, onChange]
   );
 
   const handleContentTypeChange = (newContentType: BlendContentType) => {
-    if (newContentType === "letter") {
-      updateConfig({
-        contentType: newContentType,
-        word: "",
-        segments: [],
-        speed: "none",
-      });
-    } else {
-      // Switch to word mode: default to the first blending stage (segmented).
-      updateConfig({
-        contentType: newContentType,
-        word: "",
-        segments: [],
-        speed: "segmented",
-      });
-    }
-  };
-
-  const handleWordChange = (newWord: string) => {
-    const detected = autoDetectSegments(newWord, useIsolatedForms);
-    updateConfig({ word: newWord, segments: detected });
+    // Letter mode has no word model; word mode starts at the first blending stage.
+    onChange({
+      ...clearBlendFields(cfg),
+      contentType: newContentType,
+      word: "",
+      segments: [],
+      speed: newContentType === "letter" ? "none" : "segmented",
+    });
   };
 
   const handleLetterSelect = (ref: LetterReference | LetterReference[] | null) => {
@@ -158,17 +140,6 @@ export function SoundBlendActivityForm({
       word: letterChar,
       segments: [segment],
     });
-  };
-
-  const handleSegmentDurationChange = (index: number, duration: SoundDuration) => {
-    const newSegments = [...segments];
-    newSegments[index] = { ...newSegments[index], duration };
-    updateConfig({ segments: newSegments });
-  };
-
-  const handleRedetect = () => {
-    const detected = autoDetectSegments(word, useIsolatedForms);
-    updateConfig({ segments: detected });
   };
 
   const getSpeedHint = () => {
@@ -234,81 +205,64 @@ export function SoundBlendActivityForm({
 
       {contentType === "word" && (
         <WordSelector
-          value={word}
-          onChange={(value) => handleWordChange(value)}
+          value={sourceText}
+          onChange={(value, wordData) =>
+            onChange(changeWord(cfg, value, wordData ? { id: wordData.id, is_pseudo: wordData.is_pseudo } : undefined))
+          }
           label="Arabic Word"
           required
           placeholder="Type to search word library..."
         />
       )}
 
+      {preview && (
+        <FormField
+          label="Syllables"
+          hint="Split by the shared rules, the same as the server. The server splits again on save."
+        >
+          <BlendWordPanel
+            preview={preview}
+            ending={ending}
+            fullText={cfg.wordBlendEdit?.fullText ?? ""}
+            isPseudo={!!cfg.wordBlendEdit?.isPseudo}
+            onFullTextChange={(text) => onChange(changeFullText(cfg, text))}
+            onPseudoChange={(on) => onChange(changePseudo(cfg, on))}
+            onSplit={(form, i, at) => onChange(splitFormUnit(cfg, form, i, at))}
+            onMerge={(form, i) => onChange(mergeFormUnits(cfg, form, i))}
+            onReset={(form) => onChange(changeOverride(cfg, form, null))}
+          />
+        </FormField>
+      )}
+
+      {contentType === "word" && (
+        <BlendSettingsFields
+          ending={ending}
+          stages={stages}
+          endingWarning={endingWarning}
+          stageProblems={stageProblems}
+          onEndingChange={(value) => onChange(changeEnding(cfg, value))}
+          onStageToggle={(stage, on) => onChange(changeStages(cfg, toggleStage(stages, stage, on)))}
+        />
+      )}
+
       {segments.length > 0 && (
         <FormField
-          label="Sound Segments"
-          hint="Duration: Stop (dot), Short (small bar), Long (big bar)"
+          label="v1 slider"
+          hint="What the v1 app shows, derived from the syllables: stop (sukoon), short, long (madd)."
         >
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
-              {segments.map((segment, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center gap-2 p-3 bg-muted rounded-lg border"
-                >
-                  <span className="font-arabic text-2xl">{segment.sound}</span>
-                  <div className="flex gap-1">
-                    {([1, 2, 3] as SoundDuration[]).map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => handleSegmentDurationChange(index, d)}
-                        className={cn(
-                          "px-2 py-1 text-xs font-medium rounded border transition-all",
-                          segment.duration === d
-                            ? DURATION_LABELS[d].color
-                            : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
-                        )}
-                        title={DURATION_LABELS[d].label}
-                      >
-                        {DURATION_LABELS[d].icon}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {warnings.length > 0 && (
-              <ul className="text-sm text-amber-700 dark:text-amber-400 space-y-1">
-                {warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            )}
-
-            {contentType === "word" && (
-              <button
-                type="button"
-                onClick={handleRedetect}
-                className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+          <div className="flex flex-wrap justify-end gap-2" dir="rtl">
+            {segments.map((segment, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center gap-1 rounded-md border bg-muted px-2 py-1"
+                title={DURATION_LABELS[segment.duration].label}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Re-detect durations
-              </button>
-            )}
-
-            <div className="flex gap-4 text-xs text-muted-foreground border-t pt-3">
-              <div className="flex items-center gap-1">
-                <span className="text-red-600 dark:text-red-400">●</span> Stop (sukun)
+                <span className="font-arabic text-xl">{segment.sound}</span>
+                <span className={cn("text-xs", DURATION_LABELS[segment.duration].color)}>
+                  {DURATION_LABELS[segment.duration].icon}
+                </span>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-blue-600 dark:text-blue-400">▬</span> Short (voweled)
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-amber-600 dark:text-amber-400">▬▬</span> Long (madd)
-              </div>
-            </div>
+            ))}
           </div>
         </FormField>
       )}
@@ -321,7 +275,7 @@ export function SoundBlendActivityForm({
               <button
                 key={mode}
                 type="button"
-                onClick={() => updateConfig({ speed: mode })}
+                onClick={() => onChange(changeSpeed(cfg, mode))}
                 className={cn(
                   "flex flex-col items-center gap-1 px-4 py-3 rounded-lg border-2 transition-all min-w-[100px]",
                   normalizedSpeed === mode

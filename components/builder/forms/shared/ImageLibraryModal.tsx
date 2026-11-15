@@ -14,11 +14,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Search, Upload, Check } from "lucide-react";
 import { useAssets } from "@/lib/hooks/useAssets";
 import { cn } from "@/lib/utils";
+import type { Asset } from "@/lib/types/assets";
 
 interface ImageLibraryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectImage: (url: string) => void;
+  /** The picked image's URL, and its library entry (`registryId` is the asset id). */
+  onSelectImage: (url: string, asset?: Asset) => void;
   currentImage?: string;
 }
 
@@ -52,7 +54,7 @@ export function ImageLibraryModal({
 
   const handleSelect = () => {
     if (selectedUrl) {
-      onSelectImage(selectedUrl);
+      onSelectImage(selectedUrl, imageAssets.find((a) => a.url === selectedUrl));
       onClose();
     }
   };

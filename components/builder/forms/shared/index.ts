@@ -30,14 +30,13 @@ export type { HarakaChoiceGridProps } from "./HarakaChoiceGrid";
 // Option selector grid (for break types, colors, shapes, etc.)
 export { OptionSelector } from "./OptionSelector";
 
-// Option square (single card in grid)
-export { OptionSquare } from "./OptionSquare";
-export type { OptionSquareData, LetterRef } from "./OptionSquare";
-
 // Options grid variants
 export { OptionsGrid, NumberGrid } from "./OptionsGrid";
-export { AnswerOptionsGrid } from "./OptionsGridNew";
-export type { OptionData } from "./OptionsGridNew";
+
+// Content items (CM-S6): one item, an answer grid of items, the prompt kind
+export { ContentItemEditor, CONTENT_KIND_OPTIONS } from "./ContentItemEditor";
+export { ContentItemGrid } from "./ContentItemGrid";
+export { PromptKindPicker } from "./PromptKindPicker";
 
 // Letter selector with modal
 export { LetterSelector } from "./LetterSelector";

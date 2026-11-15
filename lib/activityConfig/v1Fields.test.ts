@@ -136,6 +136,47 @@ const EXTRA_ROWS: { id: string; type: string; config: Config }[] = [
   { id: "x-dragdots", type: "drag_dots_to_letter", config: { targetLetter: "ت", position: "final" } },
   { id: "x-color", type: "color_letter", config: { letter: { letterId: "ba", form: "isolated", display: "ب" } } },
   { id: "x-haraka", type: "drag_haraka_to_letter", config: { targetLetter: { letterId: "ba", form: "isolated", haraka: "none" }, harakaType: "fatha" } },
+  // CM-S6: a letter-only MCQ with a prompt kind and no stimulus opens canonically
+  // only when it is canonical already (x-mcq-kinded); in the legacy shape it
+  // stays on the shim (v1 reads the options array as a whole)
+  {
+    id: "x-mcq-letters",
+    type: "multiple_choice_question",
+    config: {
+      prompt: { kind: "sound_to_symbol" },
+      options: [
+        { id: "a", letter: { letterId: "ba", form: "isolated" }, text: { en: "", ar: "" }, isCorrect: true },
+        { id: "b", letter: { letterId: "ta", form: "initial", haraka: "fatha" }, text: { en: "", ar: "" }, isCorrect: false },
+      ],
+    },
+  },
+  {
+    id: "x-mcq-kinded",
+    type: "multiple_choice_question",
+    config: {
+      prompt: { kind: "form" },
+      options: [
+        { id: "a", kind: "letter", letter: { letterId: "ba", form: "final" }, isCorrect: true },
+        { id: "b", kind: "letter", letter: { letterId: "ba", form: "medial" }, isCorrect: false },
+      ],
+    },
+  },
+  // ...but not with a stored mode, a stimulus, or other kinds of option
+  {
+    id: "x-mcq-mode",
+    type: "multiple_choice_question",
+    config: { mode: "letter", prompt: { kind: "sound_to_symbol" }, options: [{ id: "a", letter: { letterId: "ba", form: "isolated" }, isCorrect: true }, { id: "b", letter: { letterId: "ta", form: "isolated" }, isCorrect: false }] },
+  },
+  {
+    id: "x-mcq-question",
+    type: "multiple_choice_question",
+    config: { question: { en: "", ar: "باب" }, prompt: { kind: "symbol_to_sound" }, options: [{ id: "a", letter: { letterId: "ba", form: "isolated" }, isCorrect: true }, { id: "b", letter: { letterId: "ta", form: "isolated" }, isCorrect: false }] },
+  },
+  {
+    id: "x-mcq-numerals",
+    type: "multiple_choice_question",
+    config: { prompt: { kind: "count" }, options: [{ id: "a", text: { en: "", ar: "2" }, isCorrect: true }, { id: "b", text: { en: "", ar: "3" }, isCorrect: false }] },
+  },
 ];
 
 function rowsOf(types: readonly string[]) {
@@ -196,12 +237,14 @@ describe("v1 fields after an open-and-save in Studio (CM-B31)", () => {
   });
 
   it("the changes Studio already made before CM-S3 are only the shim's known mappings", () => {
-    // A missing contentType written as `letter` (show_letter_or_word), and a
-    // glyph correctLetter copied to targetLetter when the row has none.
+    // A missing contentType written as `letter` (show_letter_or_word), a
+    // glyph correctLetter copied to targetLetter when the row has none, and a
+    // missing MCQ `mode` inferred from the options (`inferOptionMode`; MCQ rows
+    // with a stimulus, a stored mode or no prompt kind stay on the shim).
     const shared = sharedDifferences(Object.keys(CANONICAL_FORM_TYPES));
     if (process.env.V1_REPORT) console.log(shared.join("\n"));
     for (const d of shared) {
-      expect(d).toMatch(/^(show_letter_or_word \S+ contentType: "\(absent\)" -> "letter"|pop_balloons_with_letter x-pop-1 targetLetter(\[\])?: )/);
+      expect(d).toMatch(/^(show_letter_or_word \S+ contentType: "\(absent\)" -> "letter"|pop_balloons_with_letter x-pop-1 targetLetter(\[\])?: |multiple_choice_question \S+ mode: "\(absent\)" -> "(letter|text|image)"$)/);
     }
   });
 

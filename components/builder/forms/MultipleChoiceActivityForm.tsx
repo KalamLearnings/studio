@@ -4,18 +4,33 @@ import * as React from "react";
 import {
   ModeToggle,
   ContentDisplayPicker,
-  AnswerOptionsGrid,
-  LetterSelector,
+  ContentItemGrid,
+  PromptKindPicker,
   WordSelector,
+  FieldErrors,
 } from "./shared";
-import { useLetters, getLetterDisplayChar } from "@/lib/hooks/useLetters";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  emptied,
+  gridKindOf,
+  isFilled,
+  kindOfMcqMode,
+  MCQ_MODE_OF_KIND,
+  mcqOptionFromItem,
+  mcqOptionItem,
+  promptKind,
+  withPromptKind,
+  type EditorItem,
+  type EditorKind,
+} from "@/lib/activityConfig/contentItems";
+
+/**
+ * Multiple choice (content model CM-S6). The options are content items in the
+ * shared grid (letter, library word, library image, numeral). What the form
+ * stores per option is v1's shape (`mcqOptionFromItem`); a letter-only
+ * question with no stimulus and a prompt kind is saved canonically
+ * (lib/activityConfig/canonical.ts).
+ */
 
 interface MultipleChoiceOption {
   id: string;
@@ -29,8 +44,9 @@ interface MultipleChoiceConfig {
   question?: { en?: string; ar?: string };
   questionImage?: string;
   targetLetter?: LetterReference;
-  mode?: "letter" | "word" | "image";
+  mode?: "letter" | "word" | "image" | "text";
   options?: MultipleChoiceOption[];
+  prompt?: unknown;
 }
 
 const CONTENT_TYPE_OPTIONS = [
@@ -38,11 +54,7 @@ const CONTENT_TYPE_OPTIONS = [
   { value: "image" as const, label: "Image", icon: "🖼️" },
 ];
 
-const ANSWER_MODE_OPTIONS = [
-  { value: "letter" as const, label: "Letter", icon: "أ" },
-  { value: "word" as const, label: "Word", icon: "📝" },
-  { value: "image" as const, label: "Image", icon: "🖼️" },
-];
+const ANSWER_KINDS: EditorKind[] = ["letter", "word", "image", "numeral"];
 
 const generateOptionId = (index: number) => `option_${index}_${Date.now()}`;
 
@@ -51,19 +63,12 @@ export function MultipleChoiceActivityForm({
   onChange,
   topic,
 }: BaseActivityFormProps<MultipleChoiceConfig>) {
-  const { getLetter } = useLetters();
-
   const questionAr = config?.question?.ar || "";
   const questionImage = config?.questionImage || "";
-  const mode = config?.mode || "letter";
-
 
   const [contentType, setContentType] = React.useState<"text" | "image">(
     questionImage ? "image" : "text"
   );
-  const [letterModalOpen, setLetterModalOpen] = React.useState(false);
-  const [wordModalOpen, setWordModalOpen] = React.useState(false);
-  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<number | null>(null);
 
   // Options are derived from config (single source of truth) so editing an
   // existing activity pre-populates and stays in sync — no duplicate local
@@ -77,6 +82,11 @@ export function MultipleChoiceActivityForm({
           { id: generateOptionId(2), text: { en: "", ar: "" }, isCorrect: false },
           { id: generateOptionId(3), text: { en: "", ar: "" }, isCorrect: false },
         ];
+  const items: EditorItem[] = options.map((o) => mcqOptionItem(o, config?.mode));
+
+  const [answerKind, setAnswerKind] = React.useState<EditorKind>(() =>
+    gridKindOf(items, kindOfMcqMode(config?.mode))
+  );
 
   const updateConfig = (updates: Partial<MultipleChoiceConfig>) => {
     onChange({ ...config, ...updates });
@@ -91,68 +101,24 @@ export function MultipleChoiceActivityForm({
     }
   };
 
-  const handleUpdateOption = (
-    index: number,
-    field: "text" | "image" | "isCorrect" | "letter",
-    value: unknown
-  ) => {
-    const newOptions = [...options];
-    if (field === "text") {
-      // A word and a letter ref are mutually exclusive content for an option;
-      // a stale letter ref left behind makes the backend render the letter
-      // instead of the word on mobile.
-      newOptions[index] = {
-        ...newOptions[index],
-        text: { en: "", ar: value as string },
-        letter: undefined,
-      };
-    } else if (field === "image") {
-      newOptions[index] = { ...newOptions[index], image: value as string };
-    } else if (field === "isCorrect") {
-      newOptions[index] = { ...newOptions[index], isCorrect: value as boolean };
-    } else if (field === "letter") {
-      newOptions[index] = {
-        ...newOptions[index],
-        letter: value as LetterReference,
-        text: { en: "", ar: "" },
-      };
-    }
-    updateConfig({ options: newOptions });
+  const handleChangeItem = (index: number, item: EditorItem) => {
+    const next = [...options];
+    next[index] = mcqOptionFromItem(item, options[index]) as unknown as MultipleChoiceOption;
+    updateConfig({ options: next });
   };
 
-  const handleOpenLetterPicker = (index: number) => {
-    setSelectedOptionIndex(index);
-    setLetterModalOpen(true);
+  // v1 shows one kind per question (`mode`): switching it empties the options of another kind.
+  const handleKindChange = (kind: EditorKind) => {
+    setAnswerKind(kind);
+    updateConfig({
+      mode: MCQ_MODE_OF_KIND[kind],
+      options: options.map((o, i) =>
+        isFilled(items[i]) && items[i].kind !== kind
+          ? (mcqOptionFromItem(emptied({ ...items[i], kind }), o) as unknown as MultipleChoiceOption)
+          : o
+      ),
+    });
   };
-
-  const handleOpenWordPicker = (index: number) => {
-    setSelectedOptionIndex(index);
-    setWordModalOpen(true);
-  };
-
-  const handleLetterSelect = (selected: LetterReference | LetterReference[] | null) => {
-    if (selectedOptionIndex !== null && selected) {
-      const letterRef = Array.isArray(selected) ? selected[0] : selected;
-      handleUpdateOption(selectedOptionIndex, "letter", letterRef);
-    }
-    setLetterModalOpen(false);
-  };
-
-  const handleWordSelect = (word: string) => {
-    if (selectedOptionIndex !== null) {
-      handleUpdateOption(selectedOptionIndex, "text", word);
-    }
-    setWordModalOpen(false);
-  };
-
-  const optionData = options.map((opt) => ({
-    id: opt.id,
-    text: opt.text?.ar || "",
-    image: opt.image,
-    letter: opt.letter,
-    letterDisplay: getLetterDisplayChar(opt.letter, getLetter),
-    isCorrect: opt.isCorrect,
-  }));
 
   return (
     <div className="space-y-6">
@@ -182,58 +148,24 @@ export function MultipleChoiceActivityForm({
         )}
       </div>
 
-      <ModeToggle
-        label="Answer Type"
-        value={mode}
-        options={ANSWER_MODE_OPTIONS}
-        onChange={(newMode) => updateConfig({ mode: newMode })}
-        borderTop
+      <PromptKindPicker
+        value={promptKind(config)}
+        onChange={(kind) => onChange(withPromptKind({ ...config }, kind))}
       />
 
-      <AnswerOptionsGrid
-        options={optionData}
-        mode={mode}
-        onUpdateOption={handleUpdateOption}
+      <ContentItemGrid
+        items={items}
+        onChangeItem={handleChangeItem}
+        kind={answerKind}
+        onKindChange={handleKindChange}
+        allowedKinds={ANSWER_KINDS}
+        kindLabel="Answer Type"
         title="Answer Options"
         showCorrectCheckbox
         columns={4}
-        onOpenLetterPicker={handleOpenLetterPicker}
-        onOpenWordPicker={handleOpenWordPicker}
+        topic={topic}
       />
-
-      {/* Letter Selector Modal */}
-      {letterModalOpen && (
-        <Dialog open={letterModalOpen} onOpenChange={setLetterModalOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Select Letter</DialogTitle>
-            </DialogHeader>
-            <LetterSelector
-              value={selectedOptionIndex !== null ? options[selectedOptionIndex]?.letter || null : null}
-              onChange={handleLetterSelect}
-              topic={topic}
-              showFormSelector
-              showHarakaSelector
-            />
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Word Selector Modal */}
-      {wordModalOpen && (
-        <Dialog open={wordModalOpen} onOpenChange={setWordModalOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Select Word</DialogTitle>
-            </DialogHeader>
-            <WordSelector
-              value={selectedOptionIndex !== null ? options[selectedOptionIndex]?.text?.ar || "" : ""}
-              onChange={handleWordSelect}
-              placeholder="Type to search word library..."
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      <FieldErrors path="options" />
     </div>
   );
 }

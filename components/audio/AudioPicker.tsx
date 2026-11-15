@@ -21,11 +21,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Search, Music, Check, Play } from "lucide-react";
 import { useAudio } from "@/lib/hooks/useAudio";
 import { cn } from "@/lib/utils";
+import type { AudioAsset } from "@/lib/types/audio";
 
 interface AudioPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string) => void;
+  /** The picked clip's URL, and its library entry (the `audio_assets` id, the registry id). */
+  onSelect: (url: string, asset?: AudioAsset) => void;
   currentUrl?: string | null;
 }
 
@@ -50,7 +52,7 @@ export function AudioPicker({
 
   const handleConfirm = () => {
     if (selectedUrl) {
-      onSelect(selectedUrl);
+      onSelect(selectedUrl, audioAssets.find((a) => a.url === selectedUrl));
       onClose();
     }
   };

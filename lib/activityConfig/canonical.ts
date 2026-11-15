@@ -20,9 +20,12 @@
  *
  * v1 limit: the server does not yet write the v1 display strings from a
  * reference (`word` from `wordRef`, `image` from `imageRef`, a word card's
- * `text`). Until it does, the word and picture modes of show_letter_or_word,
- * speech_practice and content_with_cards stay in their legacy shape, so the
- * v1 app keeps showing them.
+ * `text`, an MCQ option's `text` or `image`, the MCQ `mode` and `question`,
+ * a match pair side's `type`, `value` and `audioUrl`). Until it does, the
+ * word and picture modes of show_letter_or_word, speech_practice and
+ * content_with_cards, every MCQ but a letter-only one with no stimulus, and
+ * match_pairs (`V1_BLOCKED_TYPES`) stay in their legacy shape, so the v1 app
+ * keeps showing them.
  */
 
 import {
@@ -32,6 +35,14 @@ import {
 } from "@kalam/curriculum-schemas/server";
 import { normalizeActivityConfig } from "../../components/builder/forms/normalizeActivityConfig";
 import { contrastPickerEnabled, isContrastId } from "./contrast";
+import {
+  mcqOptionItem,
+  pairSideItem,
+  promptKind,
+  toContentItemWrite,
+  toContentRefWrite,
+  writePrompt,
+} from "./contentItems";
 
 export type Config = Record<string, unknown>;
 
@@ -246,6 +257,84 @@ function writeLetterCards(config: Config): Config {
   }
   if (next.targetLetter != null) next.targetLetter = singleRef(next.targetLetter);
   else delete next.targetLetter;
+  if (next.prompt !== undefined) next.prompt = writePrompt(next.prompt);
+  return next;
+}
+
+// ---------------------------------------------------------------------------
+// answer sets (CM-S6): multiple_choice_question, match_pairs
+// ---------------------------------------------------------------------------
+
+/** The MCQ keys the server derives for v1 or drops (`multiple_choice_question.ts`). */
+const MCQ_DERIVED_KEYS = ["mode", "question", "questionImage", "contentType", "showImages", "correctOptionId"];
+
+const filledText = (v: unknown) => typeof v === "string" && !!v.trim();
+
+const hasArabic = (v: unknown) =>
+  (typeof v === "string" && !!v.trim()) || (isRecord(v) && typeof v.ar === "string" && !!v.ar.trim());
+
+/**
+ * An MCQ v1 can show from references alone: every option a letter (the
+ * delivery writes its glyph into `text.ar`), no stimulus above the options
+ * (v1 reads `question.ar` and `questionImage`; the server does not write them
+ * from `prompt.target`), the answer grid in letter mode, and a prompt kind (the write
+ * schema needs it).
+ */
+function mcqLetterOnly(config: Config): boolean {
+  if (!promptKind(config)) return false;
+  if (hasArabic(config.question) || filledText(config.questionImage)) return false;
+  if (config.mode !== undefined && config.mode !== "letter") return false;
+  if (isRecord(config.prompt) && config.prompt.target !== undefined) return false;
+  if (!Array.isArray(config.options) || config.options.length === 0) return false;
+  return config.options.every((o) => {
+    if (!isRecord(o)) return false;
+    if (o.kind !== undefined) return o.kind === "letter";
+    if (typeof o.image === "string" && o.image) return false;
+    return !hasArabic(o.text);
+  });
+}
+
+/** MCQ letter options: each a letter content item; no `mode`, `question` or option `text`. */
+function writeMcq(config: Config): Config {
+  if (!mcqLetterOnly(config)) return config;
+  const next = without(config, MCQ_DERIVED_KEYS);
+  next.options = (config.options as unknown[]).map((o) => toContentItemWrite(mcqOptionItem(o, "letter")));
+  next.prompt = writePrompt(config.prompt);
+  if (next.targetLetter != null) next.targetLetter = targetRefs(next.targetLetter);
+  else delete next.targetLetter;
+  return next;
+}
+
+/**
+ * A stored MCQ opens canonically only when it is canonical already (every
+ * option has its `kind`) and has no `mode`, `question` or `questionImage`.
+ * A legacy row stays on the shim: v1 reads the `options` array as a whole
+ * (CM-B31), so rewriting its options as content items changes a v1 field
+ * even where the delivery writes the same glyph back; a stored `mode` or
+ * stimulus would be dropped (a stored prompt keeps no target from them).
+ */
+function mcqStoredOk(stored: Config): boolean {
+  if ("mode" in stored || hasArabic(stored.question) || filledText(stored.questionImage)) return false;
+  return Array.isArray(stored.options) && stored.options.every((o) => isRecord(o) && typeof o.kind === "string");
+}
+
+/**
+ * match_pairs: each side a content item without an id (`ContentRefWriteSchema`),
+ * no `type`, `value`, `audioUrl` or flat letter fields. Blocked for v1
+ * (`V1_BLOCKED_TYPES`): v1 reads every side's `type` and `value`.
+ */
+function writeMatchPairs(config: Config): Config {
+  const next = without(config, ["targetLetterAudioUrl", "targetLetterAudioId"]);
+  if (Array.isArray(config.pairs)) {
+    next.pairs = config.pairs.map((p) =>
+      isRecord(p)
+        ? { left: toContentRefWrite(pairSideItem(p.left)), right: toContentRefWrite(pairSideItem(p.right)) }
+        : p,
+    );
+  }
+  if (next.targetLetter != null) next.targetLetter = targetRefs(next.targetLetter);
+  else delete next.targetLetter;
+  if (next.prompt !== undefined) next.prompt = writePrompt(next.prompt);
   return next;
 }
 
@@ -290,18 +379,25 @@ export const CANONICAL_FORM_TYPES: Readonly<Record<string, CanonicalType>> = {
   show_letter_or_word: { write: writeShowLetter, canonicalOk: isLetterMode },
   speech_practice: { write: writeSpeechLetter, canonicalOk: isLetterMode, keepAbsent: ["contentType"] },
   content_with_cards: { write: writeLetterCards, canonicalOk: cardsLetterMode },
+  // answer sets (CM-S6): a letter-only MCQ with no stimulus; match pairs blocked for v1
+  multiple_choice_question: { write: writeMcq, canonicalOk: mcqLetterOnly, storedOk: mcqStoredOk },
+  match_pairs: { write: writeMatchPairs },
 };
 
 /**
  * Types taken back to the shim because opening and saving a stored row would
  * change a field the v1 app reads (CM-B31, `v1Fields.test.ts`). They open
  * through the shim and save exactly as before, until the server writes the
- * fields v1 reads. Empty: on the PROD shapes no converted type changes a v1
- * field beyond what the shim already did. Rows are also kept on the shim one
- * by one (`openForEdit`: an unreadable row, a word or picture mode, a trace
- * glyph whose form disagrees with `position`).
+ * fields v1 reads. Rows are also kept on the shim one by one (`openForEdit`:
+ * an unreadable row, a word or picture mode, a trace glyph whose form
+ * disagrees with `position`, an MCQ with a stimulus or a stored `mode`).
+ *
+ * - `match_pairs`: v1 draws every side from its `type` and `value` (and an
+ *   audio side from `audioUrl`); the canonical side has neither and the
+ *   server does not write them from the reference yet, so every mode would
+ *   lose what v1 shows. Its writer (`writeMatchPairs`) is ready for when it does.
  */
-export const V1_BLOCKED_TYPES: readonly string[] = [];
+export const V1_BLOCKED_TYPES: readonly string[] = ["match_pairs"];
 
 export function isCanonicalFormType(type: string | undefined): boolean {
   return !!type && Object.prototype.hasOwnProperty.call(CANONICAL_FORM_TYPES, type) &&

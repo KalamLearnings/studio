@@ -23,6 +23,8 @@ interface AudioPickerFieldProps {
   onChange: (audioUrl: string | undefined, audioId?: string) => void;
   required?: boolean;
   className?: string;
+  /** Report the picked clip's own library id (content items, CM-S6) instead of keeping `audioId`. */
+  reportAssetId?: boolean;
 }
 
 export function AudioPickerField({
@@ -33,6 +35,7 @@ export function AudioPickerField({
   onChange,
   required = false,
   className,
+  reportAssetId = false,
 }: AudioPickerFieldProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -40,8 +43,8 @@ export function AudioPickerField({
 
   const hasAudio = !!value;
 
-  const handleSelect = (url: string) => {
-    onChange(url, audioId || undefined);
+  const handleSelect = (url: string, asset?: AudioAsset) => {
+    onChange(url, reportAssetId ? asset?.id : audioId || undefined);
   };
 
   const handleClear = () => {

@@ -27,6 +27,7 @@ export function ColorLetterActivityForm({
         label="Letter to Color"
         hint="Select the letter and form to color"
         required
+        errorPath="letter"
       >
         <LetterSelector
           value={letter}
@@ -38,7 +39,7 @@ export function ColorLetterActivityForm({
         />
       </FormField>
 
-      <FormField label="Stroke Width" hint="Width of the coloring brush (1-50)">
+      <FormField label="Stroke Width" hint="Width of the coloring brush (1-50)" errorPath="strokeWidth">
         <NumberInput
           value={strokeWidth}
           onChange={(value) => updateConfig({ strokeWidth: value })}

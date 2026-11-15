@@ -6,6 +6,8 @@ import { FormField, NumberInput } from "../FormField";
 import { LetterSelector } from "./LetterSelector";
 import { GameSpeedSelector } from "./GameSpeedSelector";
 import { AudioPickerField } from "./AudioPickerField";
+import { DistractorContrastField } from "./DistractorContrastField";
+import { carryContrast, contrastPickerEnabled } from "@/lib/activityConfig/contrast";
 import type {
   BaseActivityFormProps,
   LetterReference,
@@ -40,6 +42,8 @@ interface TargetLetterWithDistractorsFormProps
   speedField?: string;
   /** Whether to show an audio picker for the target letter's sound */
   showTargetAudio?: boolean;
+  /** The activity type (for the distractor contrast picker) */
+  activityType?: string;
 }
 
 /**
@@ -60,6 +64,7 @@ export function TargetLetterWithDistractorsForm({
   showSpeedConfig = false,
   speedField = "speed",
   showTargetAudio = false,
+  activityType,
 }: TargetLetterWithDistractorsFormProps) {
   const targetLetter: LetterReference | LetterReference[] | null =
     (config?.[targetLetterField] as LetterReference | LetterReference[] | null) || null;
@@ -79,6 +84,24 @@ export function TargetLetterWithDistractorsForm({
     onChange({ ...config, ...updates } as TargetLetterConfig);
   };
 
+  const targetList = (value: unknown): LetterReference[] =>
+    Array.isArray(value) ? value : value ? [value as LetterReference] : [];
+
+  // A picked distractor contrast follows its letter when the selection changes,
+  // and goes where the server can derive one (CM-S3).
+  const pickerOn = contrastPickerEnabled(activityType);
+  const setTarget = (value: unknown) =>
+    updateConfig({
+      [targetLetterField]: value,
+      ...(config?.distractorLetters !== undefined && {
+        distractorLetters: carryContrast(pickerOn, targetList(value), distractorLetters, distractorLetters),
+      }),
+    });
+  const setDistractors = (value: LetterReference[]) =>
+    updateConfig({
+      distractorLetters: carryContrast(pickerOn, targetList(targetLetter), distractorLetters, value),
+    });
+
   const toggleLetterPosition = (position: LetterPosition) => {
     const newPositions = letterPositions.includes(position)
       ? letterPositions.filter((p) => p !== position)
@@ -95,6 +118,7 @@ export function TargetLetterWithDistractorsForm({
         label={labels.targetLetterLabel || "Target Letter"}
         hint={labels.targetLetterHint || "Select the target letter and form"}
         required
+        errorPath={targetLetterField}
       >
         {targetLetterMultiSelect ? (
           <LetterSelector
@@ -105,18 +129,14 @@ export function TargetLetterWithDistractorsForm({
                 ? [targetLetter]
                 : []
             }
-            onChange={(value) =>
-              updateConfig({ [targetLetterField]: value })
-            }
+            onChange={setTarget}
             multiSelect
             multiFormSelect
           />
         ) : (
           <LetterSelector
             value={targetLetter}
-            onChange={(value) =>
-              updateConfig({ [targetLetterField]: value })
-            }
+            onChange={setTarget}
             topic={topic}
             showFormSelector={true}
             multiFormSelect
@@ -143,21 +163,28 @@ export function TargetLetterWithDistractorsForm({
         label="Distractor Letters"
         hint="Select letters that will appear as incorrect options"
         required
+        errorPath="distractorLetters"
       >
         <LetterSelector
           value={distractorLetters}
-          onChange={(value) =>
-            updateConfig({ distractorLetters: value })
-          }
+          onChange={setDistractors}
           multiSelect
           multiFormSelect
         />
       </FormField>
 
+      <DistractorContrastField
+        activityType={activityType}
+        targets={targetList(targetLetter)}
+        distractors={distractorLetters}
+        onChange={(value) => updateConfig({ distractorLetters: value })}
+      />
+
       {showLetterPositions && (
         <FormField
           label="Letter Positions"
           hint="Select which letter forms to include"
+          errorPath="letterPositions"
         >
           <div className="grid grid-cols-4 gap-2">
             {LETTER_POSITIONS.map((pos) => (
@@ -192,6 +219,7 @@ export function TargetLetterWithDistractorsForm({
             labels.targetCountHint ||
             "Number of correct responses to complete"
           }
+          errorPath="targetCount"
         >
           <NumberInput
             value={targetCount}
@@ -206,6 +234,7 @@ export function TargetLetterWithDistractorsForm({
         <FormField
           label="Duration (seconds)"
           hint="Time limit for the activity"
+          errorPath="duration"
         >
           <NumberInput
             value={duration}

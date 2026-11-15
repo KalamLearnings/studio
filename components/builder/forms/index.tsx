@@ -242,6 +242,7 @@ function createTargetLetterForm(
         showSpeedConfig={formConfig.showSpeedConfig}
         speedField={formConfig.speedField}
         showTargetAudio={formConfig.showTargetAudio}
+        activityType={activityType}
       />
     );
   };

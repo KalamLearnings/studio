@@ -30,6 +30,7 @@ export function DragDotsToLetterForm({
         label="Target Letter"
         hint="Select a letter with dots that students will complete"
         required
+        errorPath="targetLetter"
       >
         <LetterSelector
           value={targetLetter}

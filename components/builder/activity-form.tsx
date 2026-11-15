@@ -19,7 +19,9 @@ import {
   type ActivityConfig,
   type TopicContext,
 } from "./forms";
-import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
+import { openForEdit, toSaveConfig } from "@/lib/activityConfig/canonical";
+import { isConfigSaveError, parseConfigSaveError } from "@/lib/activityConfig/saveErrors";
+import { SaveErrorsProvider } from "./forms/shared/SaveErrors";
 import { isBlendActivityType, toBlendSaveParts } from "@/lib/blendWord/config";
 import { BLEND_INVALID } from "@/lib/blendWord/saveErrors";
 import { WORD_SPELLING_INVALID } from "@/lib/words/spelling";
@@ -65,9 +67,12 @@ export function ActivityForm({
   onDuplicate,
   onConfigChange,
 }: ActivityFormProps) {
-  const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(() =>
-    normalizeActivityConfig(activityType, config),
-  );
+  // A converted type's legacy row opens in the canonical shape (CM-S3), read
+  // with the server's own read schema; other types go through the shim.
+  // A row that opens through the shim saves exactly as before (`canonical`
+  // false), so v1 keeps every field it reads (CM-B31).
+  const [opened] = React.useState(() => openForEdit(activityType, config));
+  const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(opened.config);
   const [instruction, setInstruction] = React.useState(initialInstruction);
   // Initialize to the activity's saved voice, falling back to the default
   // (Shelby). Never undefined — otherwise the form would display the default
@@ -91,10 +96,12 @@ export function ActivityForm({
   // When the author clears the instruction text but a clip still exists, we
   // confirm before saving since saving will remove the audio (backend deletes it).
   const [confirmClearAudio, setConfirmClearAudio] = React.useState(false);
-  // The last save's refusal, shown inline by forms that understand it
-  // (the blend forms: BLEND_INVALID, and WORD_SPELLING_INVALID on the word
-  // field). Cleared on the next config edit.
+  // The last save's refusal, shown inline: the blend forms read BLEND_INVALID
+  // and WORD_SPELLING_INVALID; every form shows the save validation errors
+  // (CONFIG_INVALID, CONFIG_EMPTY, CONFIG_CHECK_FAILED) beside their fields.
+  // Cleared on the next config edit.
   const [saveError, setSaveError] = React.useState<{ code?: string; details?: unknown } | null>(null);
+  const configErrors = React.useMemo(() => parseConfigSaveError(saveError), [saveError]);
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
@@ -135,7 +142,11 @@ export function ActivityForm({
     setIsSaving(true);
     try {
       // Blend v2 (sound_blend, word_split_blend): the word-level edit leaves config for the body's top level.
-      const { config: configToSave, wordBlendEdit } = toBlendSaveParts(activityType, localConfig);
+      // Converted types send references only, no derived or legacy fields (CM-S3).
+      const { config: configToSave, wordBlendEdit } = toBlendSaveParts(
+        activityType,
+        toSaveConfig(activityType, localConfig, opened.canonical),
+      );
       setSaveError(null);
       const saved = await onSave?.({
         config: configToSave,
@@ -155,6 +166,7 @@ export function ActivityForm({
       console.error("Error saving activity:", error);
       const apiError = error as { code?: string; details?: unknown };
       if (
+        isConfigSaveError(apiError) ||
         apiError?.code === BLEND_INVALID ||
         (apiError?.code === WORD_SPELLING_INVALID && isBlendActivityType(activityType))
       ) {
@@ -281,12 +293,14 @@ export function ActivityForm({
           {/* Activity-specific form */}
           {FormComponent && (
             <div className="pt-4 border-t">
-              <FormComponent
-                config={localConfig}
-                onChange={handleConfigChange}
-                topic={topic}
-                saveError={saveError}
-              />
+              <SaveErrorsProvider errors={configErrors}>
+                <FormComponent
+                  config={localConfig}
+                  onChange={handleConfigChange}
+                  topic={topic}
+                  saveError={saveError}
+                />
+              </SaveErrorsProvider>
             </div>
           )}
 

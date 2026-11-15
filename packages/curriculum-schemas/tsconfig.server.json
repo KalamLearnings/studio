@@ -1,0 +1,15 @@
+{
+  // The backend's activity schemas, copied byte for byte into src/server
+  // (test/server-schemas-drift.test.ts). They are Deno sources: relative
+  // imports end in `.ts` (rewritten to `.js` on emit), they use ES2022
+  // library calls, and they are written for the backend's compiler options,
+  // so they build here with those instead of the package's stricter ones.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "rewriteRelativeImportExtensions": true,
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src/server/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+}

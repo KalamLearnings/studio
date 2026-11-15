@@ -84,6 +84,7 @@ export function SpeechPracticeActivityForm({
         label="Content Type"
         hint="What should the child pronounce?"
         required
+        errorPath="contentType"
       >
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -121,6 +122,7 @@ export function SpeechPracticeActivityForm({
           label="Letter"
           hint="Select letter and form to pronounce"
           required
+          errorPath="targetLetter"
         >
           <LetterSelector
             value={targetLetter}
@@ -160,7 +162,7 @@ export function SpeechPracticeActivityForm({
         </>
       )}
 
-      <FormField label="Passing Score" hint="Minimum score to pass (0-100)">
+      <FormField label="Passing Score" hint="Minimum score to pass (0-100)" errorPath="passingScore">
         <NumberInput
           value={passingScore}
           onChange={(value) => updateConfig({ passingScore: value })}

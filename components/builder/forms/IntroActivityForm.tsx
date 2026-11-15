@@ -76,6 +76,7 @@ export function IntroActivityForm({
         label="Content Type"
         hint="What to display in this activity"
         required
+        errorPath="contentType"
       >
         <div className="grid grid-cols-3 gap-3">
           {CONTENT_TYPES.map((type) => (
@@ -106,6 +107,7 @@ export function IntroActivityForm({
           label="Letter"
           hint="Select the Arabic letter and form to display"
           required
+          errorPath="targetLetter"
         >
           <LetterSelector
             value={targetLetter}

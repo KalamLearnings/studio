@@ -8,6 +8,9 @@ export {
   Select,
 } from "./FormField";
 
+// Server save errors beside their fields
+export { SaveErrorsProvider, FieldErrors } from "./SaveErrors";
+
 // Mode toggle for text/image switching
 export {
   ModeToggle,

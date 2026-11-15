@@ -1,0 +1,5501 @@
+[
+ {
+  "id": "activity_1790783821062",
+  "type": "activity_request",
+  "config": {}
+ },
+ {
+  "id": "activity_1791398590250",
+  "type": "activity_request",
+  "config": {
+   "contentType": "letter",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "dad"
+   }
+  }
+ },
+ {
+  "id": "activity_1784962327040",
+  "type": "animation_intro",
+  "config": {
+   "loop": false,
+   "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/introduction/Level-1-Intro-Animation-video__1784962249087.mp3?v=1784962250127",
+   "animationUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-animations/activities/mini2anim__1784962310860.riv"
+  }
+ },
+ {
+  "id": "activity_1779326008430",
+  "type": "audio_letter_match",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "kaf"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ra"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ta"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ba"
+    }
+   ],
+   "targetLetterAudioId": "8804f7fd-791d-4c63-9f97-f2320120c4ae",
+   "targetLetterAudioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814822668.mp3"
+  }
+ },
+ {
+  "id": "activity_1779925368374",
+  "type": "audio_letter_match",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "noon"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "meem"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "ayn"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779925621435",
+  "type": "audio_letter_match",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "jeem"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "haa"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "khaa"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "khaa"
+    }
+   ],
+   "targetLetterAudioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814688409.mp3?v=1783324230365"
+  }
+ },
+ {
+  "id": "activity_1766481497213",
+  "type": "balance_scale",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "zay"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1769552890444",
+  "type": "balance_scale",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "alif"
+   }
+  }
+ },
+ {
+  "id": "activity_1772574287786",
+  "type": "balance_scale",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "meem"
+    },
+    {
+     "form": "initial",
+     "letterId": "meem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1773012897659",
+  "type": "balance_scale",
+  "config": {
+   "targetCount": 4,
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "qaf"
+    },
+    {
+     "form": "initial",
+     "letterId": "qaf"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "letterId": "faa"
+    },
+    {
+     "form": "initial",
+     "letterId": "faa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1773079245192",
+  "type": "balance_scale",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "noon"
+    },
+    {
+     "form": "initial",
+     "letterId": "noon"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "medial",
+     "letterId": "heh"
+    },
+    {
+     "form": "initial",
+     "letterId": "heh"
+    },
+    {
+     "form": "initial",
+     "letterId": "ba"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777592204140",
+  "type": "balance_scale",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "lam"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "lam"
+    },
+    {
+     "form": "medial",
+     "haraka": "fatha",
+     "letterId": "lam"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    },
+    {
+     "form": "medial",
+     "letterId": "alif"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "alif_hamza_above"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766479592738",
+  "type": "bear_honey",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "dal"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772583202292",
+  "type": "bear_honey",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "zay"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779664944323",
+  "type": "bear_honey",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "dal"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "dal"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "ra"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764208336889",
+  "type": "break_time_minigame",
+  "config": {
+   "color": "yellow",
+   "variant": "dot_tapping"
+  }
+ },
+ {
+  "id": "activity_1764294745344",
+  "type": "break_time_minigame",
+  "config": {}
+ },
+ {
+  "id": "activity_1764541906916",
+  "type": "break_time_minigame",
+  "config": {
+   "variant": "tracing_lines"
+  }
+ },
+ {
+  "id": "activity_1765527215210",
+  "type": "break_time_minigame",
+  "config": {
+   "variant": "tap_shapes",
+   "targetShape": "square"
+  }
+ },
+ {
+  "id": "activity_1765699400446",
+  "type": "break_time_minigame",
+  "config": {
+   "variant": "tracing_lines",
+   "linePattern": "straight"
+  }
+ },
+ {
+  "id": "activity_1772646881120",
+  "type": "break_time_minigame",
+  "config": {
+   "variant": "memory_game",
+   "cardCount": 8
+  }
+ },
+ {
+  "id": "activity_1772731289932",
+  "type": "break_time_minigame",
+  "config": {
+   "variant": "tap_shapes",
+   "targetCount": 7,
+   "targetShape": "triangle"
+  }
+ },
+ {
+  "id": "activity_1772734755974",
+  "type": "break_time_minigame",
+  "config": {
+   "color": "pink",
+   "variant": "tap_shapes",
+   "targetShape": "heart"
+  }
+ },
+ {
+  "id": "activity_1775712938736",
+  "type": "break_time_minigame",
+  "config": {
+   "linePattern": "zigzag"
+  }
+ },
+ {
+  "id": "activity_1792611502186",
+  "type": "break_time_minigame",
+  "config": {
+   "variant": "pattern_completion",
+   "patternColors": [
+    "red",
+    "blue",
+    "red",
+    "blue",
+    "red",
+    "red",
+    "blue"
+   ]
+  }
+ },
+ {
+  "id": "activity_1765698764271",
+  "type": "build_word_from_letters",
+  "config": {
+   "targetWord": "فرح",
+   "letterDisplayMode": "isolated"
+  }
+ },
+ {
+  "id": "activity_1769391629585",
+  "type": "build_word_from_letters",
+  "config": {
+   "useChildName": true,
+   "letterDisplayMode": "contextual"
+  }
+ },
+ {
+  "id": "activity_1772474702960",
+  "type": "build_word_from_letters",
+  "config": {
+   "targetWord": "مطر",
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "did you see that? the letter meem changed its shape completely to connect into the word",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1772913775702.mp3"
+    }
+   },
+   "letterDisplayMode": "isolated"
+  }
+ },
+ {
+  "id": "activity_1773012690344",
+  "type": "build_word_from_letters",
+  "config": {
+   "targetWord": "طريق",
+   "wordMeaning": {
+    "ar": "",
+    "en": ""
+   },
+   "letterDisplayMode": "isolated"
+  }
+ },
+ {
+  "id": "activity_1779956276313",
+  "type": "camel_narration",
+  "config": {
+   "narrationSteps": [
+    {
+     "pose": "wave",
+     "audioId": "4e242146-56b3-48b2-a86e-bf7582eb84a5",
+     "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/introduction/level-2-intro__1779614323877.mp3"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782955648814",
+  "type": "camel_narration",
+  "config": {
+   "narrationSteps": [
+    {
+     "pose": "happy",
+     "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/introduction/were-getting-closer-to-beatin__1782955537771.mp3?v=1782955549432"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764553619562",
+  "type": "catch_fish_with_letter",
+  "config": {
+   "targetCount": 7,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "tha"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    },
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765246967136",
+  "type": "catch_fish_with_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "lam"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772646786200",
+  "type": "catch_fish_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772736056807",
+  "type": "catch_fish_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "thaa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "dad"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779328099389",
+  "type": "catch_fish_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "ayn"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "ayn"
+    },
+    {
+     "form": "medial",
+     "haraka": "kasra",
+     "letterId": "ayn"
+    },
+    {
+     "form": "final",
+     "haraka": "kasra",
+     "letterId": "ayn"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    },
+    {
+     "form": "medial",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    },
+    {
+     "form": "final",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779523263573",
+  "type": "catch_fish_with_letter",
+  "config": {
+   "fishSpeed": 1.25,
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "alif_hamza_below"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "alif_hamza_above"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765097679718",
+  "type": "color_letter",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "ghayn"
+   }
+  }
+ },
+ {
+  "id": "activity_1775262321188",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1775262256776",
+     "text": "كـ",
+     "letter": {
+      "form": "isolated",
+      "letterId": "kaf"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1775262256776",
+     "text": "ك",
+     "letter": {
+      "form": "initial",
+      "letterId": "kaf"
+     },
+     "isCorrect": false
+    }
+   ],
+   "interactive": false,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "kaf"
+   }
+  }
+ },
+ {
+  "id": "activity_1775262487302",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1775262332771",
+     "text": "كَـ",
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "kaf"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1775262332771",
+     "text": "كَ",
+     "letter": {
+      "form": "initial",
+      "haraka": "fatha",
+      "letterId": "kaf"
+     },
+     "isCorrect": false
+    }
+   ],
+   "interactive": false,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "kaf"
+   }
+  }
+ },
+ {
+  "id": "activity_1775264314743",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1775262256776",
+     "text": "ت",
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1775262256776",
+     "text": "تـ",
+     "isCorrect": false
+    }
+   ],
+   "interactive": false
+  }
+ },
+ {
+  "id": "activity_1776988102195",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1776915914921",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "qaf"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1776915914921",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "haraka": "fatha",
+      "letterId": "qaf"
+     },
+     "isCorrect": false
+    }
+   ],
+   "interactive": false,
+   "targetLetter": {
+    "form": "initial",
+    "haraka": "fatha",
+    "letterId": "qaf"
+   }
+  }
+ },
+ {
+  "id": "activity_1777517378054",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1777516470205",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "haa"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1777516470205",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "haraka": "fatha",
+      "letterId": "haa"
+     },
+     "isCorrect": false
+    }
+   ],
+   "interactive": false
+  }
+ },
+ {
+  "id": "activity_1777536307953",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1777516470205",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "letterId": "khaa"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1777516470205",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "letterId": "khaa"
+     },
+     "isCorrect": false
+    }
+   ],
+   "interactive": false,
+   "targetLetter": {
+    "form": "isolated",
+    "haraka": "fatha",
+    "letterId": "khaa"
+   }
+  }
+ },
+ {
+  "id": "activity_1777624050711",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_3_1777598531925",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "letterId": "zay"
+     },
+     "isCorrect": false
+    }
+   ],
+   "interactive": false
+  }
+ },
+ {
+  "id": "activity_1782431475330",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1782431462763",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "faa"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1782431462763",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "haraka": "damma",
+      "letterId": "faa"
+     },
+     "isCorrect": false
+    }
+   ],
+   "contentType": "letter",
+   "interactive": false,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "faa"
+   }
+  }
+ },
+ {
+  "id": "activity_1783473887364",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1783473866219",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "haraka": "sukoon",
+      "letterId": "ayn"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1783473866219",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "haraka": "sukoon",
+      "letterId": "ayn"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_2_1783473867693",
+     "text": "",
+     "letter": {
+      "form": "medial",
+      "haraka": "sukoon",
+      "letterId": "ayn"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_3_1783473868031",
+     "text": "",
+     "letter": {
+      "form": "final",
+      "haraka": "sukoon",
+      "letterId": "ayn"
+     },
+     "isCorrect": false
+    }
+   ],
+   "cardMode": "letter",
+   "interactive": false,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "ayn"
+   }
+  }
+ },
+ {
+  "id": "activity_1783557680147",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1783557692671",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "haraka": "sukoon",
+      "letterId": "seen"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1783557692671",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "haraka": "sukoon",
+      "letterId": "seen"
+     },
+     "isCorrect": false
+    }
+   ],
+   "content": {
+    "word": ""
+   },
+   "cardMode": "letter",
+   "contentType": "word",
+   "interactive": false
+  }
+ },
+ {
+  "id": "activity_1784075614955",
+  "type": "content_with_cards",
+  "config": {
+   "cards": [
+    {
+     "id": "card_0_1784075605055",
+     "text": "",
+     "letter": {
+      "form": "isolated",
+      "haraka": "sukoon",
+      "letterId": "jeem"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "card_1_1784075605055",
+     "text": "",
+     "letter": {
+      "form": "initial",
+      "haraka": "sukoon",
+      "letterId": "jeem"
+     },
+     "isCorrect": false
+    }
+   ],
+   "content": {},
+   "contentType": "letter",
+   "interactive": false,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1766481008870",
+  "type": "deliver_envelope",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thaa"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sad"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766531308663",
+  "type": "deliver_envelope",
+  "config": {
+   "targetCount": 2,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "faa"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "qaf"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1767082345074",
+  "type": "deliver_envelope",
+  "config": {
+   "totalItems": 6,
+   "targetCount": 2,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "alif"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "dad"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1767235363591",
+  "type": "deliver_envelope",
+  "config": {
+   "targetCount": 3,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "yaa"
+   },
+   "showArabicLabel": false,
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ba"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772735195737",
+  "type": "deliver_envelope",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "thaa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "dad"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777598064655",
+  "type": "deliver_envelope",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "faa"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "faa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "qaf"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "qaf"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764206408252",
+  "type": "drag_dots_to_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1764294272063",
+  "type": "drag_dots_to_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sheen"
+   },
+   "distractorDotsCount": 2
+  }
+ },
+ {
+  "id": "activity_1772042331426",
+  "type": "drag_dots_to_letter",
+  "config": {
+   "targetLetter": "ج"
+  }
+ },
+ {
+  "id": "activity_1772072494811",
+  "type": "drag_dots_to_letter",
+  "config": {
+   "position": "initial",
+   "targetLetter": {
+    "form": "initial",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1772911174870",
+  "type": "drag_dots_to_letter",
+  "config": {
+   "targetLetter": {
+    "form": "final",
+    "letterId": "ghayn"
+   },
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "youre too good at this!",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1772911186344.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1773683811006",
+  "type": "drag_hamza_to_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "alif"
+   },
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "great job!!! this form of اليف ONLY shows when its in the BEGINNING of a word",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1773683779426.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1776813172060",
+  "type": "drag_haraka_to_letter",
+  "config": {
+   "harakaType": "fatha",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "kaf"
+   }
+  }
+ },
+ {
+  "id": "activity_1777190510140",
+  "type": "drag_haraka_to_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thaa"
+   }
+  }
+ },
+ {
+  "id": "activity_1777794135131",
+  "type": "drag_haraka_to_letter",
+  "config": {
+   "harakaType": "fatha",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "ra"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    },
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ba"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1780563083043",
+  "type": "drag_haraka_to_letter",
+  "config": {
+   "harakaType": "fatha",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "alif_hamza_above"
+   },
+   "distractorHarakat": [
+    "damma",
+    "kasra"
+   ]
+  }
+ },
+ {
+  "id": "activity_1790880852229",
+  "type": "drag_haraka_to_word",
+  "config": {
+   "word": {
+    "text": "لَبْ"
+   },
+   "blankIndices": [
+    0
+   ],
+   "distractorHarakat": [
+    "kasra",
+    "damma"
+   ]
+  }
+ },
+ {
+  "id": "activity_1790965522978",
+  "type": "drag_haraka_to_word",
+  "config": {
+   "word": {
+    "text": "رُضْوَ"
+   },
+   "blankIndices": [
+    0
+   ]
+  }
+ },
+ {
+  "id": "activity_1772039778580",
+  "type": "drag_to_animal_mouth",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "alif_hamza_above"
+    },
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    },
+    {
+     "form": "medial",
+     "letterId": "alif"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "lam"
+    },
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    },
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772128937711",
+  "type": "drag_to_animal_mouth",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "khaa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1792614158565",
+  "type": "drive_to_shadda",
+  "config": {
+   "word": {
+    "text": "شَكَّ"
+   },
+   "holdMs": 1000
+  }
+ },
+ {
+  "id": "activity_1790879728073",
+  "type": "drive_to_sukoon",
+  "config": {
+   "word": {
+    "text": "رَبْ"
+   }
+  }
+ },
+ {
+  "id": "activity_1766481156546",
+  "type": "feed_baby",
+  "config": {
+   "bottleColor": "yellow",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "taa"
+   },
+   "showArabicLabel": false,
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sad"
+    },
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772650513494",
+  "type": "feed_baby",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777625347116",
+  "type": "feed_baby",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "alif_hamza_above"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "lam"
+    },
+    {
+     "form": "initial",
+     "letterId": "lam"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1773164730952",
+  "type": "feed_rabbit",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "zay"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    },
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1792690547349",
+  "type": "feed_rabbit",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "haraka": "shadda_fatha",
+     "letterId": "seen"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "shadda_damma",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "haraka": "shadda_kasra",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766480328969",
+  "type": "fly_on_flowers",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thal"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772265769252",
+  "type": "fly_on_flowers",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thal"
+   }
+  }
+ },
+ {
+  "id": "activity_1793041442528",
+  "type": "fly_on_flowers",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "shadda_fatha",
+     "letterId": "ghayn"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "shadda_kasra",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "haraka": "shadda_damma",
+     "letterId": "ghayn"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766479491814",
+  "type": "grid_tap",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "dal"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766481212800",
+  "type": "grid_tap",
+  "config": {
+   "theme": "ocean",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "taa"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thaa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766481329965",
+  "type": "grid_tap",
+  "config": {
+   "targetCount": 7,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "ayn"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766530820173",
+  "type": "grid_tap",
+  "config": {
+   "theme": "ocean",
+   "targetCount": 5,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "zay"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772582092994",
+  "type": "grid_tap",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777017708061",
+  "type": "grid_tap",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "taa"
+    }
+   ],
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "way to go! some letters in arabic sounds quite similar, make sure you listen cloooosely to the difference",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1777017753081.mp3"
+    }
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ta"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777190793364",
+  "type": "grid_tap",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ta"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "dal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1773769914542",
+  "type": "i_spy",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1774755111947",
+  "type": "i_spy",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "medial",
+     "letterId": "heh"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779614025309",
+  "type": "i_spy",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "thal"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "dal"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "zay"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766477577973",
+  "type": "ice_cream_stacking",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thaa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "haa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766538064648",
+  "type": "ice_cream_stacking",
+  "config": {
+   "targetCount": 2,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sad"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "tha"
+    },
+    {
+     "form": "isolated",
+     "letterId": "noon"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766562552228",
+  "type": "ice_cream_stacking",
+  "config": {
+   "totalItems": 7,
+   "targetCount": 2,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "dad"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sad"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ba"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772418126280",
+  "type": "ice_cream_stacking",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    },
+    {
+     "form": "initial",
+     "letterId": "sheen"
+    }
+   ],
+   "letterPositions": [
+    "isolated",
+    "initial"
+   ]
+  }
+ },
+ {
+  "id": "activity_1772649757458",
+  "type": "ice_cream_stacking",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sad"
+    },
+    {
+     "form": "isolated",
+     "letterId": "dad"
+    },
+    {
+     "form": "isolated",
+     "letterId": "thaa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772822891157",
+  "type": "ice_cream_stacking",
+  "config": {
+   "targetCount": 3,
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    },
+    {
+     "form": "initial",
+     "letterId": "kaf"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "noon"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ayn"
+    },
+    {
+     "form": "isolated",
+     "letterId": "lam"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779355622333",
+  "type": "ice_cream_stacking",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "haa"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "haa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "haa"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "haa"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "khaa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764720687450",
+  "type": "letter_discrimination",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "dal"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1769589625915",
+  "type": "letter_discrimination",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "alif_hamza_above"
+    },
+    {
+     "form": "medial",
+     "letterId": "alif"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772041828736",
+  "type": "letter_discrimination",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   },
+   "letterPositions": [
+    "initial"
+   ],
+   "distractorLetters": [
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765529320823",
+  "type": "letter_rain",
+  "config": {
+   "difficulty": "easy",
+   "targetCount": 7,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "ba"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "tha"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    },
+    {
+     "form": "isolated",
+     "letterId": "noon"
+    },
+    {
+     "form": "isolated",
+     "letterId": "tha"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765698885153",
+  "type": "letter_rain",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "haa"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "khaa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765702384169",
+  "type": "letter_rain",
+  "config": {
+   "targetCount": 8,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "heh"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "meem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "letterId": "meem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772582250568",
+  "type": "letter_rain",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "meem"
+    },
+    {
+     "form": "initial",
+     "letterId": "meem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1773013465454",
+  "type": "letter_rain",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "qaf"
+    },
+    {
+     "form": "initial",
+     "letterId": "qaf"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ayn"
+    },
+    {
+     "form": "initial",
+     "letterId": "ayn"
+    },
+    {
+     "form": "isolated",
+     "letterId": "heh"
+    },
+    {
+     "form": "medial",
+     "letterId": "heh"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777624007051",
+  "type": "letter_rain",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "waw"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "qaf"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "faa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782869361987",
+  "type": "letter_rain",
+  "config": {
+   "speed": 1.25,
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "damma",
+     "letterId": "meem"
+    },
+    {
+     "form": "initial",
+     "haraka": "damma",
+     "letterId": "meem"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "initial",
+     "letterId": "noon"
+    },
+    {
+     "form": "isolated",
+     "haraka": "damma",
+     "letterId": "noon"
+    },
+    {
+     "form": "isolated",
+     "haraka": "damma",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "haraka": "damma",
+     "letterId": "dal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1774754837263",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ش",
+      "letterId": "sheen"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "شـ",
+      "letterId": "sheen"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ج",
+      "letterId": "jeem"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "جـ",
+      "letterId": "jeem"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ا",
+      "letterId": "alif"
+     },
+     "right": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "أ",
+      "letterId": "alif_hamza_above"
+     }
+    }
+   ],
+   "shuffleItems": true
+  }
+ },
+ {
+  "id": "activity_1774754971206",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "م",
+      "letterId": "meem"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "مـ",
+      "letterId": "meem"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ش",
+      "letterId": "sheen"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "شـ",
+      "letterId": "sheen"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ج",
+      "letterId": "jeem"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "جـ",
+      "letterId": "jeem"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ا",
+      "letterId": "alif"
+     },
+     "right": {
+      "form": "medial",
+      "type": "letter",
+      "value": "ـا",
+      "letterId": "alif"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1780441988054",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "فِ",
+      "haraka": "kasra",
+      "letterId": "faa"
+     },
+     "right": {
+      "type": "audio",
+      "audioId": "f19c9c92-e369-472e-9888-fcc4cd89d2d2",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780441635998.mp3"
+     }
+    },
+    {
+     "left": {
+      "form": "initial",
+      "type": "letter",
+      "value": "قـِ",
+      "haraka": "kasra",
+      "letterId": "qaf"
+     },
+     "right": {
+      "type": "audio",
+      "audioId": "b987c2da-81fe-45af-8c48-73ffae84e309",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780441792771.mp3"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "إِ",
+      "haraka": "kasra",
+      "letterId": "alif_hamza_below"
+     },
+     "right": {
+      "type": "audio",
+      "audioId": "3fb5508a-dc81-4f31-ac15-3e31697309a3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780441867227.mp3"
+     }
+    },
+    {
+     "left": {
+      "form": "initial",
+      "type": "letter",
+      "value": "ضـِ",
+      "haraka": "kasra",
+      "letterId": "dad"
+     },
+     "right": {
+      "type": "audio",
+      "audioId": "831d3a86-8f28-46aa-bb12-f3f8a7c61337",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780441752511.mp3"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1780444000670",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "type": "audio",
+      "audioId": "831d3a86-8f28-46aa-bb12-f3f8a7c61337",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780441752511.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "ضـ",
+      "letterId": "dad"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "audioId": "54d2116b-f3ce-40b1-b590-bc80305f56c5",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780442059317.mp3"
+     },
+     "right": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "ز",
+      "letterId": "zay"
+     }
+    },
+    {
+     "left": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "و",
+      "letterId": "waw"
+     },
+     "right": {
+      "type": "audio",
+      "audioId": "5b8ecf6a-f6e9-4548-930f-169dda35766d",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780442135537.mp3"
+     }
+    },
+    {
+     "left": {
+      "form": "initial",
+      "type": "letter",
+      "value": "شـ",
+      "letterId": "sheen"
+     },
+     "right": {
+      "type": "audio",
+      "audioId": "96c288bb-0e20-4948-802d-04cae24d8e29",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780441724411.mp3"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1780444493537",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "type": "audio",
+      "audioId": "95927a07-8a8e-497c-8509-69142107235d",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780444338041.mp3"
+     },
+     "right": {
+      "form": "final",
+      "type": "letter",
+      "value": "ـغِ",
+      "haraka": "kasra",
+      "letterId": "ghayn"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "audioId": "5179773f-db39-4dc7-9d1d-8b8777cd402e",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780444413901.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "نـِ",
+      "haraka": "kasra",
+      "letterId": "noon"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "audioId": "8a34a8d3-f2d9-4fc4-8eb6-4b8898d26d13",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780443221982.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "يـِ",
+      "haraka": "kasra",
+      "letterId": "yaa"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "audioId": "01ea5444-8220-423f-9a06-bc11ba47d994",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1780444441212.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "بـِ",
+      "haraka": "kasra",
+      "letterId": "ba"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782691600484",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814660548.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814660548.mp3"
+     },
+     "right": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "أُ",
+      "haraka": "damma",
+      "letterId": "alif_hamza_above"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814847135.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814847135.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "نـُ",
+      "haraka": "damma",
+      "letterId": "noon"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814853787.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814853787.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "هـُ",
+      "haraka": "damma",
+      "letterId": "heh"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814831759.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814831759.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "لـُ",
+      "haraka": "damma",
+      "letterId": "lam"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782720040444",
+  "type": "match_pairs",
+  "config": {
+   "pairs": [
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814314188.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814314188.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "بُـ",
+      "haraka": "damma",
+      "letterId": "ba"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814860854.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814860854.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "وُ",
+      "haraka": "damma",
+      "letterId": "waw"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814713806.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814713806.mp3"
+     },
+     "right": {
+      "form": "isolated",
+      "type": "letter",
+      "value": "دُ",
+      "haraka": "damma",
+      "letterId": "dal"
+     }
+    },
+    {
+     "left": {
+      "type": "audio",
+      "value": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814685713.mp3",
+      "audioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814685713.mp3"
+     },
+     "right": {
+      "form": "initial",
+      "type": "letter",
+      "value": "جُـ",
+      "haraka": "damma",
+      "letterId": "jeem"
+     }
+    }
+   ],
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "damma",
+     "letterId": "ra"
+    }
+   ],
+   "targetLetterAudioUrl": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/__1781814728898.mp3"
+  }
+ },
+ {
+  "id": "activity_1765529551935",
+  "type": "memory_card_match",
+  "config": {
+   "letters": [
+    {
+     "form": "isolated",
+     "letterId": "ba"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    }
+   ],
+   "cardCount": 4
+  }
+ },
+ {
+  "id": "activity_1765697744437",
+  "type": "memory_card_match",
+  "config": {
+   "letters": [
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    },
+    {
+     "form": "isolated",
+     "letterId": "tha"
+    }
+   ],
+   "cardCount": 4,
+   "showHints": true
+  }
+ },
+ {
+  "id": "activity_1772424697188",
+  "type": "memory_card_match",
+  "config": {
+   "letters": [
+    {
+     "form": "isolated",
+     "letterId": "sheen",
+     "matchingForm": "initial"
+    },
+    {
+     "form": "isolated",
+     "letterId": "alif",
+     "matchingForm": "medial"
+    },
+    {
+     "form": "isolated",
+     "letterId": "jeem",
+     "matchingForm": "initial"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw",
+     "matchingForm": "initial"
+    }
+   ],
+   "matchType": "letter_to_letter"
+  }
+ },
+ {
+  "id": "activity_1772732549656",
+  "type": "memory_card_match",
+  "config": {
+   "letters": [
+    {
+     "form": "isolated",
+     "letterId": "yaa",
+     "matchingForm": "initial"
+    },
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "sheen",
+     "matchingForm": "initial"
+    },
+    {
+     "form": "isolated",
+     "letterId": "seen",
+     "matchingForm": "initial"
+    },
+    {
+     "form": "isolated",
+     "letterId": "alif",
+     "matchingForm": "medial"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1773167922741",
+  "type": "memory_card_match",
+  "config": {
+   "letters": [
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    },
+    {
+     "form": "medial",
+     "letterId": "alif"
+    },
+    {
+     "form": "final",
+     "letterId": "heh"
+    },
+    {
+     "form": "medial",
+     "letterId": "heh"
+    },
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    },
+    {
+     "form": "initial",
+     "letterId": "kaf"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "initial",
+     "letterId": "ghayn"
+    }
+   ],
+   "matchType": "form_to_form"
+  }
+ },
+ {
+  "id": "activity_1764294957909",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "image",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/misc/lor18__1765412974457.png",
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/animals/spider__1761801101807.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/animals/panda__1761801085441.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/misc/lor10__1765412994142.png",
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "",
+    "en": ""
+   },
+   "questionImage": ""
+  }
+ },
+ {
+  "id": "activity_1764541680097",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "image",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "assets/animals/tiger__1761801109028.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "assets/animals/horse__1761801070936.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "assets/animals/reindeer__1761801093526.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "assets/misc/fly__1764736356393.png",
+     "isCorrect": true
+    }
+   ],
+   "question": {
+    "ar": "",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1764541987162",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "1",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "2",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "3",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "0",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "ذ",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1764719773580",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "image",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/animals/spider__1761801101807.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/animals/panda__1761801085441.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/misc/cat__1761800959275.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "image": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-images/assets/misc/lor22__1765416540086.png",
+     "isCorrect": true
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764721680731",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "ج",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ش",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "ذ",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "ث",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765418206671",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "ص",
+      "en": ""
+     },
+     "image": "assets/misc/lor12__1765412471537.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ق",
+      "en": ""
+     },
+     "image": "assets/misc/lor23__1765417534316.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "ث",
+      "en": ""
+     },
+     "image": "assets/misc/lor18__1765412974457.png",
+     "isCorrect": true
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "ذ",
+      "en": ""
+     },
+     "image": "assets/misc/lor20__1765415348208.png",
+     "isCorrect": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765616110175",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "text",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "ق",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ف",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "و",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "ذ",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772388175365",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "text",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "بحر",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ذراع",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "كتاب",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "جبل",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1772663694035",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "ط",
+      "en": ""
+     },
+     "image": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-images/assets/misc/lor65__1772647510398.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ذ",
+      "en": ""
+     },
+     "image": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-images/assets/misc/lor66__1772648045352.png",
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "ر",
+      "en": ""
+     },
+     "image": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-images/assets/misc/lor31__1765443379053.png",
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "ا",
+      "en": ""
+     },
+     "image": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-images/assets/misc/lor68__1772649980610.png",
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "طراز",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1772903972434",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "هـ",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ـهـ",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "ـه",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "ه",
+      "en": ""
+     },
+     "isCorrect": true
+    }
+   ],
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "great job, i almost tricked you there, but youre too smart! they're all ها!",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1772911037553.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1772910949865",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "text",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "ـغ",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ـغـ",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "غـ",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "غ",
+      "en": ""
+     },
+     "isCorrect": true
+    }
+   ],
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "that was a trick question! you got it, they're all [arabic] غين",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1772910939077.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1773165633503",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "غ",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "ع",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "ي",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "صـ",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "عزيز",
+    "en": ""
+   },
+   "conditionalAudio": {
+    "onPartialSuccess": {
+     "text": "hmm i see another one!",
+     "audio_url": "instructions/instruction_en_1780473280248.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1775262777383",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "kaf"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "initial",
+      "letterId": "kaf"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "صَ",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "دَ",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777103964656",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "letter",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "tha"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "ayn"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "initial",
+      "haraka": "fatha",
+      "letterId": "ayn"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "medial",
+      "haraka": "fatha",
+      "letterId": "ayn"
+     },
+     "isCorrect": true
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1781746297830",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "letter",
+   "options": [
+    {
+     "id": "option_0",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "heh"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_1",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "waw"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_2",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "dal"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "kasra",
+      "letterId": "heh"
+     },
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "دُلِهُ",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1782090114630",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0_1782090076712",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "ta"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1_1782090076712",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "tha"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_2_1782090076712",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "initial",
+      "haraka": "damma",
+      "letterId": "tha"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3_1782090076712",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "kasra",
+      "letterId": "tha"
+     },
+     "isCorrect": true
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782346832436",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0_1782346800482",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "fatha",
+      "letterId": "waw"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1_1782346800482",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "kasra",
+      "letterId": "waw"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2_1782346800482",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "waw"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3_1782346800482",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "haraka": "damma",
+      "letterId": "yaa"
+     },
+     "isCorrect": false
+    }
+   ],
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "waw"
+   }
+  }
+ },
+ {
+  "id": "activity_1784076265380",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "word",
+   "options": [
+    {
+     "id": "option_0_1784076216305",
+     "text": {
+      "ar": "وَجْهَ",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1_1784076216305",
+     "text": {
+      "ar": "حَجُمِ",
+      "en": ""
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_2_1784076216305",
+     "text": {
+      "ar": "حَجْمِ",
+      "en": ""
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_3_1784076216305",
+     "text": {
+      "ar": "خَجْمِ",
+      "en": ""
+     },
+     "isCorrect": false
+    }
+   ],
+   "contentType": "letter",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1784248656745",
+  "type": "multiple_choice_question",
+  "config": {
+   "mode": "letter",
+   "options": [
+    {
+     "id": "option_0_1784248636349",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "alif_hamza_above"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1_1784248636349",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "khaa"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_2_1784248636349",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "jeem"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_3_1784248636349",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "haa"
+     },
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "أَخْ",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1784253097656",
+  "type": "multiple_choice_question",
+  "config": {
+   "options": [
+    {
+     "id": "option_0_1784253107594",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "faa"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_1_1784253107594",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "ta"
+     },
+     "isCorrect": false
+    },
+    {
+     "id": "option_2_1784253107594",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "haa"
+     },
+     "isCorrect": true
+    },
+    {
+     "id": "option_3_1784253107594",
+     "text": {
+      "ar": "",
+      "en": ""
+     },
+     "letter": {
+      "form": "isolated",
+      "letterId": "jeem"
+     },
+     "isCorrect": false
+    }
+   ],
+   "question": {
+    "ar": "فَتْحِ",
+    "en": ""
+   }
+  }
+ },
+ {
+  "id": "activity_1767133902141",
+  "type": "pick_flowers",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "waw"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "qaf"
+    },
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772908914620",
+  "type": "pick_flowers",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "khaa"
+    },
+    {
+     "form": "initial",
+     "letterId": "khaa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "haa"
+    },
+    {
+     "form": "initial",
+     "letterId": "haa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779334653602",
+  "type": "pick_flowers",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "seen"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "sheen"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "sheen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766478715426",
+  "type": "pick_from_tree",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sheen"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    },
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766479324720",
+  "type": "pick_from_tree",
+  "config": {
+   "fruitType": "orange",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sheen"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "tha"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766565840860",
+  "type": "pick_from_tree",
+  "config": {
+   "totalItems": 10,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "lam"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ayn"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772072726229",
+  "type": "pick_from_tree",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772474006131",
+  "type": "pick_from_tree",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "letterId": "meem"
+    },
+    {
+     "form": "medial",
+     "letterId": "meem"
+    },
+    {
+     "form": "final",
+     "letterId": "meem"
+    }
+   ],
+   "letterPositions": [
+    "initial",
+    "isolated"
+   ]
+  }
+ },
+ {
+  "id": "activity_1772904613399",
+  "type": "pick_from_tree",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "heh"
+    },
+    {
+     "form": "initial",
+     "letterId": "heh"
+    },
+    {
+     "form": "medial",
+     "letterId": "heh"
+    },
+    {
+     "form": "final",
+     "letterId": "heh"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777541086429",
+  "type": "pick_from_tree",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "heh"
+    },
+    {
+     "form": "medial",
+     "haraka": "fatha",
+     "letterId": "heh"
+    },
+    {
+     "form": "final",
+     "haraka": "fatha",
+     "letterId": "heh"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "heh"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "haa"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "haa"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "waw"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777713023371",
+  "type": "pick_from_tree",
+  "config": {
+   "targetCount": 6,
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "meem"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "meem"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "meem"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "meem"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766531672953",
+  "type": "piggy_bank",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "seen"
+   },
+   "showArabicLabels": false,
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    },
+    {
+     "form": "isolated",
+     "letterId": "sad"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1767254603002",
+  "type": "piggy_bank",
+  "config": {
+   "targetCount": 7,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "faa"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "letterId": "qaf"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772424639744",
+  "type": "piggy_bank",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "waw"
+   }
+  }
+ },
+ {
+  "id": "activity_1772820156381",
+  "type": "piggy_bank",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "haa"
+    },
+    {
+     "form": "initial",
+     "letterId": "haa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777515245328",
+  "type": "piggy_bank",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "noon"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "noon"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "ba"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ba"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766480647033",
+  "type": "plant_seeds",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "ayn"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1766539294967",
+  "type": "plant_seeds",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "dad"
+   },
+   "showArabicLabel": false,
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sad"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772732422040",
+  "type": "plant_seeds",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "yaa"
+    },
+    {
+     "form": "initial",
+     "letterId": "yaa"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    },
+    {
+     "form": "initial",
+     "letterId": "ta"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ba"
+    },
+    {
+     "form": "initial",
+     "letterId": "ba"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1777538774753",
+  "type": "plant_seeds",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "sad"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "sad"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "taa"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764294335330",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sheen"
+   },
+   "correctLetter": "ش",
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    },
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1764720288588",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetCount": 6,
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    }
+   ],
+   "correctLetter": "د",
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765266995275",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "thaa"
+    }
+   ],
+   "correctLetter": "ظ",
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "letterId": "taa"
+    },
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772424854484",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "waw"
+   }
+  }
+ },
+ {
+  "id": "activity_1772584497650",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772732585954",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "thal"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    },
+    {
+     "form": "isolated",
+     "letterId": "ra"
+    },
+    {
+     "form": "isolated",
+     "letterId": "zay"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772906762819",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "heh"
+    },
+    {
+     "form": "initial",
+     "letterId": "heh"
+    },
+    {
+     "form": "medial",
+     "letterId": "heh"
+    },
+    {
+     "form": "final",
+     "letterId": "heh"
+    }
+   ],
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "you had to pay attention to so many forms but you did it so well!!"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1777623057464",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "balloonSpeed": 1.25,
+   "targetLetter": [
+    {
+     "form": "final",
+     "haraka": "fatha",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "ghayn"
+    },
+    {
+     "form": "medial",
+     "haraka": "fatha",
+     "letterId": "ghayn"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    },
+    {
+     "form": "medial",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    },
+    {
+     "form": "final",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    },
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "ayn"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779329850965",
+  "type": "pop_balloons_with_letter",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "jeem"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "jeem"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "jeem"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "khaa"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "khaa"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1791313484523",
+  "type": "pop_balloons_with_letter",
+  "config": {}
+ },
+ {
+  "id": "activity_1764205864886",
+  "type": "show_letter_or_word",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1764205955012",
+  "type": "show_letter_or_word",
+  "config": {
+   "word": "مهاج",
+   "letter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   },
+   "contentType": "word"
+  }
+ },
+ {
+  "id": "activity_1764208264866",
+  "type": "show_letter_or_word",
+  "config": {
+   "word": "عَرْش",
+   "contentType": "word"
+  }
+ },
+ {
+  "id": "activity_1765158318395",
+  "type": "show_letter_or_word",
+  "config": {
+   "word": "هلال",
+   "letter": {
+    "form": "isolated",
+    "letterId": "lam"
+   },
+   "contentType": "word",
+   "conditionalAudio": {
+    "onPartialSuccess": {
+     "text": "hey, you're thinking two steps ahead!! try again"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1765266540009",
+  "type": "show_letter_or_word",
+  "config": {
+   "word": "ظرف",
+   "letter": {
+    "form": "isolated",
+    "letterId": "thaa"
+   },
+   "contentType": "word",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thaa"
+   }
+  }
+ },
+ {
+  "id": "activity_1765701479563",
+  "type": "show_letter_or_word",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "heh"
+   },
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "heh"
+   }
+  }
+ },
+ {
+  "id": "activity_1772388965907",
+  "type": "show_letter_or_word",
+  "config": {
+   "contentType": "letter",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sheen"
+   }
+  }
+ },
+ {
+  "id": "activity_1772389961226",
+  "type": "show_letter_or_word",
+  "config": {
+   "word": "شارع",
+   "contentType": "word",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "sheen"
+   }
+  }
+ },
+ {
+  "id": "activity_1772420954705",
+  "type": "show_letter_or_word",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "waw"
+   }
+  }
+ },
+ {
+  "id": "activity_1772991505795",
+  "type": "show_letter_or_word",
+  "config": {
+   "word": "حديث",
+   "contentType": "word",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "tha"
+   },
+   "conditionalAudio": {}
+  }
+ },
+ {
+  "id": "activity_1775615873248",
+  "type": "show_letter_or_word",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "haraka": "fatha",
+    "letterId": "ta"
+   }
+  }
+ },
+ {
+  "id": "activity_1777516796210",
+  "type": "show_letter_or_word",
+  "config": {
+   "contentType": "letter",
+   "targetLetter": {
+    "form": "initial",
+    "haraka": "fatha",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1766479155802",
+  "type": "snowflakes",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "tha"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "ta"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1772647785433",
+  "type": "snowflakes",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "letterId": "seen"
+    },
+    {
+     "form": "initial",
+     "letterId": "seen"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "sheen"
+    },
+    {
+     "form": "initial",
+     "letterId": "sheen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779413372772",
+  "type": "snowflakes",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "sad"
+    },
+    {
+     "form": "initial",
+     "haraka": "kasra",
+     "letterId": "sad"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "sad"
+    },
+    {
+     "form": "initial",
+     "haraka": "fatha",
+     "letterId": "sad"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "seen"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1775262631806",
+  "type": "sound_blend",
+  "config": {
+   "word": "كـ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "كـ",
+     "duration": 2
+    }
+   ],
+   "contentType": "letter",
+   "requiredSlides": 1
+  }
+ },
+ {
+  "id": "activity_1775616099017",
+  "type": "sound_blend",
+  "config": {
+   "word": "كَتَبَ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "ﻙَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﺕَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﺏَ",
+     "duration": 2
+    }
+   ],
+   "requiredSlides": 1,
+   "showBothSpeeds": true
+  }
+ },
+ {
+  "id": "activity_1775690703361",
+  "type": "sound_blend",
+  "config": {
+   "word": "كَتَبَ",
+   "segments": [
+    {
+     "sound": "ﻙَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﺕَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﺏَ",
+     "duration": 2
+    }
+   ],
+   "requiredSlides": 1,
+   "showBothSpeeds": true
+  }
+ },
+ {
+  "id": "activity_1777018476051",
+  "type": "sound_blend",
+  "config": {
+   "word": "عَ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "عَ",
+     "duration": 2
+    }
+   ],
+   "contentType": "letter",
+   "requiredSlides": 1,
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "good try! this is a tough letter, it comes from a part thats REALLY deep in your throat!",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1777019480266.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1777537681763",
+  "type": "sound_blend",
+  "config": {
+   "word": "ضـَ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "ضـَ",
+     "duration": 2
+    }
+   ],
+   "contentType": "letter"
+  }
+ },
+ {
+  "id": "activity_1777622748114",
+  "type": "sound_blend",
+  "config": {
+   "word": "غَفَرَ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "ﻍَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﻑَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﺭَ",
+     "duration": 2
+    }
+   ],
+   "showBothSpeeds": true
+  }
+ },
+ {
+  "id": "activity_1777624111345",
+  "type": "sound_blend",
+  "config": {
+   "word": "زَ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "زَ",
+     "duration": 2
+    }
+   ],
+   "contentType": "letter",
+   "requiredSlides": 1,
+   "showBothSpeeds": true
+  }
+ },
+ {
+  "id": "activity_1777712893225",
+  "type": "sound_blend",
+  "config": {
+   "word": "مَمِ",
+   "speed": "none",
+   "segments": [
+    {
+     "sound": "ﻡَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﻡِ",
+     "duration": 2
+    }
+   ],
+   "requiredSlides": 1
+  }
+ },
+ {
+  "id": "activity_1781555894133",
+  "type": "sound_blend",
+  "config": {
+   "word": "تَكَ",
+   "segments": [
+    {
+     "sound": "ﺕَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﻙَ",
+     "duration": 2
+    }
+   ],
+   "showBothSpeeds": true
+  }
+ },
+ {
+  "id": "activity_1781832186479",
+  "type": "sound_blend",
+  "config": {
+   "word": "سَصُ",
+   "segments": [
+    {
+     "sound": "ﺱَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﺹُ",
+     "duration": 2
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782430754680",
+  "type": "sound_blend",
+  "config": {
+   "word": "غَغِغُ",
+   "speed": "segmented",
+   "segments": [
+    {
+     "sound": "ﻍَ",
+     "duration": 2
+    },
+    {
+     "sound": "ﻍِ",
+     "duration": 2
+    },
+    {
+     "sound": "ﻍُ",
+     "duration": 2
+    }
+   ],
+   "contentType": "word",
+   "showBothSpeeds": true
+  }
+ },
+ {
+  "id": "activity_1782691735641",
+  "type": "sound_blend",
+  "config": {
+   "word": "ضُرِبَ",
+   "speed": "fluent",
+   "segments": [
+    {
+     "sound": "ضُ",
+     "duration": 2
+    },
+    {
+     "sound": "رِ",
+     "duration": 2
+    },
+    {
+     "sound": "بَ",
+     "duration": 2
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1782957547310",
+  "type": "sound_blend",
+  "config": {
+   "word": "أَبْ",
+   "speed": "fluent",
+   "segments": [
+    {
+     "sound": "أَ",
+     "duration": 2
+    },
+    {
+     "sound": "بْ",
+     "duration": 1
+    }
+   ],
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "nice try! did you say أَبْ",
+     "voice_id": "rfkTsdZrVWEVhDycUYn9",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/conditional/1782957527272_x6i5pk.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1783038402832",
+  "type": "sound_blend",
+  "config": {
+   "word": "عَبْدِهِ",
+   "speed": "fluent",
+   "segments": [
+    {
+     "sound": "عَ",
+     "duration": 2
+    },
+    {
+     "sound": "بْ",
+     "duration": 1
+    },
+    {
+     "sound": "دِ",
+     "duration": 2
+    },
+    {
+     "sound": "هِ",
+     "duration": 2
+    }
+   ],
+   "contentType": "word",
+   "showBothSpeeds": true,
+   "conditionalAudio": {
+    "onSuccess": {
+     "text": "did you say عَبْدِهِ??",
+     "voice_id": "rfkTsdZrVWEVhDycUYn9",
+     "audio_url": "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/conditional/1790880246868_5o2egv.mp3"
+    }
+   }
+  }
+ },
+ {
+  "id": "activity_1791398733572",
+  "type": "sound_blend",
+  "config": {}
+ },
+ {
+  "id": "activity_1793134867193",
+  "type": "sound_blend",
+  "config": {
+   "speed": "fluent"
+  }
+ },
+ {
+  "id": "activity_1767774944606",
+  "type": "speech_practice",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "zay"
+   },
+   "contentType": "letter",
+   "passingScore": 80
+  }
+ },
+ {
+  "id": "activity_1767775347061",
+  "type": "speech_practice",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "yaa"
+   },
+   "passingScore": 80
+  }
+ },
+ {
+  "id": "activity_1768894804450",
+  "type": "speech_practice",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1768896928713",
+  "type": "speech_practice",
+  "config": {
+   "letter": {
+    "form": "isolated",
+    "letterId": "heh"
+   },
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "heh"
+   }
+  }
+ },
+ {
+  "id": "activity_1772419983232",
+  "type": "speech_practice",
+  "config": {
+   "targetLetter": {
+    "form": "initial",
+    "letterId": "jeem"
+   }
+  }
+ },
+ {
+  "id": "activity_1773010897550",
+  "type": "speech_practice",
+  "config": {
+   "contentType": "letter",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "kaf"
+   }
+  }
+ },
+ {
+  "id": "activity_1766480842009",
+  "type": "tap_crescent_moons",
+  "config": {
+   "totalItems": 8,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "lam"
+   },
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "alif"
+    },
+    {
+     "form": "isolated",
+     "letterId": "kaf"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1767338447157",
+  "type": "tap_crescent_moons",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "initial",
+     "letterId": "heh"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "letterId": "dal"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1779526048076",
+  "type": "tap_crescent_moons",
+  "config": {
+   "targetLetter": [
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "waw"
+    }
+   ],
+   "distractorLetters": [
+    {
+     "form": "isolated",
+     "haraka": "fatha",
+     "letterId": "waw"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "faa"
+    },
+    {
+     "form": "isolated",
+     "haraka": "kasra",
+     "letterId": "qaf"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1765590353267",
+  "type": "tap_dot_position",
+  "config": {
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "zay"
+   },
+   "distractorPositions": [
+    "bottom",
+    "middle"
+   ]
+  }
+ },
+ {
+  "id": "activity_1764206109351",
+  "type": "tap_letter_in_word",
+  "config": {
+   "targetWord": "مهاج",
+   "targetCount": 1,
+   "wordMeaning": "Camel",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "jeem"
+   },
+   "targetIndices": [
+    3
+   ]
+  }
+ },
+ {
+  "id": "activity_1764541584304",
+  "type": "tap_letter_in_word",
+  "config": {
+   "targetWord": "ذبابة",
+   "targetCount": 1,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thal"
+   },
+   "targetIndices": [
+    0
+   ]
+  }
+ },
+ {
+  "id": "activity_1765246234104",
+  "type": "tap_letter_in_word",
+  "config": {
+   "targetWord": "هلال",
+   "targetCount": 2,
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "lam"
+   },
+   "targetIndices": [
+    1,
+    3
+   ],
+   "conditionalAudio": {
+    "rules": [
+     {
+      "id": "0e360e94-eec1-4e6e-906c-3623922b5e17",
+      "name": "New Rule",
+      "enabled": true,
+      "priority": 50,
+      "response": {
+       "text": "[excited] Oh wow! You found the hidden letter [arabic] Lam. Can you find the other Lam in this word?",
+       "audio_url": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1769068301350.mp3"
+      },
+      "condition": {
+       "event": "tap",
+       "target": {
+        "elementId": "letter_1"
+       },
+       "attemptNumber": 1
+      }
+     },
+     {
+      "id": "6d474764-b416-4c47-9554-9bc996c1154b",
+      "name": "New Rule",
+      "enabled": true,
+      "priority": 50,
+      "response": {
+       "text": "[excited] You found the [arabic] Lam in [arabic] هلال. Did you notice the other hidden Lam? ",
+       "followUp": {
+        "delay": 3000,
+        "action": "continue",
+        "highlight": [
+         "letter_1"
+        ]
+       },
+       "audio_url": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1769068394916.mp3"
+      },
+      "condition": {
+       "event": "tap",
+       "target": {
+        "elementId": "letter_3"
+       },
+       "attemptNumber": 1
+      }
+     },
+     {
+      "id": "00d73cf8-d8b1-4083-b0b9-d463a4315334",
+      "name": "New Rule",
+      "enabled": true,
+      "priority": 50,
+      "response": {
+       "text": "[excited] You found the other [arabic] لام!",
+       "audio_url": "https://prod-project.supabase.co/storage/v1/object/public/curriculum-audio/instructions/instruction_en_1769148345956.mp3"
+      },
+      "condition": {
+       "event": "tap",
+       "target": {
+        "elementId": "letter_3"
+       },
+       "attemptNumber": 2
+      }
+     }
+    ]
+   }
+  }
+ },
+ {
+  "id": "activity_1765526104895",
+  "type": "tap_letter_in_word",
+  "config": {
+   "targetWord": "طَعَام",
+   "targetCount": 1,
+   "targetLetter": {
+    "form": "isolated",
+    "haraka": "fatha",
+    "letterId": "taa"
+   },
+   "targetIndices": [
+    0
+   ]
+  }
+ },
+ {
+  "id": "activity_1782090436254",
+  "type": "tap_letter_in_word",
+  "config": {
+   "targetWord": "ثُبِتَ",
+   "targetCount": 1,
+   "wordMeaning": "",
+   "targetLetter": {
+    "form": "isolated",
+    "haraka": "damma",
+    "letterId": "tha"
+   },
+   "targetIndices": [
+    0
+   ]
+  }
+ },
+ {
+  "id": "activity_1764294130828",
+  "type": "trace_letter",
+  "config": {
+   "letterForm": "ش"
+  }
+ },
+ {
+  "id": "activity_1764294151367",
+  "type": "trace_letter",
+  "config": {
+   "mode": "freehand",
+   "letterForm": "ش"
+  }
+ },
+ {
+  "id": "activity_1772733898218",
+  "type": "trace_letter",
+  "config": {
+   "mode": "freehand",
+   "targetLetter": {
+    "form": "isolated",
+    "letterId": "thaa"
+   }
+  }
+ },
+ {
+  "id": "activity_1792614353465",
+  "type": "word_split_blend",
+  "config": {
+   "chunks": [
+    {
+     "text": "بَ"
+    },
+    {
+     "text": "كَّ"
+    },
+    {
+     "text": "رَ"
+    }
+   ]
+  }
+ },
+ {
+  "id": "activity_1792614649517",
+  "type": "word_split_blend",
+  "config": {
+   "word": "يَدُعُّ",
+   "chunks": [
+    {
+     "text": "يَ"
+    },
+    {
+     "text": "دُ"
+    },
+    {
+     "text": "عُّ"
+    }
+   ]
+  }
+ }
+]

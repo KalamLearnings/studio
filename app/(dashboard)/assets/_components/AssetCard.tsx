@@ -7,7 +7,9 @@ import {
   Trash2,
   Download,
   Copy,
+  Pencil,
   Tag,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,13 +25,19 @@ import { AssetStatusBadge } from "@/components/assets/AssetStatusBadge";
 
 interface AssetCardProps {
   asset: Asset;
+  onEdit: (asset: Asset) => void;
   onLabel: (asset: Asset) => void;
+  onRetire: (asset: Asset) => void;
+  onRestore: (asset: Asset) => void;
   onCopyUrl: (url: string) => void;
 }
 
 export const AssetCard = React.memo(function AssetCard({
   asset,
+  onEdit,
   onLabel,
+  onRetire,
+  onRestore,
   onCopyUrl,
 }: AssetCardProps) {
   return (
@@ -57,6 +65,13 @@ export const AssetCard = React.memo(function AssetCard({
             <DropdownMenuContent>
               <DropdownMenuItem
                 disabled={asset.registryId === null}
+                onClick={() => onEdit(asset)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={asset.registryId === null}
                 onClick={() => onLabel(asset)}
               >
                 <Tag className="mr-2 h-4 w-4" />
@@ -73,11 +88,24 @@ export const AssetCard = React.memo(function AssetCard({
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {/* Nothing is deleted (D9): retiring is a status change with no backend route yet. */}
-              <DropdownMenuItem disabled>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Retire (not available yet)
-              </DropdownMenuItem>
+              {/* Nothing is deleted (D9): retiring is a status change; the file keeps
+                  showing where it is already used. A superseded image was replaced:
+                  change the newer one. Unregistered images wait for the backfill. */}
+              {asset.status === "retired" ? (
+                <DropdownMenuItem onClick={() => onRestore(asset)}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Restore
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={asset.registryId === null || asset.status === "superseded"}
+                  onClick={() => onRetire(asset)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Retire
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

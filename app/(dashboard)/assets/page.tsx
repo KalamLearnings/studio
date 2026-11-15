@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { useAssets } from "@/lib/hooks/useAssets";
-import { AssetUploadModal, AssetLabelDialog } from "@/components/assets";
+import { AssetUploadModal, AssetEditModal, AssetLabelDialog } from "@/components/assets";
 import type { Asset, AssetCategory } from "@/lib/types/assets";
 import { toast } from "sonner";
 import {
@@ -18,6 +18,7 @@ export default function AssetsPage() {
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false);
   const [labellingAsset, setLabellingAsset] = React.useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
 
   const {
     assets,
@@ -30,6 +31,8 @@ export default function AssetsPage() {
     selectedStatus,
     setStatus,
     uploadNewAsset,
+    editAsset,
+    changeAssetStatus,
     applyRegistryAsset,
   } = useAssets();
 
@@ -54,6 +57,45 @@ export default function AssetsPage() {
       }
     },
     [uploadNewAsset]
+  );
+
+  // Library fields, or a replace when a new file is chosen (the old image is
+  // superseded and keeps showing where it is already used).
+  const handleSaveEdit = React.useCallback(
+    async (
+      asset: Asset,
+      data: { displayName: string; category: AssetCategory; tags: string[]; file?: File }
+    ) => {
+      await editAsset(asset, data);
+      toast.success(data.file ? "Image replaced" : "Asset updated");
+    },
+    [editAsset]
+  );
+
+  // Nothing is deleted (D9): retiring hides the image from the library.
+  const handleRetire = React.useCallback(
+    async (asset: Asset) => {
+      if (!confirm("Retire this asset? It is hidden from the library but keeps showing where it is already used.")) return;
+      try {
+        await changeAssetStatus(asset, "retired");
+        toast.success("Asset retired");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to retire asset");
+      }
+    },
+    [changeAssetStatus]
+  );
+
+  const handleRestore = React.useCallback(
+    async (asset: Asset) => {
+      try {
+        await changeAssetStatus(asset, "active");
+        toast.success("Asset restored");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to restore asset");
+      }
+    },
+    [changeAssetStatus]
   );
 
   const hasFilters = !!(searchQuery || selectedCategory || selectedStatus);
@@ -91,7 +133,10 @@ export default function AssetsPage() {
       {!loading && assets.length > 0 && viewMode === "grid" && (
         <AssetGrid
           assets={assets}
+          onEdit={setEditingAsset}
           onLabel={setLabellingAsset}
+          onRetire={handleRetire}
+          onRestore={handleRestore}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -100,7 +145,10 @@ export default function AssetsPage() {
       {!loading && assets.length > 0 && viewMode === "list" && (
         <AssetTable
           assets={assets}
+          onEdit={setEditingAsset}
           onLabel={setLabellingAsset}
+          onRetire={handleRetire}
+          onRestore={handleRestore}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -119,6 +167,14 @@ export default function AssetsPage() {
         onOpenChange={setIsUploadModalOpen}
         onUpload={handleUpload}
         defaultCategory={selectedCategory}
+      />
+
+      {/* Edit Modal */}
+      <AssetEditModal
+        asset={editingAsset}
+        open={!!editingAsset}
+        onOpenChange={(open) => !open && setEditingAsset(null)}
+        onSave={handleSaveEdit}
       />
 
       {/* Label Dialog */}

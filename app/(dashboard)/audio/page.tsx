@@ -40,6 +40,8 @@ export default function AudioPage() {
     setStatus,
     uploadNewAudio,
     updateAudio,
+    replaceAudio,
+    changeAudioStatus,
     applyRegistryAsset,
   } = useAudio();
 
@@ -65,9 +67,10 @@ export default function AudioPage() {
 
   // Single submit path for the shared add/edit dialog.
   // - Create (no editingAudio): upload a brand-new asset through the backend.
-  // - Edit without a file: only catalogue fields changed.
-  // - Edit with a new file: refused. Files are content-addressed and never
-  //   overwritten (D8); replacing one needs a backend supersede route.
+  // - Edit without a file: the library fields, written by the backend.
+  // - Edit with a new file: the backend stores it as a new clip and marks the
+  //   old one superseded (files are never overwritten, D8). Activities that
+  //   already use the old clip keep playing it until their references move.
   const handleDialogSubmit = React.useCallback(
     async (data: AudioSubmitData) => {
       try {
@@ -86,12 +89,18 @@ export default function AudioPage() {
           });
           toast.success("Audio uploaded successfully");
         } else if (data.file) {
-          throw new Error(
-            "Replacing the file of existing audio is not available yet. Add it as new audio instead."
-          );
+          await replaceAudio(editingAudio.id, {
+            displayName: data.displayName,
+            category: data.category,
+            tags: data.tags,
+            file: data.file,
+            metadata: data.metadata,
+          });
+          toast.success("Audio regenerated and saved");
         } else {
           await updateAudio(editingAudio.id, {
             displayName: data.displayName,
+            category: data.category,
             tags: data.tags,
             ...(data.metadata ? { metadata: data.metadata } : {}),
           });
@@ -103,7 +112,34 @@ export default function AudioPage() {
         throw err;
       }
     },
-    [editingAudio, uploadNewAudio, updateAudio, closeDialog]
+    [editingAudio, uploadNewAudio, updateAudio, replaceAudio, closeDialog]
+  );
+
+  // Nothing is deleted (D9): retiring hides the clip from the library and the
+  // picker; its file stays and keeps playing where it is already used.
+  const handleRetire = React.useCallback(
+    async (audio: AudioAsset) => {
+      if (!confirm("Retire this audio? It is hidden from the library but keeps playing where it is already used.")) return;
+      try {
+        await changeAudioStatus(audio.id, "retired");
+        toast.success("Audio retired");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to retire audio");
+      }
+    },
+    [changeAudioStatus]
+  );
+
+  const handleRestore = React.useCallback(
+    async (audio: AudioAsset) => {
+      try {
+        await changeAudioStatus(audio.id, "active");
+        toast.success("Audio restored");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to restore audio");
+      }
+    },
+    [changeAudioStatus]
   );
 
   const handleTogglePlay = React.useCallback(
@@ -166,6 +202,8 @@ export default function AudioPage() {
           onTogglePlay={handleTogglePlay}
           onEdit={handleEdit}
           onLabel={setLabellingAudio}
+          onRetire={handleRetire}
+          onRestore={handleRestore}
           onCopyUrl={handleCopyUrl}
         />
       )}

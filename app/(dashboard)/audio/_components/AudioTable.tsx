@@ -11,6 +11,7 @@ import {
   Copy,
   Pencil,
   Tag,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,8 @@ interface AudioTableProps {
   onTogglePlay: (id: string) => void;
   onEdit: (audio: AudioAsset) => void;
   onLabel: (audio: AudioAsset) => void;
+  onRetire: (audio: AudioAsset) => void;
+  onRestore: (audio: AudioAsset) => void;
   onCopyUrl: (url: string) => void;
 }
 
@@ -48,6 +51,8 @@ const AudioRow = React.memo(function AudioRow({
   onTogglePlay,
   onEdit,
   onLabel,
+  onRetire,
+  onRestore,
   onCopyUrl,
 }: {
   audio: AudioAsset;
@@ -55,6 +60,8 @@ const AudioRow = React.memo(function AudioRow({
   onTogglePlay: (id: string) => void;
   onEdit: (audio: AudioAsset) => void;
   onLabel: (audio: AudioAsset) => void;
+  onRetire: (audio: AudioAsset) => void;
+  onRestore: (audio: AudioAsset) => void;
   onCopyUrl: (url: string) => void;
 }) {
   return (
@@ -144,12 +151,24 @@ const AudioRow = React.memo(function AudioRow({
               Label
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {/* Nothing is deleted (D9): retiring a file is a status change,
-                and the backend has no route for it yet. */}
-            <DropdownMenuItem disabled>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Retire (not available yet)
-            </DropdownMenuItem>
+            {/* Nothing is deleted (D9): retiring is a status change; the file
+                keeps playing where it is already used. A superseded clip
+                was replaced: change the newer one. */}
+            {audio.status === "retired" ? (
+              <DropdownMenuItem onClick={() => onRestore(audio)}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restore
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={audio.status === "superseded"}
+                onClick={() => onRetire(audio)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Retire
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </td>
@@ -163,6 +182,8 @@ export function AudioTable({
   onTogglePlay,
   onEdit,
   onLabel,
+  onRetire,
+  onRestore,
   onCopyUrl,
 }: AudioTableProps) {
   return (
@@ -188,6 +209,8 @@ export function AudioTable({
               onTogglePlay={onTogglePlay}
               onEdit={onEdit}
               onLabel={onLabel}
+              onRetire={onRetire}
+              onRestore={onRestore}
               onCopyUrl={onCopyUrl}
             />
           ))}

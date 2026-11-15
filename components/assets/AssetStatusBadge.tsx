@@ -8,12 +8,13 @@ const TONE: Record<string, string> = {
   orphan: "bg-slate-200 text-slate-700",
   superseded: "bg-slate-100 text-slate-600",
   broken: "bg-destructive/10 text-destructive",
+  retired: "bg-slate-100 text-slate-600",
   unregistered: "bg-muted text-muted-foreground",
 };
 
 /**
  * The registry status of a library file. Active files show nothing; the rest
- * (quarantined, orphan, superseded, broken, not in registry) show a pill.
+ * (quarantined, orphan, superseded, broken, retired, not in registry) show a pill.
  */
 export function AssetStatusBadge({
   status,

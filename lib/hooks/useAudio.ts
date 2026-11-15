@@ -9,9 +9,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { AudioAsset, AudioCategory, AudioUploadData } from '@/lib/types/audio';
-import type { RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
+import type { PersonStatus, RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
 import {
   getAudioAssets,
+  replaceAudioAsset,
+  setAudioStatus,
   uploadAudioAsset,
   updateAudioAsset,
   type AudioFilters,
@@ -32,7 +34,11 @@ interface UseAudioReturn {
 
   loadAudio: () => Promise<void>;
   uploadNewAudio: (data: AudioUploadData) => Promise<AudioAsset>;
-  updateAudio: (id: string, updates: Partial<Pick<AudioAsset, 'displayName' | 'tags' | 'metadata'>>) => Promise<AudioAsset>;
+  updateAudio: (id: string, updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>) => Promise<AudioAsset>;
+  /** Replaces a clip's file; the old clip is superseded and the new one takes its place in the list. */
+  replaceAudio: (id: string, data: AudioUploadData) => Promise<AudioAsset>;
+  /** Retires a clip or makes it active again; the file is never deleted. */
+  changeAudioStatus: (id: string, status: PersonStatus) => Promise<AudioAsset>;
   /** Puts a relabelled registry row's status and label on its library row. */
   applyRegistryAsset: (asset: RegistryAsset) => void;
   selectedStatus: StatusFilter | undefined;
@@ -103,7 +109,7 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
 
   const updateAudio = useCallback(async (
     id: string,
-    updates: Partial<Pick<AudioAsset, 'displayName' | 'tags' | 'metadata'>>
+    updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>
   ): Promise<AudioAsset> => {
     setError(null);
 
@@ -117,6 +123,46 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
       throw err;
     }
   }, []);
+
+  const replaceAudio = useCallback(async (id: string, data: AudioUploadData): Promise<AudioAsset> => {
+    setError(null);
+    try {
+      const next = await replaceAudioAsset(id, data);
+      // The superseded clip leaves the default list; the new one takes its place.
+      setAudioAssets(prev => {
+        const shown =
+          (!selectedCategory || selectedCategory === next.category) &&
+          matchesStatusFilter(next.status, selectedStatus);
+        const rest = prev
+          .filter(audio => audio.id !== next.id)
+          .map(audio => (audio.id === id ? { ...audio, status: 'superseded' as const } : audio))
+          .filter(audio => matchesStatusFilter(audio.status, selectedStatus));
+        return shown ? [next, ...rest] : rest;
+      });
+      return next;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to replace audio';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [selectedCategory, selectedStatus]);
+
+  const changeAudioStatus = useCallback(async (id: string, status: PersonStatus): Promise<AudioAsset> => {
+    setError(null);
+    try {
+      const updated = await setAudioStatus(id, status);
+      setAudioAssets(prev =>
+        prev
+          .map(audio => (audio.id === id ? updated : audio))
+          .filter(audio => matchesStatusFilter(audio.status, selectedStatus))
+      );
+      return updated;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change the audio status';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [selectedStatus]);
 
   const applyRegistryAsset = useCallback((asset: RegistryAsset) => {
     setAudioAssets(prev =>
@@ -153,6 +199,8 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
     loadAudio,
     uploadNewAudio,
     updateAudio,
+    replaceAudio,
+    changeAudioStatus,
     applyRegistryAsset,
     selectedStatus,
     setStatus,

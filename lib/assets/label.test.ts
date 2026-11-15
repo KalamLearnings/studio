@@ -58,9 +58,13 @@ describe('labelProblems', () => {
 });
 
 describe('matchesStatusFilter', () => {
-  it('passes everything without a filter', () => {
+  it('passes everything in use without a filter; retired and superseded only when asked for', () => {
     expect(matchesStatusFilter(null, undefined)).toBe(true);
     expect(matchesStatusFilter('orphan', undefined)).toBe(true);
+    expect(matchesStatusFilter('retired', undefined)).toBe(false);
+    expect(matchesStatusFilter('superseded', undefined)).toBe(false);
+    expect(matchesStatusFilter('retired', 'retired')).toBe(true);
+    expect(matchesStatusFilter('superseded', 'superseded')).toBe(true);
   });
   it('matches a status and the unregistered bucket', () => {
     expect(matchesStatusFilter('quarantined', 'quarantined')).toBe(true);

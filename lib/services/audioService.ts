@@ -2,9 +2,11 @@
  * Audio Service Layer
  *
  * The audio library. Reads come from the `audio_assets` catalogue joined with
- * the `assets` registry (status, label). Uploads go through the backend
- * (`POST /assets/library`, CM-B5): Studio no longer writes library files or
- * `audio_assets` rows itself, and never deletes a file (D9) (CM-S4).
+ * the `assets` registry (status, label). Every write goes through the backend
+ * (`assets` function, CM-B5): uploads, replaces, status changes and edits of
+ * the display name, category, tags and metadata. Studio never writes library
+ * files, `audio_assets` or `assets` rows itself, and never deletes a file
+ * (D9) (CM-S4).
  */
 
 import {
@@ -14,8 +16,13 @@ import {
 } from '@/lib/supabase/client';
 import type { AudioAsset, AudioCategory, AudioUploadData } from '@/lib/types/audio';
 import { SUPPORTED_AUDIO_TYPES, MAX_AUDIO_FILE_SIZE } from '@/lib/types/audio';
-import type { AssetProvenance, StatusFilter } from '@/lib/types/assetRegistry';
-import { uploadLibraryAsset } from '@/lib/api/assets';
+import type { AssetProvenance, PersonStatus, StatusFilter } from '@/lib/types/assetRegistry';
+import {
+  replaceRegistryAsset,
+  setRegistryAssetStatus,
+  updateRegistryAssetLibrary,
+  uploadLibraryAsset,
+} from '@/lib/api/assets';
 import { getRegistryEntries, type RegistryEntry } from '@/lib/services/assetRegistryService';
 import { matchesStatusFilter } from '@/lib/assets/label';
 
@@ -319,35 +326,61 @@ export async function uploadAudioAsset(data: AudioUploadData): Promise<AudioAsse
 }
 
 /**
- * Updates audio asset metadata (display name, tags, metadata) on the
- * `audio_assets` catalogue only. The file, its path and its registry row are
- * untouched. This is still a direct catalogue write: the backend has no route
- * for catalogue fields yet (CM-S4 handoff).
+ * Updates the library fields (display name, category, tags, metadata) through
+ * the backend (`PUT /assets/:assetId/library`), which writes the
+ * `audio_assets` row and the `assets` row of the same id. The file, its path
+ * and its label are untouched.
  */
 export async function updateAudioAsset(
   id: string,
-  updates: Partial<Pick<AudioAsset, 'displayName' | 'tags' | 'metadata'>>
+  updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>
 ): Promise<AudioAsset> {
-  const supabase = createClient();
+  await updateRegistryAssetLibrary(id, {
+    ...(updates.displayName !== undefined ? { displayName: updates.displayName } : {}),
+    ...(updates.category !== undefined ? { category: updates.category } : {}),
+    ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
+    ...(updates.metadata !== undefined ? { metadata: updates.metadata } : {}),
+  });
+  const asset = await getAudioAsset(id);
+  if (!asset) throw new Error('The audio was updated but its library row could not be read');
+  return asset;
+}
 
-  const updateData: Record<string, unknown> = {};
-  if (updates.displayName !== undefined) updateData.display_name = updates.displayName;
-  if (updates.tags !== undefined) updateData.tags = updates.tags;
-  if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
+/**
+ * Replaces the file of a library clip ("Replace with File", "Regenerate from
+ * Text") through the backend (`POST /assets/:assetId/replace`). The new file
+ * gets a new id and its own library row; the old clip becomes `superseded`
+ * and stays stored, so activities that already use it keep playing it until
+ * their references move (a later migration). Returns the new clip.
+ */
+export async function replaceAudioAsset(
+  id: string,
+  data: Omit<AudioUploadData, 'file'> & { file: File },
+): Promise<AudioAsset> {
+  validateAudioFile(data.file);
+  const provenance = ttsProvenance(data.metadata);
+  const result = await replaceRegistryAsset(id, {
+    file: data.file,
+    displayName: data.displayName,
+    category: data.category,
+    tags: data.tags,
+    ...(data.metadata ? { metadata: data.metadata } : {}),
+    ...(provenance ? { provenance } : {}),
+  });
+  const asset = await getAudioAsset(result.audioAssetId ?? result.asset.id);
+  if (!asset) throw new Error('The new audio was stored but its library row could not be read');
+  return asset;
+}
 
-  const { data, error } = await supabase
-    .from('audio_assets')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating audio asset:', error);
-    throw new Error(`Failed to update audio asset: ${error.message}`);
-  }
-
-  const [asset] = await withRegistry([data as AudioAssetRow]);
+/**
+ * Changes a clip's registry status (`PUT /assets/:assetId/status`): retire,
+ * or make active again. Nothing is deleted; the clip keeps playing wherever
+ * it is already used. Returns the clip with its new status.
+ */
+export async function setAudioStatus(id: string, status: PersonStatus): Promise<AudioAsset> {
+  await setRegistryAssetStatus(id, status);
+  const asset = await getAudioAsset(id);
+  if (!asset) throw new Error('The status was changed but the library row could not be read');
   return asset;
 }
 

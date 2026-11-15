@@ -70,12 +70,19 @@ export function labelProblems(label: AssetLabel): string[] {
   return problems;
 }
 
+/**
+ * Statuses that are out of use: hidden from the library lists and the audio
+ * picker unless the status filter asks for them. Their files stay stored and
+ * keep playing wherever they are already used (D9).
+ */
+export const HIDDEN_BY_DEFAULT: readonly RegistryStatus[] = ['retired', 'superseded'];
+
 /** Whether a row with this registry status passes the status filter. */
 export function matchesStatusFilter(
   status: RegistryStatus,
   filter: StatusFilter | undefined,
 ): boolean {
-  if (!filter) return true;
+  if (!filter) return !HIDDEN_BY_DEFAULT.includes(status);
   if (filter === 'unregistered') return status === null;
   return status === filter;
 }

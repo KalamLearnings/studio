@@ -8,7 +8,14 @@
  * `core/contracts/assets.ts`.
  */
 
-export const ASSET_STATUSES = ['active', 'superseded', 'orphan', 'broken', 'quarantined'] as const;
+export const ASSET_STATUSES = [
+  'active',
+  'superseded',
+  'orphan',
+  'broken',
+  'quarantined',
+  'retired',
+] as const;
 export type AssetStatus = (typeof ASSET_STATUSES)[number];
 
 export type AssetMedia = 'audio' | 'image' | 'animation';
@@ -31,6 +38,17 @@ export interface AssetProvenance {
   request: Record<string, unknown> | null;
 }
 
+/** The library fields of a registered file (never the label). */
+export interface AssetLibraryFields {
+  displayName: string | null;
+  category: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+}
+
+/** The statuses a person sets with `PUT /assets/:assetId/status`. */
+export type PersonStatus = 'active' | 'retired' | 'quarantined' | 'broken';
+
 /** `GET /assets/:assetId` and the upload's `asset`. */
 export interface RegistryAsset {
   id: string;
@@ -48,6 +66,9 @@ export interface RegistryAsset {
   provenance: AssetProvenance | null;
   label: AssetLabel;
   status: AssetStatus;
+  /** The asset that replaced this one (status `superseded`). */
+  supersededBy: string | null;
+  library: AssetLibraryFields;
   createdAt: string;
   createdBy: string | null;
   updatedAt: string;
@@ -68,5 +89,6 @@ export const STATUS_FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'orphan', label: 'Orphan' },
   { value: 'superseded', label: 'Superseded' },
   { value: 'broken', label: 'Broken' },
+  { value: 'retired', label: 'Retired' },
   { value: 'unregistered', label: 'Not in registry' },
 ];

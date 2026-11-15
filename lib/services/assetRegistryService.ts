@@ -21,7 +21,8 @@ const PAGE = 1000;
 const ID_CHUNK = 100;
 
 const COLUMNS =
-  'id,bucket,path,media,mime,bytes,width,height,duration_ms,status,' +
+  'id,bucket,path,media,mime,bytes,width,height,duration_ms,status,superseded_by,' +
+  'display_name,category,tags,' +
   'label_owner_type,label_owner_id,label_role,label_locale,label_text,created_at,updated_at';
 
 interface AssetRow {
@@ -35,6 +36,10 @@ interface AssetRow {
   height: number | null;
   duration_ms: number | null;
   status: AssetStatus;
+  superseded_by: string | null;
+  display_name: string | null;
+  category: string | null;
+  tags: string[] | null;
   label_owner_type: string | null;
   label_owner_id: string | null;
   label_role: string | null;
@@ -56,6 +61,11 @@ export interface RegistryEntry {
   height: number | null;
   durationMs: number | null;
   status: AssetStatus;
+  supersededBy: string | null;
+  /** The library fields the backend keeps on the registry row (never the label). */
+  displayName: string | null;
+  category: string | null;
+  tags: string[];
   label: AssetLabel;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +83,10 @@ function toEntry(row: AssetRow): RegistryEntry {
     height: row.height,
     durationMs: row.duration_ms,
     status: row.status,
+    supersededBy: row.superseded_by,
+    displayName: row.display_name,
+    category: row.category,
+    tags: row.tags ?? [],
     label: {
       ownerType: row.label_owner_type,
       ownerId: row.label_owner_id,

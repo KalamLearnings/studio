@@ -3,17 +3,23 @@
  *
  * Lists the `assets` registry's images (staff read) together with the legacy
  * files under `assets/<category>/` in the `curriculum-images` bucket that are
- * not registered yet. Uploads go through the backend (`POST /assets/library`,
- * CM-B5), which names the path and registers the file. Studio never writes,
- * moves or deletes image files itself (D8, D9; CM-S4).
+ * not registered yet. Uploads, replaces, status changes and edits of the
+ * display name, category and tags go through the backend (`assets`
+ * function, CM-B5), which names paths and writes the registry. Studio never
+ * writes, moves or deletes image files or registry rows itself (D8, D9; CM-S4).
  */
 
 import { createClient } from '@/lib/supabase/client';
 import type { Asset, AssetCategory, AssetUploadData } from '@/lib/types/assets';
 import { ASSET_CATEGORIES } from '@/lib/types/assets';
-import type { RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
+import type { PersonStatus, RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
 import { compressImage } from '@/lib/utils/imageUpload';
-import { uploadLibraryAsset } from '@/lib/api/assets';
+import {
+  replaceRegistryAsset,
+  setRegistryAssetStatus,
+  updateRegistryAssetLibrary,
+  uploadLibraryAsset,
+} from '@/lib/api/assets';
 import {
   listRegistryEntries,
   registryPublicUrl,
@@ -103,11 +109,19 @@ async function listLegacyFiles(category?: AssetCategory): Promise<Asset[]> {
   return results.flat();
 }
 
+/** A known image category, else null (the registry keeps any slug; Studio shows its own). */
+function imageCategory(value: string | null): AssetCategory | null {
+  return value && value in ASSET_CATEGORIES ? (value as AssetCategory) : null;
+}
+
 function withRegistryEntry(asset: Asset, entry: RegistryEntry): Asset {
   return {
     ...asset,
     id: entry.id,
     registryId: entry.id,
+    displayName: entry.displayName ?? asset.displayName,
+    category: imageCategory(entry.category) ?? asset.category,
+    tags: entry.tags.length > 0 ? entry.tags : asset.tags,
     status: entry.status,
     label: entry.label,
     fileSize: entry.bytes,
@@ -122,19 +136,19 @@ function categoryOfPath(path: string): AssetCategory | null {
   return folder === ASSETS_FOLDER && !!cat && cat in ASSET_CATEGORIES ? (cat as AssetCategory) : null;
 }
 
-/** A registered image (backend-named path); its label is the only name it has. */
+/** A registered image (backend-named path), named and filed by its library fields. */
 function registeredOnlyAsset(entry: RegistryEntry): Asset {
   const name = entry.path.split('/').pop() ?? entry.path;
   return {
     id: entry.id,
     registryId: entry.id,
     name,
-    displayName: describeLabel(entry.label) ?? 'Unlabelled image',
+    displayName: entry.displayName ?? describeLabel(entry.label) ?? 'Unlabelled image',
     url: registryPublicUrl(entry),
-    category: categoryOfPath(entry.path),
+    category: imageCategory(entry.category) ?? categoryOfPath(entry.path),
     status: entry.status,
     label: entry.label,
-    tags: [],
+    tags: entry.tags,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
     fileSize: entry.bytes,
@@ -156,6 +170,10 @@ export function assetFromRegistry(asset: RegistryAsset): Asset {
     height: asset.height,
     durationMs: asset.durationMs,
     status: asset.status,
+    supersededBy: asset.supersededBy,
+    displayName: asset.library.displayName,
+    category: asset.library.category,
+    tags: asset.library.tags,
     label: asset.label,
     createdAt: asset.createdAt,
     updatedAt: asset.updatedAt,
@@ -203,17 +221,52 @@ function convertFilesToAssets(
 
 /**
  * Uploads a new image through the backend (`POST /assets/library`). The
- * backend names the path and registers the file; with no label it starts
- * quarantined until a person labels it.
- *
- * The registry has no display name, category or tags for images yet: the
- * name is sent (the route requires it) but only audio keeps it (CM-S4 handoff).
+ * backend names the path, registers the file and keeps its display name,
+ * category and tags; with no label it starts quarantined until a person
+ * labels it.
  */
 export async function uploadAsset(data: AssetUploadData): Promise<Asset> {
-  const { displayName, file, tags } = data;
+  const { displayName, category, file, tags } = data;
   const compressedFile = await compressImage(file);
-  const result = await uploadLibraryAsset({ file: compressedFile, displayName, tags });
+  const result = await uploadLibraryAsset({ file: compressedFile, displayName, category, tags });
   return assetFromRegistry(result.asset);
+}
+
+export interface AssetEditData {
+  displayName: string;
+  category: AssetCategory;
+  tags: string[];
+  /** A new file: replaces the image (the old one is superseded, never deleted). */
+  file?: File;
+}
+
+/**
+ * Saves the image edit form through the backend. Without a file: the library
+ * fields (`PUT /assets/:assetId/library`). With a file: a replace (`POST
+ * /assets/:assetId/replace`); the new image gets a new id, and activities that
+ * already use the old one keep showing it until their references move.
+ * Returns the image as it now is (the new one after a replace).
+ */
+export async function updateAsset(registryId: string, data: AssetEditData): Promise<Asset> {
+  const { displayName, category, tags, file } = data;
+  if (file) {
+    const compressedFile = await compressImage(file);
+    const result = await replaceRegistryAsset(registryId, {
+      file: compressedFile,
+      displayName,
+      category,
+      tags,
+    });
+    return assetFromRegistry(result.asset);
+  }
+  const result = await updateRegistryAssetLibrary(registryId, { displayName, category, tags });
+  if (!result.asset) throw new Error('The image is not in the registry');
+  return assetFromRegistry(result.asset);
+}
+
+/** Retires an image or makes it active again (`PUT /assets/:assetId/status`); nothing is deleted. */
+export async function setAssetStatus(registryId: string, status: PersonStatus): Promise<RegistryAsset> {
+  return setRegistryAssetStatus(registryId, status);
 }
 
 /**

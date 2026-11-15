@@ -9,10 +9,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Asset, AssetCategory, AssetUploadData } from '@/lib/types/assets';
-import type { RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
+import type { PersonStatus, RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
 import {
   getAssets,
+  setAssetStatus,
+  updateAsset,
   uploadAsset,
+  type AssetEditData,
   type AssetFilters,
 } from '@/lib/services/assetService';
 import { matchesStatusFilter } from '@/lib/assets/label';
@@ -32,6 +35,10 @@ interface UseAssetsReturn {
   // Actions
   loadAssets: () => Promise<void>;
   uploadNewAsset: (data: AssetUploadData) => Promise<Asset>;
+  /** Saves the edit form: library fields, or a replace when a file is given. */
+  editAsset: (asset: Asset, data: AssetEditData) => Promise<Asset>;
+  /** Retires an image or makes it active again; the file is never deleted. */
+  changeAssetStatus: (asset: Asset, status: PersonStatus) => Promise<void>;
   /** Puts a relabelled registry row's status and label on its library entry. */
   applyRegistryAsset: (asset: RegistryAsset) => void;
   selectedStatus: StatusFilter | undefined;
@@ -109,6 +116,58 @@ export function useAssets(options: UseAssetsOptions = {}): UseAssetsReturn {
   }, [selectedCategory, selectedStatus]);
 
   /**
+   * Save an edit. A replace supersedes the old entry and puts the new image in its place.
+   */
+  const editAsset = useCallback(async (asset: Asset, data: AssetEditData): Promise<Asset> => {
+    if (!asset.registryId) throw new Error('This image is not in the registry yet');
+    setError(null);
+    try {
+      const saved = await updateAsset(asset.registryId, data);
+      const replaced = saved.registryId !== asset.registryId;
+      setAssets(prev => {
+        const shown =
+          (!selectedCategory || selectedCategory === saved.category) &&
+          matchesStatusFilter(saved.status, selectedStatus);
+        const rest = prev
+          .filter(entry => entry.id !== saved.id)
+          .map(entry =>
+            entry.id === asset.id && replaced ? { ...entry, status: 'superseded' as const } : entry
+          )
+          .filter(entry => entry.id !== asset.id || replaced)
+          .filter(entry => matchesStatusFilter(entry.status, selectedStatus));
+        return shown ? [saved, ...rest] : rest;
+      });
+      return saved;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save asset';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [selectedCategory, selectedStatus]);
+
+  /**
+   * Retire or reactivate an image
+   */
+  const changeAssetStatus = useCallback(async (asset: Asset, status: PersonStatus): Promise<void> => {
+    if (!asset.registryId) throw new Error('This image is not in the registry yet');
+    setError(null);
+    try {
+      const registered = await setAssetStatus(asset.registryId, status);
+      setAssets(prev =>
+        prev
+          .map(entry =>
+            entry.registryId === registered.id ? { ...entry, status: registered.status } : entry
+          )
+          .filter(entry => matchesStatusFilter(entry.status, selectedStatus))
+      );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change the asset status';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [selectedStatus]);
+
+  /**
    * Apply a label result to the matching entry
    */
   const applyRegistryAsset = useCallback((registered: RegistryAsset) => {
@@ -154,6 +213,8 @@ export function useAssets(options: UseAssetsOptions = {}): UseAssetsReturn {
     searchQuery,
     loadAssets,
     uploadNewAsset,
+    editAsset,
+    changeAssetStatus,
     applyRegistryAsset,
     selectedStatus,
     setStatus,

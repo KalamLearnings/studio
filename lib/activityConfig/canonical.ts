@@ -18,30 +18,38 @@
  * Every other type keeps today's path: the shim on edit, the config as the
  * form built it on save.
  *
- * v1 limit: the server does not yet write the v1 display strings from a
- * reference (`word` from `wordRef`, `image` from `imageRef`, a word card's
- * `text`, an MCQ option's `text` or `image`, the MCQ `mode` and `question`,
- * a match pair side's `type`, `value` and `audioUrl`). Until it does, the
- * word and picture modes of show_letter_or_word, speech_practice and
- * content_with_cards, every MCQ but a letter-only one with no stimulus, and
- * match_pairs (`V1_BLOCKED_TYPES`) stay in their legacy shape, so the v1 app
- * keeps showing them.
+ * v1 display fields (R2): for MCQ, cards and match pairs the server writes
+ * what v1 reads from the references on save (backend
+ * `core/domain/curriculum/v1-display.ts`): an option's `text`, the MCQ `mode`
+ * and `question`, a card's `text`, a pair side's `type`, `value` and
+ * `audioUrl`. So an answer set saves canonically when every item is one the
+ * server can show to v1 (`v1Derivable`: a letter, a library word, a numeral,
+ * and for pairs an audio clip). A picture item stays in v1's shape: v1 reads
+ * an option's or card's `image` as a URL string, the key the canonical item
+ * holds its asset reference in, and the asset registry is not on PROD yet.
+ * The server does not write `word` from `wordRef` or `image` from `imageRef`
+ * either, so the word and picture modes of show_letter_or_word and
+ * speech_practice stay in their legacy shape too.
  */
 
 import {
   readActivityConfig,
+  readContentText,
   readLetterGlyph,
   readLetterRef,
 } from "@kalam/curriculum-schemas/server";
 import { normalizeActivityConfig } from "../../components/builder/forms/normalizeActivityConfig";
 import { contrastPickerEnabled, isContrastId } from "./contrast";
 import {
+  cardItem,
+  kindedItem,
   mcqOptionItem,
   pairSideItem,
   promptKind,
   toContentItemWrite,
   toContentRefWrite,
   writePrompt,
+  type EditorItem,
 } from "./contentItems";
 
 export type Config = Record<string, unknown>;
@@ -102,6 +110,10 @@ interface CanonicalType {
   keepAbsent?: readonly string[];
   /** False opens the stored row through the shim (its canonical read would change what v1 shows). */
   storedOk?: (stored: Config) => boolean;
+  /** Display hints the read leaves out (a word's text, a clip's URL, the question), taken from the stored row. */
+  hints?: (stored: Config, read: Config) => Config;
+  /** What the form edits, from the hinted read; the written config when absent. */
+  view?: (hinted: Config) => Config;
 }
 
 const LEGACY_HUNT_KEYS: Readonly<Record<string, string>> = { showArabicLabels: "showArabicLabel" };
@@ -220,123 +232,237 @@ function writeSpeechLetter(config: Config): Config {
   return next;
 }
 
-/** True when every card is a letter card (a reference, or nothing typed yet). */
-function lettersOnly(cards: unknown): boolean {
-  if (!Array.isArray(cards)) return true;
-  return cards.every((c) => {
-    if (!isRecord(c)) return false;
-    if (c.kind !== undefined) return c.kind === "letter";
-    if (typeof c.image === "string" && c.image) return false;
-    return c.letter != null || !(typeof c.text === "string" && c.text.trim());
-  });
+// ---------------------------------------------------------------------------
+// answer sets (CM-S6, R2): multiple_choice_question, content_with_cards, match_pairs
+// ---------------------------------------------------------------------------
+
+type ItemRole = "option" | "card" | "side" | "stimulus";
+
+/**
+ * True when the server writes every v1 display field of the item from its
+ * reference (backend `v1-display.ts`): a letter, a library word (its id), a
+ * whole numeral, and on a match pair side an audio clip (its id). Never a
+ * picture: v1 reads an option's or card's `image` as a URL string where the
+ * canonical item keeps `image: { assetId }`, and the asset registry is not on
+ * PROD yet, so a picture stays in v1's shape.
+ */
+export function v1Derivable(item: EditorItem, role: ItemRole): boolean {
+  switch (item.kind) {
+    case "letter":
+      return !!item.letter?.letterId;
+    case "word":
+      return !!item.word?.wordId;
+    case "numeral":
+      return typeof item.numeral === "number" && Number.isInteger(item.numeral) && item.numeral >= 0;
+    case "audio":
+      return role === "side" && !!item.audio?.assetId;
+    case "image":
+      return false;
+  }
 }
 
-function cardsLetterMode(config: Config): boolean {
-  return (config.contentType ?? "letter") === "letter" &&
-    (config.cardMode ?? "letter") === "letter" &&
-    lettersOnly(config.cards);
+/** The MCQ keys the server derives for v1 or drops (`multiple_choice_question.ts`, `v1-display.ts`). */
+const MCQ_DERIVED_KEYS = ["mode", "question", "questionImage", "contentType", "showImages", "correctOptionId"];
+
+const filledText = (v: unknown) => typeof v === "string" && !!v.trim();
+
+const arabicOf = (v: unknown): string =>
+  typeof v === "string" ? v : isRecord(v) && typeof v.ar === "string" ? v.ar : "";
+
+/** A stored v1-shape entry that carries a picture (v1 shows or preloads it; a canonical item cannot keep it). */
+const hasPicture = (entry: unknown) =>
+  isRecord(entry) && entry.kind === undefined && (filledText(entry.image) || filledText(entry.imageUrl));
+
+/**
+ * The MCQ stimulus as a content item, from what the form shows (`question.ar`):
+ * the prompt's stored target while it still shows that text (a library word
+ * keeps its id), else the text read as a letter or a numeral. `ok: false`
+ * when the server could not write v1's `question` from it (a typed word with
+ * no library id, a question picture).
+ */
+function mcqStimulus(config: Config): { ok: boolean; target?: EditorItem } {
+  if (filledText(config.questionImage)) return { ok: false };
+  const text = arabicOf(config.question).trim();
+  if (!text) return { ok: true };
+  const prompt = isRecord(config.prompt) ? config.prompt : {};
+  const stored = isRecord(prompt.target) && typeof prompt.target.kind === "string"
+    ? kindedItem(prompt.target)
+    : undefined;
+  if (stored?.kind === "word" && stored.word?.wordId && stored.word.text?.trim() === text) {
+    return { ok: true, target: stored };
+  }
+  const read = readContentText(text);
+  if (read && (read.kind === "letter" || read.kind === "numeral")) return { ok: true, target: kindedItem(read) };
+  return { ok: false };
 }
 
 /**
- * content_with_cards with letter content and letter cards: each card a letter
- * content item (`{ id, kind: 'letter', letter, isCorrect }`), no glyph `text`,
- * no `cardMode`, no copied `content`.
+ * An MCQ v1 can show from references alone: a prompt kind (the write schema
+ * needs it), no picture mode, a stimulus the server can draw, and every
+ * option a letter, a library word or a numeral.
  */
-function writeLetterCards(config: Config): Config {
-  if (!cardsLetterMode(config)) return config;
-  const next = without(config, ["cardMode", "content"]);
-  if (Array.isArray(config.cards)) {
-    next.cards = config.cards.map((c) => {
-      if (!isRecord(c)) return c;
-      const card: Config = { id: c.id, kind: "letter" };
-      if (c.letter != null) card.letter = ref(c.letter);
-      if (typeof c.isCorrect === "boolean") card.isCorrect = c.isCorrect;
-      if (typeof c.label === "string") card.label = c.label;
-      return card;
-    });
+function mcqCanonicalOk(config: Config): boolean {
+  if (!promptKind(config)) return false;
+  if (config.mode === "image") return false;
+  if (!mcqStimulus(config).ok) return false;
+  if (!Array.isArray(config.options) || config.options.length === 0) return false;
+  return config.options.every((o) =>
+    isRecord(o) && !hasPicture(o) && v1Derivable(mcqOptionItem(o, config.mode), "option")
+  );
+}
+
+/** MCQ options as content items; the stimulus as `prompt.target`; no `mode`, `question` or option `text`. */
+function writeMcq(config: Config): Config {
+  if (!mcqCanonicalOk(config)) return config;
+  const next = without(config, MCQ_DERIVED_KEYS);
+  next.options = (config.options as unknown[]).map((o) => toContentItemWrite(mcqOptionItem(o, config.mode)));
+  const { target } = mcqStimulus(config);
+  next.prompt = writePrompt({ kind: promptKind(config), ...(target ? { target } : {}) });
+  if (next.targetLetter != null) next.targetLetter = targetRefs(next.targetLetter);
+  else delete next.targetLetter;
+  return next;
+}
+
+/**
+ * A stored MCQ opens canonically unless v1 shows a picture in it: picture
+ * mode, a question picture, or an option holding a picture (text with a
+ * picture beside it is drawn as text and preloads the picture; a canonical
+ * option keeps one payload, so the picture would go).
+ */
+function mcqStoredOk(stored: Config): boolean {
+  if (stored.mode === "image" || filledText(stored.questionImage)) return false;
+  return Array.isArray(stored.options) && stored.options.every((o) => isRecord(o) && !hasPicture(o));
+}
+
+/** A stored entry's library word id (a v1-shape entry Studio saved keeps it as `word: { wordId }`). */
+const storedWordId = (entry: unknown): string | undefined =>
+  isRecord(entry) && isRecord(entry.word) && typeof entry.word.wordId === "string" && entry.word.wordId
+    ? entry.word.wordId
+    : undefined;
+
+/**
+ * A read word item with what the read leaves out: the text the server wrote
+ * beside it (its display hint) and the library id a v1-shape entry kept.
+ */
+function withWordText(item: unknown, text: string, wordId?: string): unknown {
+  if (!isRecord(item) || item.kind !== "word") return item;
+  const word = isRecord(item.word) ? { ...item.word } : {};
+  if (!word.text && text) word.text = text;
+  if (!word.wordId && wordId) word.wordId = wordId;
+  return { ...item, word };
+}
+
+/** Stored entries by their authored id. */
+function storedById(list: unknown): Map<string, Config> {
+  const out = new Map<string, Config>();
+  if (Array.isArray(list)) for (const e of list) if (isRecord(e) && typeof e.id === "string") out.set(e.id, e);
+  return out;
+}
+
+/** The stored question (the form shows it) and the word texts the server wrote. */
+function mcqHints(stored: Config, read: Config): Config {
+  const next = { ...read };
+  if (isRecord(stored.question)) next.question = stored.question;
+  if (Array.isArray(read.options)) {
+    const was = storedById(stored.options);
+    next.options = read.options.map((o) =>
+      isRecord(o) ? withWordText(o, arabicOf(o.text), storedWordId(was.get(String(o.id)))) : o
+    );
   }
+  if (isRecord(read.prompt) && read.prompt.target !== undefined) {
+    next.prompt = { ...read.prompt, target: withWordText(read.prompt.target, arabicOf(stored.question)) };
+  }
+  return next;
+}
+
+/** content_with_cards a v1 can show from references: letter content, every card a letter, library word or numeral. */
+function cardsCanonicalOk(config: Config): boolean {
+  if ((config.contentType ?? "letter") !== "letter") return false;
+  if (!Array.isArray(config.cards) || config.cards.length === 0) return false;
+  return config.cards.every((c) =>
+    isRecord(c) && !hasPicture(c) && v1Derivable(cardItem(c, config.cardMode), "card")
+  );
+}
+
+/** Each card a content item; no `text`, `cardMode` or copied `content`. */
+function writeCards(config: Config): Config {
+  if (!cardsCanonicalOk(config)) return config;
+  const next = without(config, ["cardMode", "content"]);
+  next.cards = (config.cards as unknown[]).map((c) => toContentItemWrite(cardItem(c, config.cardMode)));
   if (next.targetLetter != null) next.targetLetter = singleRef(next.targetLetter);
   else delete next.targetLetter;
   if (next.prompt !== undefined) next.prompt = writePrompt(next.prompt);
   return next;
 }
 
-// ---------------------------------------------------------------------------
-// answer sets (CM-S6): multiple_choice_question, match_pairs
-// ---------------------------------------------------------------------------
-
-/** The MCQ keys the server derives for v1 or drops (`multiple_choice_question.ts`). */
-const MCQ_DERIVED_KEYS = ["mode", "question", "questionImage", "contentType", "showImages", "correctOptionId"];
-
-const filledText = (v: unknown) => typeof v === "string" && !!v.trim();
-
-const hasArabic = (v: unknown) =>
-  (typeof v === "string" && !!v.trim()) || (isRecord(v) && typeof v.ar === "string" && !!v.ar.trim());
-
-/**
- * An MCQ v1 can show from references alone: every option a letter (the
- * delivery writes its glyph into `text.ar`), no stimulus above the options
- * (v1 reads `question.ar` and `questionImage`; the server does not write them
- * from `prompt.target`), the answer grid in letter mode, and a prompt kind (the write
- * schema needs it).
- */
-function mcqLetterOnly(config: Config): boolean {
-  if (!promptKind(config)) return false;
-  if (hasArabic(config.question) || filledText(config.questionImage)) return false;
-  if (config.mode !== undefined && config.mode !== "letter") return false;
-  if (isRecord(config.prompt) && config.prompt.target !== undefined) return false;
-  if (!Array.isArray(config.options) || config.options.length === 0) return false;
-  return config.options.every((o) => {
-    if (!isRecord(o)) return false;
-    if (o.kind !== undefined) return o.kind === "letter";
-    if (typeof o.image === "string" && o.image) return false;
-    return !hasArabic(o.text);
-  });
+function cardsStoredOk(stored: Config): boolean {
+  return !Array.isArray(stored.cards) || stored.cards.every((c) => !hasPicture(c));
 }
 
-/** MCQ letter options: each a letter content item; no `mode`, `question` or option `text`. */
-function writeMcq(config: Config): Config {
-  if (!mcqLetterOnly(config)) return config;
-  const next = without(config, MCQ_DERIVED_KEYS);
-  next.options = (config.options as unknown[]).map((o) => toContentItemWrite(mcqOptionItem(o, "letter")));
-  next.prompt = writePrompt(config.prompt);
-  if (next.targetLetter != null) next.targetLetter = targetRefs(next.targetLetter);
-  else delete next.targetLetter;
-  return next;
+function cardsHints(stored: Config, read: Config): Config {
+  if (!Array.isArray(read.cards)) return read;
+  const was = storedById(stored.cards);
+  return {
+    ...read,
+    cards: read.cards.map((c) =>
+      isRecord(c) ? withWordText(c, typeof c.text === "string" ? c.text : "", storedWordId(was.get(String(c.id)))) : c
+    ),
+  };
 }
 
-/**
- * A stored MCQ opens canonically only when it is canonical already (every
- * option has its `kind`) and has no `mode`, `question` or `questionImage`.
- * A legacy row stays on the shim: v1 reads the `options` array as a whole
- * (CM-B31), so rewriting its options as content items changes a v1 field
- * even where the delivery writes the same glyph back; a stored `mode` or
- * stimulus would be dropped (a stored prompt keeps no target from them).
- */
-function mcqStoredOk(stored: Config): boolean {
-  if ("mode" in stored || hasArabic(stored.question) || filledText(stored.questionImage)) return false;
-  return Array.isArray(stored.options) && stored.options.every((o) => isRecord(o) && typeof o.kind === "string");
+/** match_pairs a v1 can show from references: every side a letter, library word, numeral or audio clip. */
+function pairsCanonicalOk(config: Config): boolean {
+  if (!Array.isArray(config.pairs) || config.pairs.length === 0) return false;
+  return config.pairs.every((p) =>
+    isRecord(p) && v1Derivable(pairSideItem(p.left), "side") && v1Derivable(pairSideItem(p.right), "side")
+  );
 }
 
 /**
  * match_pairs: each side a content item without an id (`ContentRefWriteSchema`),
- * no `type`, `value`, `audioUrl` or flat letter fields. Blocked for v1
- * (`V1_BLOCKED_TYPES`): v1 reads every side's `type` and `value`.
+ * no `type`, `value`, `audioUrl` or flat letter fields (the server writes them).
  */
 function writeMatchPairs(config: Config): Config {
+  if (!pairsCanonicalOk(config)) return config;
   const next = without(config, ["targetLetterAudioUrl", "targetLetterAudioId"]);
-  if (Array.isArray(config.pairs)) {
-    next.pairs = config.pairs.map((p) =>
-      isRecord(p)
-        ? { left: toContentRefWrite(pairSideItem(p.left)), right: toContentRefWrite(pairSideItem(p.right)) }
-        : p,
-    );
-  }
+  next.pairs = (config.pairs as Config[]).map((p) => ({
+    left: toContentRefWrite(pairSideItem(p.left)),
+    right: toContentRefWrite(pairSideItem(p.right)),
+  }));
   if (next.targetLetter != null) next.targetLetter = targetRefs(next.targetLetter);
   else delete next.targetLetter;
   if (next.prompt !== undefined) next.prompt = writePrompt(next.prompt);
   return next;
 }
+
+/** A side's display hints from the stored side: a word's text, a clip's URL. */
+function sideHints(side: unknown, storedSide: unknown): unknown {
+  if (!isRecord(side)) return side;
+  const from = isRecord(storedSide) ? storedSide : {};
+  if (side.kind === "word") {
+    return withWordText(side, typeof side.value === "string" ? side.value : arabicOf(from.value), storedWordId(from));
+  }
+  if (side.kind === "audio" && isRecord(side.audio) && !side.audio.url) {
+    const url = [side.audioUrl, from.audioUrl, from.value].find(filledText);
+    return url ? { ...side, audio: { ...side.audio, url } } : side;
+  }
+  return side;
+}
+
+function pairsHints(stored: Config, read: Config): Config {
+  if (!Array.isArray(read.pairs)) return read;
+  const storedPairs = Array.isArray(stored.pairs) ? stored.pairs : [];
+  return {
+    ...read,
+    pairs: read.pairs.map((p, n) => {
+      const was = isRecord(storedPairs[n]) ? storedPairs[n] as Config : {};
+      return isRecord(p) ? { ...p, left: sideHints(p.left, was.left), right: sideHints(p.right, was.right) } : p;
+    }),
+  };
+}
+
+/** The answer-set forms edit the hinted read (kinded items with their display hints); a save writes it. */
+const asRead = (hinted: Config) => hinted;
 
 const isLetterMode = (config: Config) => (config.contentType ?? "letter") === "letter";
 
@@ -378,26 +504,23 @@ export const CANONICAL_FORM_TYPES: Readonly<Record<string, CanonicalType>> = {
   // letter modes only (word and picture modes wait for server-written v1 strings)
   show_letter_or_word: { write: writeShowLetter, canonicalOk: isLetterMode },
   speech_practice: { write: writeSpeechLetter, canonicalOk: isLetterMode, keepAbsent: ["contentType"] },
-  content_with_cards: { write: writeLetterCards, canonicalOk: cardsLetterMode },
-  // answer sets (CM-S6): a letter-only MCQ with no stimulus; match pairs blocked for v1
-  multiple_choice_question: { write: writeMcq, canonicalOk: mcqLetterOnly, storedOk: mcqStoredOk },
-  match_pairs: { write: writeMatchPairs },
+  // answer sets (CM-S6, R2): every item one the server shows to v1 from its reference
+  content_with_cards: { write: writeCards, canonicalOk: cardsCanonicalOk, storedOk: cardsStoredOk, hints: cardsHints, view: asRead },
+  multiple_choice_question: { write: writeMcq, canonicalOk: mcqCanonicalOk, storedOk: mcqStoredOk, hints: mcqHints, view: asRead },
+  match_pairs: { write: writeMatchPairs, canonicalOk: pairsCanonicalOk, hints: pairsHints, view: asRead },
 };
 
 /**
  * Types taken back to the shim because opening and saving a stored row would
  * change a field the v1 app reads (CM-B31, `v1Fields.test.ts`). They open
- * through the shim and save exactly as before, until the server writes the
- * fields v1 reads. Rows are also kept on the shim one by one (`openForEdit`:
- * an unreadable row, a word or picture mode, a trace glyph whose form
- * disagrees with `position`, an MCQ with a stimulus or a stored `mode`).
- *
- * - `match_pairs`: v1 draws every side from its `type` and `value` (and an
- *   audio side from `audioUrl`); the canonical side has neither and the
- *   server does not write them from the reference yet, so every mode would
- *   lose what v1 shows. Its writer (`writeMatchPairs`) is ready for when it does.
+ * through the shim and save exactly as before. None today: match_pairs left
+ * the list when the server began writing every side's `type`, `value` and
+ * `audioUrl` from its reference (R2). Rows are also kept on the shim one by
+ * one (`openForEdit`: an unreadable row, a word or picture mode, a trace
+ * glyph whose form disagrees with `position`, an answer set holding a
+ * picture or an item the server cannot show to v1).
  */
-export const V1_BLOCKED_TYPES: readonly string[] = ["match_pairs"];
+export const V1_BLOCKED_TYPES: readonly string[] = [];
 
 export function isCanonicalFormType(type: string | undefined): boolean {
   return !!type && Object.prototype.hasOwnProperty.call(CANONICAL_FORM_TYPES, type) &&
@@ -419,8 +542,9 @@ export function openForEdit(type: string | undefined, stored: Config): { config:
   const read = readActivityConfig(type, stored);
   if (!read.success) return legacy();
   if (entry.storedOk && !entry.storedOk(stored)) return legacy();
-  if (entry.canonicalOk && !entry.canonicalOk(read.config)) return legacy();
-  const config = entry.write(read.config, type);
+  const hinted = entry.hints ? entry.hints(stored, read.config) : read.config;
+  if (entry.canonicalOk && !entry.canonicalOk(hinted)) return legacy();
+  const config = entry.view ? entry.view(hinted) : entry.write(hinted, type);
   for (const key of entry.keepAbsent ?? []) if (!(key in stored)) delete config[key];
   return { config, canonical: true };
 }

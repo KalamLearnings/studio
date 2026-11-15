@@ -7,9 +7,9 @@
  * plus the legacy rows below) is delivered to v1 twice through the backend's
  * own delivery path (`enrichActivityConfig` and `resolveActivityStorageUrls`,
  * as `makeGetNodeActivities` runs them): as stored, after Studio opens and
- * saves it unchanged (`openForEdit`, then `toSaveConfig`), and after the
- * Studio before CM-S3 did the same (the shim, then the config as the form
- * holds it). The deliveries are compared on the v1 fields with the backend's
+ * saves it unchanged (`openForEdit`, then `toSaveConfig`, then the save
+ * path's v1 display fields, `deriveV1Display`, R2), and after the shim alone
+ * did the same (the shim, then the config as the form holds it). The deliveries are compared on the v1 fields with the backend's
  * CM-B31 rule
  * (`compareV1Deliveries`, fixture `tests/golden/v1-fields.json`). Letters come
  * from the backend's letters seed.
@@ -40,6 +40,11 @@ import {
   type StorageUrlResolver,
 } from "../../packages/curriculum-schemas/test/backend/supabase/functions/_shared/core/domain/curriculum/player-projection.ts";
 import type { LetterData } from "../../packages/curriculum-schemas/test/backend/supabase/functions/_shared/core/domain/curriculum/letter-reference.ts";
+import {
+  deriveV1Display,
+  type V1DisplaySources,
+} from "../../packages/curriculum-schemas/test/backend/supabase/functions/_shared/core/domain/curriculum/v1-display.ts";
+import { getActivityConfigSchema } from "@kalam/curriculum-schemas/server";
 import { normalizeActivityConfig } from "../../components/builder/forms/normalizeActivityConfig";
 import {
   CANONICAL_FORM_TYPES,
@@ -88,10 +93,41 @@ function deliver(id: string, type: string, config: Config): DeliveredActivity {
   ) as DeliveredActivity;
 }
 
-/** What Studio stores after an author opens the row and saves it unchanged. */
+/**
+ * What the server looks up for the v1 display fields: the letters seed, the
+ * library words the extra rows name, and each stored audio id's URL (the
+ * catalogue path the stored row already plays; the backend's asset backfill
+ * checks that ids and URLs agree).
+ */
+function displaySources(rows: readonly { config: Config }[]): V1DisplaySources {
+  const audio = new Map<string, string>();
+  const visit = (v: unknown) => {
+    if (Array.isArray(v)) v.forEach(visit);
+    else if (v && typeof v === "object") {
+      const r = v as Config;
+      if (typeof r.audioId === "string" && typeof r.audioUrl === "string") audio.set(r.audioId, r.audioUrl);
+      Object.values(r).forEach(visit);
+    }
+  };
+  rows.forEach((r) => visit(r.config));
+  return { letters: LETTERS, words: new Map(Object.entries(WORDS)), images: new Map(), audio };
+}
+
+/** Library words named by the extra rows (id -> spelling). */
+const WORDS: Record<string, string> = { "w-bab": "بَاب", "w-dub": "دُب" };
+
+/**
+ * What the server stores after an author opens the row and saves it
+ * unchanged: Studio's save, then the save path's v1 display fields from the
+ * references, the stored row as the previous config (R2). A save the server
+ * would reject (an item it cannot show to v1) fails the test.
+ */
 function openAndSave(type: string, stored: Config): Config {
   const { config, canonical } = openForEdit(type, structuredClone(stored));
-  return toSaveConfig(type, config, canonical);
+  const sent = toSaveConfig(type, config, canonical);
+  const derived = deriveV1Display(type, sent, SOURCES, stored);
+  expect(derived.unresolved, `${type} save rejected by the server`).toEqual([]);
+  return derived.config;
 }
 
 /** What the Studio before CM-S3 stored after the same open-and-save. */
@@ -136,9 +172,9 @@ const EXTRA_ROWS: { id: string; type: string; config: Config }[] = [
   { id: "x-dragdots", type: "drag_dots_to_letter", config: { targetLetter: "ت", position: "final" } },
   { id: "x-color", type: "color_letter", config: { letter: { letterId: "ba", form: "isolated", display: "ب" } } },
   { id: "x-haraka", type: "drag_haraka_to_letter", config: { targetLetter: { letterId: "ba", form: "isolated", haraka: "none" }, harakaType: "fatha" } },
-  // CM-S6: a letter-only MCQ with a prompt kind and no stimulus opens canonically
-  // only when it is canonical already (x-mcq-kinded); in the legacy shape it
-  // stays on the shim (v1 reads the options array as a whole)
+  // R2: an MCQ with a prompt kind whose options and stimulus the server can
+  // show to v1 (letters, library words, numerals) opens and saves canonically,
+  // legacy or not; the server writes option text, mode and question back
   {
     id: "x-mcq-letters",
     type: "multiple_choice_question",
@@ -161,7 +197,7 @@ const EXTRA_ROWS: { id: string; type: string; config: Config }[] = [
       ],
     },
   },
-  // ...but not with a stored mode, a stimulus, or other kinds of option
+  // a stored mode is kept by the server; a typed word stimulus with no library id stays on the shim
   {
     id: "x-mcq-mode",
     type: "multiple_choice_question",
@@ -177,7 +213,78 @@ const EXTRA_ROWS: { id: string; type: string; config: Config }[] = [
     type: "multiple_choice_question",
     config: { prompt: { kind: "count" }, options: [{ id: "a", text: { en: "", ar: "2" }, isCorrect: true }, { id: "b", text: { en: "", ar: "3" }, isCorrect: false }] },
   },
+  // a stored canonical MCQ with library words and a word stimulus, as the server stored it
+  {
+    id: "x-mcq-words",
+    type: "multiple_choice_question",
+    config: {
+      mode: "word",
+      prompt: { kind: "meaning", target: { kind: "word", word: { wordId: "w-dub" } } },
+      question: { en: "", ar: "دُب" },
+      options: [
+        { id: "a", kind: "word", word: { wordId: "w-bab" }, isCorrect: true, text: { en: "", ar: "بَاب" } },
+        { id: "b", kind: "word", word: { wordId: "w-dub" }, isCorrect: false, text: { en: "", ar: "دُب" } },
+      ],
+    },
+  },
+  // a letter question glyph spelled with two tatweels stays as v1 draws it
+  {
+    id: "x-mcq-glyph-question",
+    type: "multiple_choice_question",
+    config: { question: { en: "", ar: "جــ" }, prompt: { kind: "form" }, options: [{ id: "a", text: { en: "", ar: "جــ" }, isCorrect: true }, { id: "b", text: { en: "", ar: " ب" }, isCorrect: false }] },
+  },
+  // the shim bug rows: text with a picture beside it, no mode (v1 draws the text and preloads
+  // the picture); they stay on the shim and keep having no mode (activity_1765418206671)
+  {
+    id: "x-mcq-text-and-image",
+    type: "multiple_choice_question",
+    config: {
+      prompt: { kind: "meaning" },
+      options: [
+        { id: "a", text: { en: "", ar: "ص" }, image: "assets/misc/lor12.png", isCorrect: false },
+        { id: "b", text: { en: "", ar: "ث" }, image: "assets/misc/lor18.png", isCorrect: true },
+      ],
+    },
+  },
+  // cards: a stored canonical word and numeral card set
+  {
+    id: "x-cards-words",
+    type: "content_with_cards",
+    config: {
+      contentType: "letter",
+      targetLetter: { letterId: "ba", form: "isolated" },
+      interactive: false,
+      cards: [
+        { id: "c1", kind: "word", word: { wordId: "w-bab" }, isCorrect: false, text: "بَاب" },
+        { id: "c2", kind: "numeral", numeral: 2, isCorrect: false, text: "2" },
+      ],
+    },
+  },
+  // match pairs: letter to audio with the kasra after the tatweel (as older Studio stored it)
+  {
+    id: "x-pairs-audio",
+    type: "match_pairs",
+    config: {
+      pairs: [
+        { left: { type: "letter", value: "لـِ", letterId: "lam", form: "initial", haraka: "kasra" }, right: { type: "audio", audioId: "aud-1", audioUrl: "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/li.mp3" } },
+        { left: { type: "letter", value: "بِ", letterId: "ba", form: "isolated", haraka: "kasra" }, right: { type: "audio", audioId: "aud-2", audioUrl: "https://api.kalamkidslearning.com/storage/v1/object/public/curriculum-audio/audio/letter_sounds/bi.mp3" } },
+      ],
+    },
+  },
+  // ...but a URL-only clip (no catalogue id) or a picture side stays on the shim
+  {
+    id: "x-pairs-url-only",
+    type: "match_pairs",
+    config: {
+      pairs: [
+        { left: { type: "letter", value: "ب", letterId: "ba", form: "isolated" }, right: { type: "audio", value: "https://x/b.mp3?v=1", audioUrl: "https://x/b.mp3?v=1" } },
+        { left: { type: "word", value: "بَاب" }, right: { type: "image", value: "https://x/door.png" } },
+      ],
+    },
+  },
 ];
+
+const SOURCES = displaySources([...PROD_SHAPES, ...EXTRA_ROWS]);
 
 function rowsOf(types: readonly string[]) {
   const wanted = new Set(types);
@@ -237,14 +344,14 @@ describe("v1 fields after an open-and-save in Studio (CM-B31)", () => {
   });
 
   it("the changes Studio already made before CM-S3 are only the shim's known mappings", () => {
-    // A missing contentType written as `letter` (show_letter_or_word), a
-    // glyph correctLetter copied to targetLetter when the row has none, and a
-    // missing MCQ `mode` inferred from the options (`inferOptionMode`; MCQ rows
-    // with a stimulus, a stored mode or no prompt kind stay on the shim).
+    // A missing contentType written as `letter` (show_letter_or_word) and a
+    // glyph correctLetter copied to targetLetter when the row has none. The
+    // shim no longer infers a missing MCQ `mode` (it switched rows with text
+    // and a picture to image-only in v1), so an MCQ changes nothing.
     const shared = sharedDifferences(Object.keys(CANONICAL_FORM_TYPES));
     if (process.env.V1_REPORT) console.log(shared.join("\n"));
     for (const d of shared) {
-      expect(d).toMatch(/^(show_letter_or_word \S+ contentType: "\(absent\)" -> "letter"|pop_balloons_with_letter x-pop-1 targetLetter(\[\])?: |multiple_choice_question \S+ mode: "\(absent\)" -> "(letter|text|image)"$)/);
+      expect(d).toMatch(/^(show_letter_or_word \S+ contentType: "\(absent\)" -> "letter"|pop_balloons_with_letter x-pop-1 targetLetter(\[\])?: )/);
     }
   });
 
@@ -253,6 +360,29 @@ describe("v1 fields after an open-and-save in Studio (CM-B31)", () => {
       if (Object.keys(row.config ?? {}).length === 0) continue;
       expect(openAndSave(row.type, row.config), row.id).toEqual(oldOpenAndSave(row.type, row.config));
     }
+  });
+
+  it("answer sets open canonically exactly when the server can show every item to v1 (R2)", () => {
+    const opened = (id: string) => {
+      const row = EXTRA_ROWS.find((r) => r.id === id)!;
+      return openForEdit(row.type, structuredClone(row.config)).canonical;
+    };
+    const canonical = ["x-mcq-letters", "x-mcq-kinded", "x-mcq-mode", "x-mcq-numerals", "x-mcq-words", "x-mcq-glyph-question", "x-cards-words", "x-pairs-audio"];
+    const shim = ["x-mcq-question", "x-mcq-text-and-image", "x-pairs-url-only"];
+    expect(canonical.filter((id) => !opened(id))).toEqual([]);
+    expect(shim.filter(opened)).toEqual([]);
+    // the canonical saves send references only: the server's write schema takes them
+    for (const id of canonical) {
+      const row = EXTRA_ROWS.find((r) => r.id === id)!;
+      const { config } = openForEdit(row.type, structuredClone(row.config));
+      const sent = toSaveConfig(row.type, config, true);
+      expect(getActivityConfigSchema(row.type as never).safeParse(sent).success, id).toBe(true);
+    }
+  });
+
+  it("the shim bug: a row with text and a picture keeps having no mode (v1 keeps drawing the text)", () => {
+    const row = EXTRA_ROWS.find((r) => r.id === "x-mcq-text-and-image")!;
+    expect("mode" in openAndSave(row.type, row.config)).toBe(false);
   });
 
   it("the comparison catches a dropped v1 field", () => {

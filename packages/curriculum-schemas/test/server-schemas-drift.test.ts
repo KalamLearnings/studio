@@ -9,8 +9,9 @@
  * rebuild the package (`npm run build:schemas`). Never edit the copies here.
  *
  * The v1 field golden files Studio's `lib/activityConfig/v1Fields.test.ts`
- * runs on (CM-B31: fixture, comparison, delivery, letters seed, PROD config
- * shapes) are copied the same way under `test/backend/<backend path>`.
+ * runs on (CM-B31: fixture, comparison, delivery, the save path's v1 display
+ * fields, letters seed, PROD config shapes) are copied the same way under
+ * `test/backend/<backend path>`.
  *
  * The backend is read from its `dev` branch. Like the other drift tests, the
  * comparison is skipped with a warning when the sibling backend checkout is
@@ -34,7 +35,9 @@ const GOLDEN_FILES = [
   'supabase/functions/_shared/core/domain/content-audit/v1-fields.ts',
   'supabase/functions/_shared/core/domain/curriculum/player-projection.ts',
   'supabase/functions/_shared/core/domain/curriculum/letter-reference.ts',
+  'supabase/functions/_shared/core/domain/curriculum/v1-display.ts',
   'supabase/functions/_shared/core/contracts/curriculum-schemas/harakat.ts',
+  'supabase/functions/_shared/core/contracts/curriculum-schemas/madd.ts',
 ];
 const COPY = fileURLToPath(new URL('../src/server/', import.meta.url));
 

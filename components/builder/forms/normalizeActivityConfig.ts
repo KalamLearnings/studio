@@ -11,7 +11,14 @@ import type { ActivityConfig } from "./types";
  *
  * Scope of THIS function (key/shape remaps that forms can't infer themselves):
  *  - legacy KEYS → modern keys (letterForm/letter → targetLetter)
- *  - missing discriminators (mode / contentType) inferred from the data
+ *  - a missing `contentType` inferred from the data
+ *
+ * A missing MCQ `mode` is left missing (content model R2): v1 renders an MCQ
+ * with no mode as text (`config.mode || 'text'`), and the form picks its
+ * answer grid from the options themselves (`gridKindOf`). The old inference
+ * (letter, then image, then text) wrote `mode: 'image'` into rows whose
+ * options carry both text and a picture, which switched v1 to image-only on
+ * save (activity_1765418206671, activity_1772663694035).
  *  - glyph-string letter fields left for the shared LetterSelector to resolve
  *
  * Always additive: never overwrites an existing modern value, so configs already
@@ -80,36 +87,7 @@ export function normalizeActivityConfig(
       }
       break;
     }
-
-    case "multiple_choice_question": {
-      // `mode` discriminates how options render (letter / word / image / text).
-      // When absent, infer it from the first option's populated field so the
-      // grid shows the right control instead of defaulting to letter and hiding
-      // text/image options.
-      if (next.mode == null && Array.isArray(next.options)) {
-        next.mode = inferOptionMode(next.options);
-      }
-      break;
-    }
   }
 
   return next;
-}
-
-/**
- * Infer the option display mode from the populated fields of the options.
- * Order of preference: a real letter ref → image → arabic text → default text.
- */
-function inferOptionMode(
-  options: unknown[],
-): "letter" | "word" | "image" | "text" {
-  for (const opt of options) {
-    if (!isObject(opt)) continue;
-    if (opt.letter != null) return "letter";
-    if (typeof opt.image === "string" && opt.image) return "image";
-    const text = opt.text;
-    if (isObject(text) && typeof text.ar === "string" && text.ar) return "text";
-    if (typeof text === "string" && text) return "text";
-  }
-  return "text";
 }

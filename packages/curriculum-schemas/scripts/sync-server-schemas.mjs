@@ -6,7 +6,8 @@
  *
  * Also copies, under test/backend/<backend path>, what Studio's v1 field test
  * needs (CM-B31): the v1 field fixture and its comparison, the v1 delivery
- * (player projection), the letters seed and the PROD config shapes fixture.
+ * (player projection), the save path's v1 display fields (R2), the letters
+ * seed and the PROD config shapes fixture.
  *
  *   node packages/curriculum-schemas/scripts/sync-server-schemas.mjs [<backend checkout>]
  *
@@ -51,7 +52,9 @@ export const GOLDEN_FILES = [
   'supabase/functions/_shared/core/domain/content-audit/v1-fields.ts',
   'supabase/functions/_shared/core/domain/curriculum/player-projection.ts',
   'supabase/functions/_shared/core/domain/curriculum/letter-reference.ts',
+  'supabase/functions/_shared/core/domain/curriculum/v1-display.ts',
   'supabase/functions/_shared/core/contracts/curriculum-schemas/harakat.ts',
+  'supabase/functions/_shared/core/contracts/curriculum-schemas/madd.ts',
 ];
 const golden = join(pkg, 'test/backend');
 rmSync(golden, { recursive: true, force: true });

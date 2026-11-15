@@ -86,8 +86,8 @@ describe("prompt", () => {
 });
 
 describe("MCQ options in v1's shape", () => {
-  it("each kind stores what v1 reads: text.ar for a word or numeral, the image URL, the letter reference", () => {
-    expect(mcqOptionFromItem(word)).toEqual({ id: "o1", isCorrect: true, text: { en: "", ar: "باب" } });
+  it("each kind stores what v1 reads: text.ar for a word (its library id beside it) or numeral, the image URL, the letter reference", () => {
+    expect(mcqOptionFromItem(word)).toEqual({ id: "o1", isCorrect: true, text: { en: "", ar: "باب" }, word: { wordId: "w-bab" } });
     expect(mcqOptionFromItem(numeral)).toEqual({ id: "o3", isCorrect: false, text: { en: "", ar: "3" } });
     expect(mcqOptionFromItem(image)).toEqual({ id: "o2", isCorrect: false, text: { en: "", ar: "" }, image: "https://x/cat.png" });
     expect(mcqOptionFromItem(letter)).toEqual({ id: "o4", isCorrect: false, text: { en: "", ar: "" }, letter: baFatha });
@@ -95,7 +95,7 @@ describe("MCQ options in v1's shape", () => {
 
   it("an edit keeps the option's other keys and replaces its content", () => {
     const prev = { id: "o1", letter: ba, text: { en: "", ar: "" }, isCorrect: true, hint: "door" };
-    expect(mcqOptionFromItem(word, prev)).toEqual({ id: "o1", isCorrect: true, text: { en: "", ar: "باب" }, hint: "door" });
+    expect(mcqOptionFromItem(word, prev)).toEqual({ id: "o1", isCorrect: true, text: { en: "", ar: "باب" }, word: { wordId: "w-bab" }, hint: "door" });
   });
 
   it("reads stored options as v1 renders them", () => {
@@ -107,18 +107,17 @@ describe("MCQ options in v1's shape", () => {
     expect(mcqOptionItem({ id: "a", kind: "numeral", numeral: 2 }, undefined)).toEqual({ id: "a", kind: "numeral", numeral: 2 });
   });
 
-  it("round-trips every kind it stores (word ids and asset ids live only in a canonical save)", () => {
-    for (const item of [numeral, letter]) {
+  it("round-trips every kind it stores (a word keeps its library id; an asset id lives only in a canonical save)", () => {
+    for (const item of [numeral, letter, word]) {
       expect(mcqOptionItem(mcqOptionFromItem(item), "text")).toEqual(item);
     }
-    expect(mcqOptionItem(mcqOptionFromItem(word), "word")).toEqual({ ...word, word: { text: "باب" } });
     expect(mcqOptionItem(mcqOptionFromItem(image), "image")).toEqual({ ...image, isCorrect: false, image: { url: "https://x/cat.png" } });
   });
 });
 
 describe("cards in v1's shape", () => {
   it("each kind stores the card text or image", () => {
-    expect(cardFromItem(word)).toEqual({ id: "o1", text: "باب", isCorrect: true });
+    expect(cardFromItem(word)).toEqual({ id: "o1", text: "باب", isCorrect: true, word: { wordId: "w-bab" } });
     expect(cardFromItem(numeral)).toEqual({ id: "o3", text: "3", isCorrect: false });
     expect(cardFromItem(image)).toEqual({ id: "o2", text: "", image: "https://x/cat.png", isCorrect: false });
     expect(cardFromItem(letter)).toEqual({ id: "o4", text: "", letter: baFatha, isCorrect: false });
@@ -129,6 +128,7 @@ describe("cards in v1's shape", () => {
     expect(cardItem({ id: "c", text: "", letter: ba }, "letter")).toEqual({ id: "c", kind: "letter", letter: ba });
     expect(cardItem({ id: "c", text: "" }, "image")).toEqual({ id: "c", kind: "image" });
     expect(cardItem(cardFromItem(numeral), "word")).toEqual(numeral);
+    expect(cardItem(cardFromItem(word), "word")).toEqual(word);
   });
 });
 
@@ -146,7 +146,8 @@ describe("match pair sides in v1's shape", () => {
   });
 
   it("word, numeral, image and audio sides", () => {
-    expect(pairSideFromItem(word, glyph)).toEqual({ type: "word", value: "باب" });
+    expect(pairSideFromItem(word, glyph)).toEqual({ type: "word", value: "باب", word: { wordId: "w-bab" } });
+    expect(pairSideItem(pairSideFromItem(word, glyph))).toEqual({ kind: "word", word: { wordId: "w-bab", text: "باب" } });
     expect(pairSideFromItem(numeral, glyph)).toEqual({ type: "word", value: "3" });
     expect(pairSideFromItem(image, glyph)).toEqual({ type: "image", value: "https://x/cat.png" });
     expect(pairSideFromItem({ kind: "audio", audio: { assetId: "au-1", url: "https://x/ba.mp3" } }, glyph)).toEqual({

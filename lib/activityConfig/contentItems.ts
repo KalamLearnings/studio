@@ -8,14 +8,15 @@
  * editor needs to draw it (the word's text, the asset's URL). The hints never
  * reach a canonical save (`toContentItemWrite`, `toContentRefWrite`).
  *
- * The three containers (MCQ options, cards, match pair sides) still store
- * v1's shape in every mode the server cannot yet show to v1 from references
- * alone (it does not write option `text`, `mode`, `question`, card `text` or
- * pair `type` / `value` / `audioUrl` from a reference). So each container has
+ * The three containers (MCQ options, cards, match pair sides) hold v1's
+ * shape in the form, with the item's reference beside it (a word keeps
+ * `word: { wordId }`), so one form state saves either way. Each container has
  * a pair of pure adapters: stored entry -> `EditorItem` (to draw it) and
  * `EditorItem` -> v1 entry (what the form stores when an author edits it).
- * A row in a mode v1 can show canonically is cut to the write schema by
- * `canonical.ts`.
+ * A row v1 can show from references alone (the server writes option `text`,
+ * `mode`, `question`, card `text` and pair `type` / `value` / `audioUrl` from
+ * them, R2) is cut to the write schema by `canonical.ts`; any other row is
+ * saved in v1's shape as before.
  */
 
 import { readContentText, readLetterRef } from "@kalam/curriculum-schemas/server";
@@ -119,6 +120,26 @@ export function kindedItem(entry: Config): EditorItem {
 function textItem(text: string): EditorItem | null {
   const read = readContentText(text);
   return read ? kindedItem(read) : null;
+}
+
+/** A v1-shape entry's word reference, kept beside its text (`word: { wordId }`). */
+function storedWordId(entry: Config): string | undefined {
+  return isRecord(entry.word) && typeof entry.word.wordId === "string" && entry.word.wordId
+    ? entry.word.wordId
+    : undefined;
+}
+
+/** A text read as an item, with the entry's stored word id when the text is a word. */
+function textItemOf(text: string, entry: Config): EditorItem | null {
+  const read = textItem(text);
+  const wordId = storedWordId(entry);
+  if (read?.kind === "word" && wordId) return { ...read, word: { ...read.word, wordId } };
+  return read;
+}
+
+/** The word reference a v1-shape entry keeps beside its text. */
+function wordRefOf(item: EditorItem): Config {
+  return item.word?.wordId ? { word: { wordId: item.word.wordId } } : {};
 }
 
 /** The content keys of a stored entry, old and new; an edit rewrites all of them. */
@@ -253,7 +274,7 @@ export function mcqOptionItem(option: unknown, mode: unknown): EditorItem {
   const text = isRecord(option.text) ? filled(option.text.ar) : filled(option.text);
   if (letter && !text) return { ...base, kind: "letter", letter };
   if (text) {
-    const read = textItem(text);
+    const read = textItemOf(text, option);
     if (read) return { ...read, ...base, kind: read.kind };
   }
   if (letter) return { ...base, kind: "letter", letter };
@@ -282,6 +303,7 @@ export function mcqOptionFromItem(item: EditorItem, previous?: unknown): Config 
       break;
     case "word":
       out.text = { en: "", ar: item.word?.text ?? "" };
+      Object.assign(out, wordRefOf(item));
       break;
     case "numeral":
       out.text = { en: "", ar: typeof item.numeral === "number" ? String(item.numeral) : "" };
@@ -327,7 +349,7 @@ export function cardItem(card: unknown, cardMode: unknown): EditorItem {
   if (letter) return { ...base, kind: "letter", letter };
   const text = filled(card.text);
   if (text) {
-    const read = textItem(text);
+    const read = textItemOf(text, card);
     if (read) return { ...read, ...base, kind: read.kind };
   }
   const image = filled(card.image) ?? filled(card.imageUrl);
@@ -344,6 +366,7 @@ export function cardFromItem(item: EditorItem, previous?: unknown): Config {
       break;
     case "word":
       out.text = item.word?.text ?? "";
+      Object.assign(out, wordRefOf(item));
       break;
     case "numeral":
       out.text = typeof item.numeral === "number" ? String(item.numeral) : "";
@@ -373,7 +396,9 @@ export function pairSideItem(side: unknown): EditorItem {
       const read = value ? textItem(value) : null;
       // v1 shows a word side's value as text: a digit stays a numeral, everything else a word
       if (read?.kind === "numeral") return { ...item, kind: "numeral", numeral: read.numeral };
-      return value ? { ...item, kind: "word", word: { text: value } } : { ...item, kind: "word" };
+      const wordId = storedWordId(side);
+      if (!value) return { ...item, kind: "word" };
+      return { ...item, kind: "word", word: wordId ? { wordId, text: value } : { text: value } };
     }
     case "image":
       return value ? { ...item, kind: "image", image: { url: value } } : { ...item, kind: "image" };
@@ -415,7 +440,7 @@ export function pairSideFromItem(item: EditorItem, glyphOf: (letter: EditorLette
       };
     }
     case "word":
-      return { type: "word", value: item.word?.text ?? "", ...label };
+      return { type: "word", value: item.word?.text ?? "", ...wordRefOf(item), ...label };
     case "numeral":
       return { type: "word", value: typeof item.numeral === "number" ? String(item.numeral) : "", ...label };
     case "image":

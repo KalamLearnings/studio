@@ -264,6 +264,8 @@ export default function BuilderPage() {
               nodeId={selectedTreeNode.id}
               nodeTitle={selectedNode.title}
               type={selectedTreeNode.type}
+              bookId={selectedTreeNode.book_id ?? null}
+              activityCount={selectedNode.children?.length ?? 0}
             />
           </div>
         ) : (

@@ -13,6 +13,7 @@ import {
   UNIT_KEY_NAMESPACES,
   isHarakaType,
   isRuleId,
+  isReservedUnitKey,
   isValidUnitKey,
   namespaceOf,
   type StageLabel,
@@ -98,7 +99,7 @@ export function unitKeyProblem(key: string): string | null {
   const spec = ns
     ? (UNIT_KEY_NAMESPACES[ns] as { reserved?: boolean; graphOnly?: boolean })
     : null;
-  if (spec?.reserved) return `"${key}" is in a strand that is not taught yet`;
+  if (spec?.reserved || isReservedUnitKey(key)) return `"${key}" is in a strand that is not taught yet`;
   if (spec?.graphOnly) return `"${key}" is a stage; set the level's stage instead`;
   return null;
 }

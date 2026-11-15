@@ -53,7 +53,7 @@ describe('unit keys from pickers', () => {
   it('rejects malformed, reserved and graph-only keys', () => {
     expect(unitKeyProblem('ba')).toMatch(/not a unit key/);
     expect(unitKeyProblem('sound:ba:sukoon:madd')).toMatch(/not a unit key/);
-    expect(unitKeyProblem('pa:onset')).toMatch(/not taught yet/);
+    expect(unitKeyProblem('pa:rhyme')).toMatch(/not taught yet/);
     expect(unitKeyProblem('stage:fatha')).toMatch(/stage/);
   });
 

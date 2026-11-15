@@ -143,6 +143,8 @@ export function TopicTargetsPanel({ topicId, topicTitle, ctx }: TopicTargetsPane
           onOpenActivity={ctx.onOpenActivity}
           describe={ctx.describe}
           scopeName={ctx.scopeName}
+          stories={rollup.data?.story_decodability}
+          nodeTitle={ctx.nodeTitle}
         />
       </div>
     </div>

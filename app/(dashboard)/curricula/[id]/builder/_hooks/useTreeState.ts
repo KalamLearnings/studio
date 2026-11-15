@@ -101,6 +101,7 @@ export function useTreeState({ topics, nodes, activities }: UseTreeStateOptions)
             type: "node",
             title: node.title?.en || "Untitled Node",
             isPublished: node.is_published !== false,
+            isStory: node.type === "story",
             children: nodeActivities.map((activity): TreeNode => ({
               id: activity.id,
               type: "activity",

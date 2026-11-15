@@ -14,6 +14,7 @@ import {
 } from '@/lib/api/curricula';
 import { ApiError } from '@/lib/api/client';
 import type { NodeRole, TeachingTargetInput } from '@/lib/schemas/curriculum';
+import { nodeTypeUpdate, storyNodeErrorText, type STORY_NODE_TYPE } from '@/lib/books/storyNode';
 
 /** Target errors are shown beside the targets, not as a toast. */
 export function isTargetsError(error: unknown): error is ApiError {
@@ -91,7 +92,10 @@ export function useSaveLevelIntent() {
   });
 }
 
-/** Save a node's role (its `type`). */
+/**
+ * Save a node's role (its `type`), or make it a story node with its book
+ * (CM-B36). A story-node refusal is shown beside the picker, not as a toast.
+ */
 export function useSaveNodeRole() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -100,19 +104,23 @@ export function useSaveNodeRole() {
       topicId,
       nodeId,
       role,
+      bookId = null,
     }: {
       curriculumId: string;
       topicId: string;
       nodeId: string;
-      role: NodeRole;
-    }) => updateNode(curriculumId, topicId, nodeId, { type: role }),
+      role: NodeRole | typeof STORY_NODE_TYPE;
+      bookId?: string | null;
+    }) => updateNode(curriculumId, topicId, nodeId, nodeTypeUpdate(role, bookId)),
     onSuccess: (_, { curriculumId, topicId }) => {
       queryClient.invalidateQueries({ queryKey: ['all-nodes', curriculumId] });
       queryClient.invalidateQueries({ queryKey: ['nodes', curriculumId, topicId] });
-      toast.success('Node role saved');
+      // a story node's book is checked for decodability in the roll-up
+      queryClient.invalidateQueries({ queryKey: rollupKeys.all(curriculumId) });
+      toast.success('Node saved');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to save node role');
+      if (!storyNodeErrorText(error)) toast.error(error.message || 'Failed to save node role');
     },
   });
 }

@@ -232,6 +232,7 @@ export {
   SKILL_LINK_TYPES,
   SKILL_LINKS,
   isValidUnitKey,
+  isReservedUnitKey,
   isValidKeyPattern,
   namespaceOf,
   matchKeyPattern,

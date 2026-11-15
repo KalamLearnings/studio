@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Plus,
   Folder,
+  BookOpen,
   FileText,
   GripVertical,
   MoreHorizontal,
@@ -144,6 +145,8 @@ export interface TreeNode {
   activityType?: string;
   isPublished?: boolean;
   parentId?: string;
+  /** A story node (CM-B36): opens a book, holds no activities. */
+  isStory?: boolean;
 }
 
 interface CurriculumTreeProps {
@@ -302,6 +305,8 @@ function DroppableNode({
       type: "node",
       node,
     },
+    // a story node holds no activities (CM-B36)
+    disabled: node.isStory,
   });
 
   const isPublished = node.isPublished !== false;
@@ -331,7 +336,11 @@ function DroppableNode({
         </button>
 
         {/* Icon */}
-        <Folder className="h-4 w-4 text-amber-500" />
+        {node.isStory ? (
+          <BookOpen className="h-4 w-4 text-amber-500" />
+        ) : (
+          <Folder className="h-4 w-4 text-amber-500" />
+        )}
 
         {/* Title */}
         <button
@@ -347,7 +356,7 @@ function DroppableNode({
         {/* Actions */}
         <RowActionsMenu
           addLabel="Add Activity"
-          onAdd={onAddActivity}
+          onAdd={node.isStory ? undefined : onAddActivity}
           isPublished={isPublished}
           onTogglePublish={onTogglePublish}
           onDelete={onDelete}
@@ -675,7 +684,7 @@ export function CurriculumTree({
                               {/* Empty state for node with no activities */}
                               {isNodeExpanded && nodeActivities.length === 0 && (
                                 <div className="ml-8 px-2 py-2 text-xs text-muted-foreground">
-                                  No activities yet
+                                  {node.isStory ? "Story: opens a book" : "No activities yet"}
                                 </div>
                               )}
                             </DroppableNode>

@@ -59,6 +59,7 @@ export function useIntentContext({
         return { title: humanize(a.type), where: where || undefined };
       },
       onOpenActivity,
+      nodeTitle: (nodeId: string) => nodeById.get(nodeId)?.title?.en,
       scopeName: (scopeType, scopeId) =>
         scopeType === "curriculum"
           ? "This level"

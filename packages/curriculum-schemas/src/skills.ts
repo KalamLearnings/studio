@@ -29,6 +29,11 @@
  * `sukoon` and `shadda` contrasts to `DISCRIMINATE_CONTRASTS`; C3 is settled by
  * R11 (above). C1, C2, C6 to C13 agree with the map as it was.
  *
+ * READING STRANDS (ADR 0002, CM-B32; ADR status Proposed): `identify` and
+ * `comprehend` are built kinds now (`pa:`/`listen:` and `comp:`), and
+ * `decode` applies to `read:`. No activity type uses them yet (the reading
+ * set types come with CM-B33); `read_fluently` stays reserved.
+ *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/skills.ts
  *   studio/packages/curriculum-schemas/src/skills.ts
@@ -91,7 +96,8 @@ export const SKILL_KIND_META: Record<SkillKind, SkillKindMeta> = {
     id: 'decode',
     strand: 'decoding',
     canDo: 'Map a written unit to its sound',
-    units: ['sound', 'haraka', 'rule'],
+    // `read:phrase`, `read:sentence`: reading connected vowelled text (ADR 0002)
+    units: ['sound', 'haraka', 'rule', 'read'],
     reserved: false,
   },
   write: {
@@ -133,15 +139,17 @@ export const SKILL_KIND_META: Record<SkillKind, SkillKindMeta> = {
     id: 'identify',
     strand: 'phonological',
     canDo: 'Hear a sound unit with no letters',
-    units: ['pa'],
-    reserved: true,
+    // `pa:first_sound`, `listen:contrast:<a>:<b>` (ADR 0002)
+    units: ['pa', 'listen'],
+    reserved: false,
   },
   comprehend: {
     id: 'comprehend',
     strand: 'comprehension',
-    canDo: 'Understand a sentence or story',
-    units: ['listen', 'read'],
-    reserved: true,
+    canDo: 'Understand what a phrase, sentence or story says, read or heard',
+    // `comp:literal` (ADR 0002); `comp:inference` stays a reserved name
+    units: ['comp'],
+    reserved: false,
   },
   read_fluently: {
     id: 'read_fluently',
@@ -154,6 +162,43 @@ export const SKILL_KIND_META: Record<SkillKind, SkillKindMeta> = {
 
 export function isSkillKind(value: unknown): value is SkillKind {
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(SKILL_KIND_META, value);
+}
+
+/**
+ * The strand of each unit key namespace, for a key reported without a skill
+ * kind. With a kind, the kind's strand decides (`strandOfSkill`). The
+ * namespaces of one strand are never reported with another's (N6, ADR 0002
+ * item 8): `read:` is decoding, `comp:` comprehension, `pa:` and `listen:`
+ * phonological.
+ */
+export const NAMESPACE_STRANDS: Readonly<Record<string, Strand>> = {
+  letter: 'decoding',
+  form: 'decoding',
+  sound: 'decoding',
+  haraka: 'decoding',
+  rule: 'decoding',
+  joined: 'decoding',
+  word: 'decoding',
+  read: 'decoding',
+  family: 'meaning',
+  concept: 'meaning',
+  comp: 'comprehension',
+  pa: 'phonological',
+  listen: 'phonological',
+  fluency: 'fluency',
+};
+
+/** The strand of a unit key from its namespace; decoding for an unknown one. */
+export function strandOfUnitKey(unitKey: string): Strand {
+  const namespace = unitKey.split(':')[0] ?? '';
+  return Object.prototype.hasOwnProperty.call(NAMESPACE_STRANDS, namespace)
+    ? NAMESPACE_STRANDS[namespace] ?? 'decoding'
+    : 'decoding';
+}
+
+/** The strand a target or KC is reported in: its kind's, else its namespace's. */
+export function strandOfSkill(kind: string | null, unitKey: string): Strand {
+  return isSkillKind(kind) ? SKILL_KIND_META[kind].strand : strandOfUnitKey(unitKey);
 }
 
 /** `<kind>@<unit key>`. */

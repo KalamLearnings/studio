@@ -39,6 +39,17 @@
  * three short vowels. A1, A3 to A6, A8 to A14 and A16 to A18 agree with the
  * links as they were.
  *
+ * READING STRANDS (ADR 0002, CM-B32; ADR status Proposed). The keys
+ * `read:phrase`, `read:sentence`, `comp:literal`, `listen:contrast:<a>:<b>`
+ * and `pa:first_sound` and four links (`word:*` and `joined:any` before
+ * `read:phrase` and `read:sentence`) await the curriculum lead's review like
+ * the links above. They have no stage: like words, they sit at nodes, and
+ * whether a phrase is fair at a node is the decodability check (CM-B34). Not
+ * linked on purpose: `read:sentence` before `comp:literal`, because
+ * `comp:literal` is also heard comprehension, which needs no reading; and
+ * `meaning@family` per content word, which is a skill per word, not a key
+ * pattern.
+ *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/skill_graph.ts
  *   studio/packages/curriculum-schemas/src/skill_graph.ts
@@ -61,18 +72,39 @@ const VOCAB_ID = /^[a-z][a-z_]*$/;
 const SLUG = /^[a-z0-9][a-z0-9_-]*$/;
 const ROW_ID = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 
-interface NamespaceSpec {
+interface KeyForm {
   /** Required segments after the namespace. */
   segments: readonly RegExp[];
   /** One optional trailing segment. */
   optional?: RegExp;
-  /** Names fixed now, nothing built yet (N6). */
+  /** Name fixed now, nothing built yet (N6, ADR 0002). */
   reserved?: boolean;
-  /** Used only inside this graph (as a `child_of` destination), never in the index. */
-  graphOnly?: boolean;
 }
 
-/** Every key namespace and the shape of its segments. */
+interface NamespaceSpec extends KeyForm {
+  /** Used only inside this graph (as a `child_of` destination), never in the index. */
+  graphOnly?: boolean;
+  /**
+   * Alternative shapes, in place of `segments`/`optional`: the key matches
+   * when one form matches. Each form can be reserved on its own
+   * (`read:sentence` is built, `read:unvowelled` is reserved).
+   */
+  forms?: readonly KeyForm[];
+}
+
+const NONE: readonly RegExp[] = [];
+
+/**
+ * Every key namespace and the shape of its segments. The reading strands
+ * (ADR 0002, CM-B32) are listed form by form: `read:phrase` and
+ * `read:sentence` (decoding), `comp:literal` (comprehension),
+ * `listen:contrast:<a>:<b>` and `pa:first_sound` (phonological awareness).
+ * The reserved names keep their place and are not built: `read:unvowelled`,
+ * `comp:inference`, `pa:syllable_count`, `pa:rhyme`, `fluency:text`. The
+ * earlier reserved `listen:sentence`, `listen:story` (now `comp:literal` with
+ * input `heard`) and `pa:initial_sound` (now `pa:first_sound`) are gone: one
+ * name for each thing.
+ */
 export const UNIT_KEY_NAMESPACES = {
   letter: { segments: [LETTER_ID] },
   form: { segments: [LETTER_ID, FORM] },
@@ -83,10 +115,33 @@ export const UNIT_KEY_NAMESPACES = {
   word: { segments: [ROW_ID] },
   family: { segments: [SLUG] },
   concept: { segments: [SLUG] },
-  pa: { segments: [VOCAB_ID], reserved: true },
-  listen: { segments: [VOCAB_ID], reserved: true },
-  read: { segments: [VOCAB_ID], reserved: true },
-  fluency: { segments: [VOCAB_ID], reserved: true },
+  read: {
+    segments: NONE,
+    forms: [
+      { segments: [/^(phrase|sentence)$/] },
+      { segments: [/^unvowelled$/], reserved: true },
+    ],
+  },
+  comp: {
+    segments: NONE,
+    forms: [
+      { segments: [/^literal$/] },
+      { segments: [/^inference$/], reserved: true },
+    ],
+  },
+  listen: {
+    segments: NONE,
+    // the two letter ids in alphabetical order, never the same (checked below)
+    forms: [{ segments: [/^contrast$/, LETTER_ID, LETTER_ID] }],
+  },
+  pa: {
+    segments: NONE,
+    forms: [
+      { segments: [/^first_sound$/] },
+      { segments: [/^(syllable_count|rhyme)$/], reserved: true },
+    ],
+  },
+  fluency: { segments: NONE, forms: [{ segments: [/^text$/], reserved: true }], reserved: true },
   stage: { segments: [VOCAB_ID], graphOnly: true },
 } as const satisfies Record<string, NamespaceSpec>;
 
@@ -102,22 +157,39 @@ function isWildcard(segment: string): boolean {
   return segment === '*' || /^\$[a-z][a-z0-9_]*$/.test(segment);
 }
 
+function formMatches(form: KeyForm, rest: readonly string[], allowWildcards: boolean): boolean {
+  const required = form.segments.length;
+  if (rest.length !== required && !(form.optional && rest.length === required + 1)) return false;
+  for (let i = 0; i < rest.length; i++) {
+    const segment = rest[i] ?? '';
+    if (allowWildcards && isWildcard(segment)) continue;
+    const re = i < required ? form.segments[i] : form.optional;
+    if (!re || !re.test(segment)) return false;
+  }
+  return true;
+}
+
+/** The form of the namespace spec that `rest` matches, or null. */
+function matchingForm(spec: NamespaceSpec, rest: readonly string[], allowWildcards: boolean) {
+  const forms: readonly KeyForm[] = spec.forms ?? [spec];
+  for (const form of forms) if (formMatches(form, rest, allowWildcards)) return form;
+  return null;
+}
+
 function checkShape(key: string, allowWildcards: boolean): boolean {
   const parts = key.split(':');
   const namespace = parts[0] ?? '';
   const rest = parts.slice(1);
   const spec = specOf(namespace);
-  if (!spec) return false;
-  const required = spec.segments.length;
-  if (rest.length !== required && !(spec.optional && rest.length === required + 1)) return false;
-  for (let i = 0; i < rest.length; i++) {
-    const segment = rest[i] ?? '';
-    if (allowWildcards && isWildcard(segment)) continue;
-    const re = i < required ? spec.segments[i] : spec.optional;
-    if (!re || !re.test(segment)) return false;
-  }
+  if (!spec || !matchingForm(spec, rest, allowWildcards)) return false;
   // madd only with a short vowel: never `sound:<letter>:sukoon:madd`
   if (namespace === 'sound' && rest.length === 3 && rest[1] === 'sukoon') return false;
+  // a sound pair has one key: `listen:contrast:<a>:<b>` with a before b
+  if (namespace === 'listen' && rest[0] === 'contrast') {
+    const a = rest[1] ?? '';
+    const b = rest[2] ?? '';
+    if (!(allowWildcards && (isWildcard(a) || isWildcard(b))) && !(a < b)) return false;
+  }
   return true;
 }
 
@@ -135,6 +207,68 @@ export function isValidKeyPattern(pattern: string): boolean {
 export function namespaceOf(key: string): UnitKeyNamespace | null {
   const namespace = key.split(':')[0] ?? '';
   return specOf(namespace) ? (namespace as UnitKeyNamespace) : null;
+}
+
+/**
+ * Whether a valid unit key is a reserved name: fixed now so nothing else takes
+ * it, nothing built for it (N6, ADR 0002): `read:unvowelled`,
+ * `comp:inference`, `pa:syllable_count`, `pa:rhyme`, `fluency:text`. False for
+ * an invalid key.
+ */
+export function isReservedUnitKey(key: string): boolean {
+  const parts = key.split(':');
+  const spec = specOf(parts[0] ?? '');
+  if (!spec || !isValidUnitKey(key)) return false;
+  return !!spec.reserved || !!matchingForm(spec, parts.slice(1), false)?.reserved;
+}
+
+// ---------------------------------------------------------------------------
+// Reading-strand keys (ADR 0002 section 1, CM-B32)
+// ---------------------------------------------------------------------------
+
+/** Reads a short group of 2 to 4 words that is not a full sentence. Decoding strand. */
+export const READ_PHRASE_KEY = 'read:phrase';
+/** Reads a whole sentence of 2 to 8 words. Decoding strand. */
+export const READ_SENTENCE_KEY = 'read:sentence';
+/** Understands what a phrase, sentence or story plainly says, read or heard. Comprehension strand. */
+export const COMP_LITERAL_KEY = 'comp:literal';
+/** Hears a word and picks the sound it starts with. Phonological strand. */
+export const PA_FIRST_SOUND_KEY = 'pa:first_sound';
+
+/** The names ADR 0002 keeps reserved; each needs its own record before it is built. */
+export const RESERVED_READING_KEYS: readonly string[] = [
+  'read:unvowelled',
+  'comp:inference',
+  'pa:syllable_count',
+  'pa:rhyme',
+  'fluency:text',
+];
+
+/**
+ * The key of a heard sound pair, `listen:contrast:<a>:<b>`: the two
+ * `letters.id` values in alphabetical order, so a pair has one key whichever
+ * way it is given. Null when the ids are the same or not letter ids.
+ */
+export function listenContrastKey(letterA: string, letterB: string): string | null {
+  if (letterA === letterB || !LETTER_ID.test(letterA) || !LETTER_ID.test(letterB)) return null;
+  const [a, b] = letterA < letterB ? [letterA, letterB] : [letterB, letterA];
+  return `listen:contrast:${a}:${b}`;
+}
+
+/** The two letter ids of a `listen:contrast:<a>:<b>` key, or null. */
+export function listenContrastLetters(key: string): [string, string] | null {
+  const parts = key.split(':');
+  if (parts[0] !== 'listen' || parts[1] !== 'contrast' || !isValidUnitKey(key)) return null;
+  return [parts[2] as string, parts[3] as string];
+}
+
+/**
+ * Connected text: the unit keys a whole phrase, sentence or story answer
+ * credits (ADR 0002, "How evidence is counted"). An item that targets one of
+ * them gives no evidence to the units of each word inside it.
+ */
+export function isConnectedTextKey(key: string): boolean {
+  return key === READ_PHRASE_KEY || key === READ_SENTENCE_KEY || key === COMP_LITERAL_KEY;
 }
 
 export type KeyBindings = Readonly<Record<string, string>>;
@@ -218,6 +352,14 @@ export const SKILL_LINKS: readonly SkillLink[] = [
   ...SHORT_VOWEL_HARAKAT.flatMap((h) => TANWEEN_RULES.map((t) => prerequisite(h, t))),
   // the connecting hamza: al- first, its other words later (review A7)
   prerequisite('rule:hamzat_wasl', 'rule:hamzat_wasl_other'),
+  // reading connected text (ADR 0002, CM-B32): word reading before phrase and
+  // sentence reading, and a word in a phrase is written joined, so the joined
+  // shapes come first too (ADR 0002 section 3). Which words a given phrase
+  // needs is data, checked by decodability (CM-B34), not a link.
+  prerequisite('word:*', 'read:phrase'),
+  prerequisite('word:*', 'read:sentence'),
+  prerequisite('joined:any', 'read:phrase'),
+  prerequisite('joined:any', 'read:sentence'),
 
   // --- taxonomy: connected forms (N1, 2.4) ---------------------------------
   childOf('joined:ayn', 'joined:any'),

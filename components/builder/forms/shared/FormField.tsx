@@ -13,15 +13,18 @@ import {
 } from "@/components/ui/select";
 import { Checkbox as CheckboxUI } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { FieldErrors } from "./SaveErrors";
 
 interface FormFieldProps {
   label: string;
   required?: boolean;
   children: React.ReactNode;
   hint?: string;
+  /** The config path this field edits; the server's save errors there show below it. */
+  errorPath?: string;
 }
 
-export function FormField({ label, required, children, hint }: FormFieldProps) {
+export function FormField({ label, required, children, hint, errorPath }: FormFieldProps) {
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">
@@ -29,6 +32,7 @@ export function FormField({ label, required, children, hint }: FormFieldProps) {
       </Label>
       {children}
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {errorPath !== undefined && <FieldErrors path={errorPath} />}
     </div>
   );
 }

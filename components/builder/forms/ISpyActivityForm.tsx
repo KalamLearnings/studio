@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { FormField, LetterSelector, NumberInput, Select } from "./shared";
+import { DistractorContrastField } from "./shared/DistractorContrastField";
+import { carryContrast, contrastPickerEnabled } from "@/lib/activityConfig/contrast";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
 interface ISpyConfig {
@@ -36,16 +38,28 @@ export function ISpyActivityForm({
     onChange({ ...config, ...updates });
   };
 
+  const targetList = (value: unknown): LetterReference[] =>
+    Array.isArray(value) ? value : value ? [value as LetterReference] : [];
+  const pickerOn = contrastPickerEnabled("i_spy");
+
   return (
     <div className="space-y-6">
       <FormField
         label="Target Letter"
         hint="The letter the child needs to find"
         required
+        errorPath="targetLetter"
       >
         <LetterSelector
           value={targetLetter}
-          onChange={(value) => updateConfig({ targetLetter: value })}
+          onChange={(value) =>
+            updateConfig({
+              targetLetter: value,
+              ...(config?.distractorLetters !== undefined && {
+                distractorLetters: carryContrast(pickerOn, targetList(value), distractorLetters, distractorLetters),
+              }),
+            })
+          }
           topic={topic}
           showFormSelector
           multiFormSelect
@@ -55,12 +69,18 @@ export function ISpyActivityForm({
       <FormField
         label="Distractor Letters"
         hint="Wrong letters to include. Leave empty to use random letters."
+        errorPath="distractorLetters"
       >
         <LetterSelector
           value={distractorLetters}
           onChange={(value) =>
             updateConfig({
-              distractorLetters: Array.isArray(value) ? value : value ? [value] : [],
+              distractorLetters: carryContrast(
+                pickerOn,
+                targetList(targetLetter),
+                distractorLetters,
+                Array.isArray(value) ? value : value ? [value] : [],
+              ),
             })
           }
           multiSelect
@@ -68,8 +88,15 @@ export function ISpyActivityForm({
         />
       </FormField>
 
+      <DistractorContrastField
+        activityType="i_spy"
+        targets={targetList(targetLetter)}
+        distractors={distractorLetters}
+        onChange={(value) => updateConfig({ distractorLetters: value })}
+      />
+
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Target Count" hint="How many target letters to find">
+        <FormField label="Target Count" hint="How many target letters to find" errorPath="targetCount">
           <NumberInput
             value={targetCount}
             onChange={(value) => updateConfig({ targetCount: value })}
@@ -78,7 +105,7 @@ export function ISpyActivityForm({
           />
         </FormField>
 
-        <FormField label="Total Letters" hint="Total letters on screen">
+        <FormField label="Total Letters" hint="Total letters on screen" errorPath="totalLetters">
           <NumberInput
             value={totalLetters}
             onChange={(value) => updateConfig({ totalLetters: value })}
@@ -88,7 +115,7 @@ export function ISpyActivityForm({
         </FormField>
       </div>
 
-      <FormField label="Letter Size" hint="Size of letters displayed on screen">
+      <FormField label="Letter Size" hint="Size of letters displayed on screen" errorPath="letterSize">
         <Select
           value={letterSize}
           onChange={(value) => updateConfig({ letterSize: value })}

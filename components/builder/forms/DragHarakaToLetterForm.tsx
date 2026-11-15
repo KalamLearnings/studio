@@ -91,6 +91,7 @@ export function DragHarakaToLetterForm({
         label="Haraka Type"
         hint="The diacritical mark students will drag onto the letter. Turn on Shadda to offer a doubled letter with its vowel."
         required
+        errorPath="harakaType"
       >
         <HarakaChoiceGrid value={[harakaType]} onSelect={selectTarget} />
       </FormField>
@@ -99,6 +100,7 @@ export function DragHarakaToLetterForm({
         label="Target Letter"
         hint="The letter to place the haraka on"
         required
+        errorPath="targetLetter"
       >
         <LetterSelector
           value={targetLetter}
@@ -147,6 +149,7 @@ export function DragHarakaToLetterForm({
         <FormField
           label="Distractor Letters"
           hint="Wrong letters scattered around (2-6 letters)"
+          errorPath="distractorLetters"
         >
           <LetterSelector
             value={distractorLetters}
@@ -166,6 +169,7 @@ export function DragHarakaToLetterForm({
       <FormField
         label="Haraka Options"
         hint={`Add wrong harakat so the student must pick the correct one to drag (up to ${MAX_DISTRACTOR_HARAKAT})`}
+        errorPath="distractorHarakat"
       >
         <label className="flex items-center gap-2 cursor-pointer mb-3">
           <input

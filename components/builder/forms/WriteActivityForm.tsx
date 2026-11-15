@@ -42,6 +42,7 @@ export function WriteActivityForm({
         label="Letter"
         hint="The Arabic letter and form to trace"
         required
+        errorPath="targetLetter"
       >
         <LetterSelector
           value={targetLetter}
@@ -59,6 +60,7 @@ export function WriteActivityForm({
         label="Writing Mode"
         hint="Choose how students trace the letter"
         required
+        errorPath="mode"
       >
         <div className="grid grid-cols-2 gap-3">
           {WRITING_MODES.map((modeOption) => (
@@ -105,6 +107,7 @@ export function WriteActivityForm({
       <FormField
         label="Trace Count"
         hint="Number of times to trace the letter"
+        errorPath="traceCount"
       >
         <NumberInput
           value={traceCount}

@@ -2,16 +2,16 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { FormField, LetterSelector, OptionSelector, Checkbox, AudioPickerField, PreviewBox } from "./shared";
+import { FormField, LetterSelector, OptionSelector, Checkbox, PreviewBox } from "./shared";
 import { useLetters, getLetterDisplayChar } from "@/lib/hooks/useLetters";
 import type { BaseActivityFormProps, LetterReference, LetterForm } from "./types";
 
+// Letters own their audio (content model 3.1, CM-S3): a card stores no
+// audioId or audioUrl; the sound card plays the letter's own recording.
 interface MemoryCardLetter {
   letterId: string;
   form: LetterForm;
   matchingForm?: LetterForm;
-  audioId?: string;
-  audioUrl?: string;
 }
 
 interface MemoryCardConfig {
@@ -59,8 +59,7 @@ export function MemoryCardMatchActivityForm({
       return {
         letterId: ref.letterId,
         form: ref.form,
-        matchingForm: existing?.matchingForm,
-        audioId: existing?.audioId,
+        ...(existing?.matchingForm && { matchingForm: existing.matchingForm }),
       };
     });
     onChange({ ...config, letters: newLetters });
@@ -74,17 +73,6 @@ export function MemoryCardMatchActivityForm({
       l.letterId === letterId
         ? { ...l, matchingForm: matchingForm === l.form ? undefined : matchingForm }
         : l
-    );
-    onChange({ ...config, letters: newLetters });
-  };
-
-  const handleAudioChange = (
-    letterId: string,
-    audioUrl: string | undefined,
-    audioId?: string
-  ) => {
-    const newLetters = letters.map((l) =>
-      l.letterId === letterId ? { ...l, audioId, audioUrl } : l
     );
     onChange({ ...config, letters: newLetters });
   };
@@ -104,6 +92,7 @@ export function MemoryCardMatchActivityForm({
         label="Letters to Match"
         hint="Select the letters to include in the memory game"
         required
+        errorPath="letters"
       >
         <LetterSelector
           value={lettersAsRefs}
@@ -116,7 +105,7 @@ export function MemoryCardMatchActivityForm({
         />
       </FormField>
 
-      <FormField label="Match Type" hint="How cards should be matched">
+      <FormField label="Match Type" hint="How cards should be matched" errorPath="matchType">
         <OptionSelector
           options={MATCH_TYPE_OPTIONS}
           value={matchType}
@@ -250,58 +239,13 @@ export function MemoryCardMatchActivityForm({
         </FormField>
       )}
 
-      {/* Audio Assignment for letter_to_sound mode */}
+      {/* letter_to_sound: the sound card plays the letter's own recording */}
       {matchType === "letter_to_sound" && letters.length > 0 && (
-        <FormField
-          label="Letter Sound Audio"
-          hint="Assign audio for each letter's sound card"
-          required
-        >
-          <div className="space-y-3">
-            {letters.map((letter) => {
-              const letterData = getLetter(letter.letterId);
-              const hasAudio = !!letter.audioUrl;
-              return (
-                <div
-                  key={letter.letterId}
-                  className={cn(
-                    "p-3 rounded-lg border-2 transition-all",
-                    hasAudio
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-amber-300 bg-amber-50"
-                  )}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl font-arabic">
-                      {getLetterDisplay(letter.letterId, letter.form)}
-                    </span>
-                    <span className="text-sm font-medium">
-                      {letterData?.name_english || letter.letterId}
-                    </span>
-                    {!hasAudio && (
-                      <span className="text-xs text-amber-600 ml-auto">
-                        Audio required
-                      </span>
-                    )}
-                  </div>
-                  <AudioPickerField
-                    value={letter.audioUrl}
-                    audioId={letter.audioId}
-                    onChange={(url, id) =>
-                      handleAudioChange(letter.letterId, url, id)
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
-          {letters.some((l) => !l.audioUrl) && (
-            <PreviewBox variant="warning" className="mt-3">
-              Some letters are missing audio. All letters need audio for
-              letter-to-sound matching.
-            </PreviewBox>
-          )}
-        </FormField>
+        <PreviewBox>
+          Each sound card plays the letter&apos;s own recording from the letter
+          library. There is no audio to set per card: to change a sound, change
+          the letter&apos;s recording.
+        </PreviewBox>
       )}
 
       <FormField label="Show Hints">

@@ -1,0 +1,72 @@
+/**
+ * Animation Intro Activity
+ *
+ * Plays an uploaded Rive (.riv) animation — e.g. a mascot scene — as passive
+ * intro content. Narration comes from the base instruction audio, which gates
+ * the Continue button like other intro-style activities.
+ *
+ * @example
+ * ```
+ * {
+ *   type: 'animation_intro',
+ *   config: {
+ *     animationUrl: 'https://.../storage/v1/object/public/curriculum-animations/activities/mascot__123.riv',
+ *     loop: true
+ *   }
+ * }
+ * ```
+ */
+
+import { z } from 'zod';
+import { BaseActivitySchema } from '../base.ts';
+import { makeReadSchema } from '../references.ts';
+
+/**
+ * Configuration for Animation Intro activity
+ */
+export const AnimationIntroConfigSchema = z.object({
+  animationUrl: z.string().url()
+    .describe(
+      'Public URL of the Rive (.riv) file in the curriculum-animations bucket',
+    ),
+
+  loop: z.boolean()
+    .default(true)
+    .describe('Loop the animation while the activity is on screen'),
+
+  animationDurationMs: z.number().int().positive()
+    .optional()
+    .describe(
+      'How long the animation runs, in ms. Drives auto-advance timing - state-machine .riv files never report an end event, so this is the reliable clock.',
+    ),
+
+  audioId: z.string()
+    .optional()
+    .describe('ID of the narration audio asset'),
+
+  audioUrl: z.string().url()
+    .optional()
+    .describe('URL of the narration audio played over the animation'),
+});
+
+/**
+ * Complete Animation Intro activity schema
+ */
+export const AnimationIntroActivitySchema = BaseActivitySchema.extend({
+  type: z.literal('animation_intro'),
+  config: AnimationIntroConfigSchema,
+});
+
+// Type exports
+export type AnimationIntroConfig = z.infer<typeof AnimationIntroConfigSchema>;
+export type AnimationIntroActivity = z.infer<typeof AnimationIntroActivitySchema>;
+
+// ============================================================================
+// READ SCHEMA (CM-B7)
+// ============================================================================
+
+/** Read (CM-B7): the stored row; it needs the animation. */
+export const AnimationIntroReadSchema = makeReadSchema(
+  (config) => config,
+  z.object({ animationUrl: z.string().min(1) }).passthrough(),
+);

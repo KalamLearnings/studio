@@ -9,6 +9,7 @@ import {
   AnswerOptionsGrid,
   OptionData,
   WordSelector,
+  FieldErrors,
 } from "./shared";
 import {
   Dialog,
@@ -152,7 +153,7 @@ export function ContentWithCardsActivityForm({
 
   return (
     <div className="space-y-6">
-      <FormField label="Content Type" hint="Show a letter, word, or image" required>
+      <FormField label="Content Type" hint="Show a letter, word, or image" required errorPath="contentType">
         <div className="grid grid-cols-3 gap-3">
           <button
             type="button"
@@ -211,7 +212,7 @@ export function ContentWithCardsActivityForm({
       </FormField>
 
       {contentType === "letter" && (
-        <FormField label="Letter" hint="Select letter and form to display" required>
+        <FormField label="Letter" hint="Select letter and form to display" required errorPath="targetLetter">
           <LetterSelector
             value={targetLetter}
             onChange={(value) =>
@@ -384,6 +385,7 @@ export function ContentWithCardsActivityForm({
         minOptions={1}
         maxOptions={4}
       />
+      <FieldErrors path="cards" />
 
       {/* Per-card Letter Selector Modal */}
       {letterModalOpen && (

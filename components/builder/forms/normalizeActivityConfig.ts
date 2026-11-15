@@ -17,6 +17,11 @@ import type { ActivityConfig } from "./types";
  * Always additive: never overwrites an existing modern value, so configs already
  * in the new shape pass through untouched. Read-time only — saving rewrites the
  * config into the modern shape.
+ *
+ * Content model CM-S3: for the types in `CANONICAL_FORM_TYPES`
+ * (lib/activityConfig/canonical.ts) the activity form reads a stored row with
+ * the server's own read schema first and uses this shim only when that read
+ * fails or the row is in a mode v1 still reads from display strings.
  */
 
 function isObject(v: unknown): v is Record<string, unknown> {

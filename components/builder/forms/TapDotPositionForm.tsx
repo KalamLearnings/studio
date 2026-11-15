@@ -51,6 +51,7 @@ export function TapDotPositionForm({
         label="Target Letter"
         hint="Select a letter with dots that students will identify"
         required
+        errorPath="targetLetter"
       >
         <LetterSelector
           value={targetLetter}
@@ -66,6 +67,7 @@ export function TapDotPositionForm({
       <FormField
         label="Distractor Dot Positions"
         hint="Select which positions should show incorrect dots"
+        errorPath="distractorPositions"
       >
         <div className="grid grid-cols-3 gap-2">
           {DOT_POSITIONS.map((pos) => {

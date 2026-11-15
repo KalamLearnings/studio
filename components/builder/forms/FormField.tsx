@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { FieldErrors } from "./shared/SaveErrors";
 
 interface FormFieldProps {
   label: string;
@@ -12,6 +13,8 @@ interface FormFieldProps {
   hint?: string;
   htmlFor?: string;
   className?: string;
+  /** The config path this field edits; the server's save errors there show below it. */
+  errorPath?: string;
 }
 
 /**
@@ -24,6 +27,7 @@ export function FormField({
   hint,
   htmlFor,
   className,
+  errorPath,
 }: FormFieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
@@ -35,6 +39,7 @@ export function FormField({
       {hint && (
         <p className="text-xs text-muted-foreground">{hint}</p>
       )}
+      {errorPath !== undefined && <FieldErrors path={errorPath} />}
     </div>
   );
 }

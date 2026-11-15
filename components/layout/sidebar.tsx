@@ -37,6 +37,7 @@ const navItems: NavItem[] = [
   { title: "Families", href: "/families", icon: Layers },
   { title: "Concepts", href: "/concepts", icon: Shapes },
   { title: "Review", href: "/review/blend", icon: ClipboardCheck },
+  { title: "Word review", href: "/review/words", icon: ClipboardCheck },
   { title: "Books", href: "/books", icon: BookMarked },
   { title: "Games", href: "/games", icon: Gamepad2 },
   { title: "Promos", href: "/promo-codes", icon: Ticket },

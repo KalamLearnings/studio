@@ -29,12 +29,15 @@ import {
   phraseProblems,
   phraseReadingText,
   phraseWordChoices,
+  PHRASE_MIN_WORDS,
   removeWordAt,
   setSentence,
   toPhraseItem,
   type PhraseDraft,
 } from "@/lib/phrases/phraseItem";
 import { FieldErrors } from "./SaveErrors";
+import { checkDraftPhrase } from "@/lib/api/phraseReview";
+import { DecodabilityReportView } from "@/components/builder/targets/DecodabilityFindings";
 
 interface PhraseBuilderProps {
   /** The stored phrase item (read tolerantly), or nothing for a new one. */
@@ -44,9 +47,30 @@ interface PhraseBuilderProps {
   label?: string;
   /** The config path this item sits at; the server's save errors there show below it. */
   errorPath?: string;
+  /** The node the phrase will sit in; when known, the live decodability report shows (warnings only). */
+  nodeId?: string;
 }
 
-export function PhraseBuilder({ value, onChange, label = "Phrase", errorPath }: PhraseBuilderProps) {
+const DEBOUNCE_MS = 500;
+
+/** The draft phrase's decodability at the node, rechecked a moment after the last edit. */
+function useLiveDecodability(nodeId: string | undefined, draft: PhraseDraft) {
+  const key = draft.wordIds.join(" ");
+  const ready = Boolean(nodeId) && draft.wordIds.length >= PHRASE_MIN_WORDS;
+  const [settled, setSettled] = React.useState(key);
+  React.useEffect(() => {
+    const t = setTimeout(() => setSettled(key), DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [key]);
+  return useQuery({
+    queryKey: ["phrase-decodability", nodeId, settled, draft.isSentence],
+    queryFn: () => checkDraftPhrase({ node_id: nodeId!, word_ids: settled.split(" "), is_sentence: draft.isSentence }),
+    enabled: ready && settled === key,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function PhraseBuilder({ value, onChange, label = "Phrase", errorPath, nodeId }: PhraseBuilderProps) {
   const words = useQuery({ queryKey: ["curated-words"], queryFn: listCuratedWords, staleTime: 60 * 1000 });
   const [draft, setDraft] = React.useState<PhraseDraft>(() => fromPhraseItem(value));
   const byId = React.useMemo(() => new Map((words.data ?? []).map((w) => [w.id, w])), [words.data]);
@@ -58,6 +82,7 @@ export function PhraseBuilder({ value, onChange, label = "Phrase", errorPath }: 
     onChange(toPhraseItem(next), next);
   };
 
+  const live = useLiveDecodability(nodeId, draft);
   const text = phraseReadingText(draft.wordIds, wordById);
   const problems = words.data ? phraseProblems(draft, wordById) : [];
   const max = maxWordsOf(draft.isSentence);
@@ -137,6 +162,11 @@ export function PhraseBuilder({ value, onChange, label = "Phrase", errorPath }: 
               {text || <span className="text-sm text-muted-foreground">No words yet</span>}
             </p>
           </div>
+
+          {nodeId && live.data && <DecodabilityReportView report={live.data.report} />}
+          {nodeId && live.isFetching && !live.data && (
+            <p className="text-xs text-muted-foreground">Checking decodability…</p>
+          )}
 
           {problems.length > 0 && (
             <ul className="space-y-0.5 text-xs text-amber-700 dark:text-amber-400">

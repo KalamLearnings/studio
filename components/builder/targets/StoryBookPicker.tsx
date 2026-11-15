@@ -3,12 +3,11 @@
 /**
  * Picks the book a story node opens (CM-S11; backend CM-B36). Lists only
  * books with a saved reader source, the rule the backend enforces with
- * `STORY_NODE_BOOK_INVALID`. Each book's source is read with the reader
- * source query the book page uses (`GET /books/admin/:id/reader/source`).
+ * `STORY_NODE_BOOK_INVALID`. The list carries `has_reader_source` per book
+ * (`GET /books/admin`), so no request is made per book.
  */
 
 import * as React from "react";
-import { useQueries } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import {
   Select,
@@ -18,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useBooks } from "@/lib/hooks/useBooks";
-import { getReaderSource } from "@/lib/api/bookReader";
 import { storyBookChoices } from "@/lib/books/storyNode";
 
 export function StoryBookPicker({
@@ -29,22 +27,10 @@ export function StoryBookPicker({
   onChange: (bookId: string) => void;
 }) {
   const books = useBooks();
-  const sources = useQueries({
-    queries: (books.data ?? []).map((b) => ({
-      queryKey: ["book-reader-source", b.id] as const,
-      queryFn: () => getReaderSource(b.id),
-      staleTime: 60 * 1000,
-    })),
-  });
-  const hasSource = React.useMemo(() => {
-    const map = new Map<string, boolean | undefined>();
-    (books.data ?? []).forEach((b, i) => {
-      const q = sources[i];
-      map.set(b.id, q?.data ? q.data.source !== null : undefined);
-    });
-    return map;
-  }, [books.data, sources]);
-  const checking = sources.some((q) => q.isLoading);
+  const hasSource = React.useMemo(
+    () => new Map((books.data ?? []).map((b) => [b.id, b.has_reader_source] as const)),
+    [books.data],
+  );
   const choices = storyBookChoices(books.data ?? [], (id) => hasSource.get(id), value);
   const currentWithoutSource = value !== null && hasSource.get(value) === false;
 
@@ -73,9 +59,7 @@ export function StoryBookPicker({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            {checking
-              ? "Checking which books have a reader source…"
-              : choices.length === 0
+            {choices.length === 0
               ? "No book has a saved reader source yet."
               : "Only books with a saved reader source are listed."}
           </p>

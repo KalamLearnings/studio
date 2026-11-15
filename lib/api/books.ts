@@ -84,6 +84,8 @@ export interface Book {
   is_premium: boolean;
   is_active: boolean;
   availability_rules: BookAvailability[];
+  /** A reader source is saved for the book (`GET /books/admin`, CM-S11). */
+  has_reader_source?: boolean;
 }
 
 export interface CreateBookRequest {

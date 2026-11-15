@@ -80,12 +80,17 @@ export function ReadAndMatchActivityForm({ config, onChange, topic, nodeId }: Ba
 
       <FormField
         label="Read the sentence aloud first"
-        hint="Off by default: the child reads first. When on, the app reads the whole text before the child answers, so the answer counts as listening, not reading. It needs a recording of the whole sentence, which is not recorded yet; leave it off for now."
+        hint="Off by default: the child reads first. When on, the app reads the whole text before the child answers, so the answer counts as listening, not reading. It needs a recording of the whole sentence, which is not recorded yet, so this stays off until it is."
         errorPath="playSentenceFirst"
       >
         <Checkbox
           checked={config?.playSentenceFirst === true}
-          onChange={(on) => update({ playSentenceFirst: on || undefined })}
+          // Locked off until whole-sentence audio is recorded: a stored true can be
+          // cleared, but it cannot be switched on (the server would count the
+          // answer as listening while no audio plays).
+          onChange={(on) => {
+            if (!on) update({ playSentenceFirst: undefined });
+          }}
           label="Play the whole sentence before the child answers"
         />
       </FormField>

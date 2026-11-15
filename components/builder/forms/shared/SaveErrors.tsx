@@ -19,18 +19,24 @@ import {
 
 interface SaveErrorsState {
   errors: readonly ConfigFieldError[];
+  /** The server's logged findings of the saved config: warnings, never a refusal. */
+  warnings: readonly ConfigFieldError[];
   register: (path: string) => () => void;
 }
 
 const SaveErrorsContext = React.createContext<SaveErrorsState | null>(null);
 
 const listClass = "rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive";
+const warnClass = "rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-sm text-amber-700 dark:text-amber-400";
 
 export function SaveErrorsProvider({
   errors,
+  warnings,
   children,
 }: {
   errors: readonly ConfigFieldError[] | null;
+  /** Logged shadow findings of the last save; hidden while a refusal is shown. */
+  warnings?: readonly ConfigFieldError[] | null;
   children: React.ReactNode;
 }) {
   const [shown, setShown] = React.useState<Record<string, number>>({});
@@ -39,8 +45,11 @@ export function SaveErrorsProvider({
     return () => setShown((s) => ({ ...s, [path]: Math.max(0, (s[path] ?? 1) - 1) }));
   }, []);
   const list = React.useMemo(() => errors ?? [], [errors]);
-  const value = React.useMemo(() => ({ errors: list, register }), [list, register]);
-  const rest = unplacedErrors(list, Object.keys(shown).filter((p) => shown[p]! > 0));
+  const warned = React.useMemo(() => (list.length > 0 ? [] : (warnings ?? [])), [list, warnings]);
+  const value = React.useMemo(() => ({ errors: list, warnings: warned, register }), [list, warned, register]);
+  const placed = Object.keys(shown).filter((p) => shown[p]! > 0);
+  const rest = unplacedErrors(list, placed);
+  const restWarnings = unplacedErrors(warned, placed);
 
   return (
     <SaveErrorsContext.Provider value={value}>
@@ -49,6 +58,20 @@ export function SaveErrorsProvider({
           <p className="text-xs font-medium text-destructive">The server refused this save:</p>
           <ul className={listClass}>
             {rest.map((e, i) => (
+              <li key={i}>
+                <ErrorText error={e} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {restWarnings.length > 0 && (
+        <div className="mb-4 space-y-1">
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            The server&apos;s checks on the last save (it was saved anyway):
+          </p>
+          <ul className={warnClass}>
+            {restWarnings.map((e, i) => (
               <li key={i}>
                 <ErrorText error={e} />
               </li>
@@ -78,14 +101,28 @@ export function FieldErrors({ path }: { path: string }) {
   const register = ctx?.register;
   React.useEffect(() => (register ? register(path) : undefined), [register, path]);
   const errors = ctx ? errorsAt(ctx.errors, path) : [];
-  if (errors.length === 0) return null;
+  const warnings = ctx ? errorsAt(ctx.warnings, path) : [];
+  if (errors.length === 0 && warnings.length === 0) return null;
   return (
-    <ul className={listClass}>
-      {errors.map((e, i) => (
-        <li key={i}>
-          <ErrorText error={e} prefix={path} />
-        </li>
-      ))}
-    </ul>
+    <>
+      {errors.length > 0 && (
+        <ul className={listClass}>
+          {errors.map((e, i) => (
+            <li key={i}>
+              <ErrorText error={e} prefix={path} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {warnings.length > 0 && (
+        <ul className={warnClass}>
+          {warnings.map((e, i) => (
+            <li key={i}>
+              <ErrorText error={e} prefix={path} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

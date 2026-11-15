@@ -11,6 +11,7 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import {
+  Checkbox,
   ContentItemEditor,
   FormField,
   FormProblems,
@@ -100,6 +101,18 @@ export function SentenceBuilderActivityForm({ config, onChange, topic, nodeId }:
           onChange={(item) => update({ promptImage: item.image ? item : undefined })}
           allowedKinds={PICTURE}
           topic={topic}
+        />
+      </FormField>
+
+      <FormField
+        label="Read the sentence aloud first"
+        hint="Off by default: the child builds the sentence without hearing it first. When on, the app reads the whole text before the child answers, so the answer counts as listening, not reading. It needs a recording of the whole sentence, which is not recorded yet; leave it off for now."
+        errorPath="playSentenceFirst"
+      >
+        <Checkbox
+          checked={config?.playSentenceFirst === true}
+          onChange={(on) => update({ playSentenceFirst: on || undefined })}
+          label="Play the whole sentence before the child builds it"
         />
       </FormField>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Save, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,8 @@ import {
 } from "./forms";
 import { openForEdit, toSaveConfig } from "@/lib/activityConfig/canonical";
 import { isConfigSaveError, parseConfigSaveError } from "@/lib/activityConfig/saveErrors";
+import { findingsToFieldErrors } from "@/lib/activityConfig/saveFindings";
+import { getActivitySaveFindings } from "@/lib/api/saveFindings";
 import { SaveErrorsProvider } from "./forms/shared/SaveErrors";
 import { isBlendActivityType, toBlendSaveParts } from "@/lib/blendWord/config";
 import { BLEND_INVALID } from "@/lib/blendWord/saveErrors";
@@ -105,6 +108,21 @@ export function ActivityForm({
   // Cleared on the next config edit.
   const [saveError, setSaveError] = React.useState<{ code?: string; details?: unknown } | null>(null);
   const configErrors = React.useMemo(() => parseConfigSaveError(saveError), [saveError]);
+  // The server's logged checks of the saved config (shadow findings, CM-S13r):
+  // warnings only, fetched when a saved activity opens and again after a save.
+  // A failed read shows nothing; it never gets in the way of saving.
+  const findingsQuery = useQuery({
+    queryKey: ["activity-save-findings", activityId],
+    queryFn: () => getActivitySaveFindings(activityId!),
+    enabled: !!activityId && !isNew,
+    staleTime: 0,
+    retry: false,
+  });
+  const refetchFindings = findingsQuery.refetch;
+  const configWarnings = React.useMemo(
+    () => findingsToFieldErrors(findingsQuery.data),
+    [findingsQuery.data],
+  );
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
@@ -165,6 +183,7 @@ export function ActivityForm({
           ?.instruction?.audio_url ?? null;
       setExistingAudioUrl(savedAudioUrl);
       setRegenerateAudio(false);
+      if (activityId && !isNew) void refetchFindings();
     } catch (error) {
       console.error("Error saving activity:", error);
       const apiError = error as { code?: string; details?: unknown };
@@ -296,7 +315,7 @@ export function ActivityForm({
           {/* Activity-specific form */}
           {FormComponent && (
             <div className="pt-4 border-t">
-              <SaveErrorsProvider errors={configErrors}>
+              <SaveErrorsProvider errors={configErrors} warnings={configWarnings}>
                 <FormComponent
                   config={localConfig}
                   onChange={handleConfigChange}

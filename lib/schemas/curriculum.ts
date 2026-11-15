@@ -143,13 +143,16 @@ export const UpdateTopicSchema = CreateTopicSchema.extend({
  */
 export const NODE_ROLES = ['intro', 'lesson', 'practice', 'review', 'boss'] as const;
 export type NodeRole = (typeof NODE_ROLES)[number];
-export const NodeTypeSchema = z.enum([...NODE_ROLES, 'assessment']);
+/** CM-B36: a `story` node opens one book (`book_id`) in the reader and holds no activities. */
+export const NodeTypeSchema = z.enum([...NODE_ROLES, 'story', 'assessment']);
 
 export const NodeSchema = z.object({
   id: z.string().uuid(),
   topic_id: z.string().uuid(),
   sequence_number: z.number().int().positive(),
   type: NodeTypeSchema.default('lesson'),
+  /** The book a story node opens; null for every other type (CM-B36). */
+  book_id: z.string().uuid().nullable().optional(),
   title: LocalizedTextSchema,
   description: LocalizedTextSchema.optional(),
   is_published: z.boolean().default(true),
@@ -174,6 +177,8 @@ export const CreateNodeSchema = z.object({
 
 export const UpdateNodeSchema = CreateNodeSchema.extend({
   is_published: z.boolean().optional(),
+  // CM-B36: required with type `story`, refused with any other type
+  book_id: z.string().uuid().nullable().optional(),
 }).partial();
 
 // ============================================================================

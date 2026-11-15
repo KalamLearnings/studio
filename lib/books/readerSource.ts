@@ -169,7 +169,8 @@ export function withQuestions(
   source: ReaderSourceContent,
   questions: ReaderAssessmentQuestion[],
 ): ReaderSourceContent {
-  const { assessment: _ref, ...edition } = source.edition;
+  const edition = { ...source.edition };
+  delete edition.assessment;
   const { assessment: current, ...rest } = source;
   if (!questions.length) return { ...rest, edition };
   const id = current?.id ?? "assessment";
@@ -233,7 +234,7 @@ export function prepareSource(source: ReaderSourceContent, revision: string): Re
   return {
     ...synced,
     edition: {
-      ...source.edition,
+      ...synced.edition,
       revision,
       pages: source.edition.pages.map(({ narration: _narration, ...page }) => ({
         ...page,

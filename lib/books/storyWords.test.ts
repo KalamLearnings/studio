@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   arabicRuns,
+  confirmableGroups,
+  wordLinkSummary,
   displayStoryText,
   groupUnlinked,
   issuesByPath,
@@ -171,5 +173,34 @@ describe("server issues", () => {
       "A word reference is not written {{word:<id>}}.",
       `"${BAB}" is not linked to a word bank word.`,
     ]);
+  });
+});
+
+describe("wordLinkSummary (CM-S10 editor)", () => {
+  const bank = [
+    { id: "bab", arabic: "باب", created_at: "2026-01-01" },
+    { id: "old", arabic: "قلم", created_at: "2026-01-01", retired_at: "2026-02-01" },
+  ];
+  const src = (text: string): StorySource => ({ edition: { title: "T", pages: [{ text }] } });
+
+  it("unlinked text is a warning while references are not required, an error when they are", () => {
+    const s = src("A باب and a بيت.");
+    const off = wordLinkSummary(s, bank, false);
+    expect(off.unlinked.map((g) => [g.text, g.match.kind])).toEqual([["باب", "exact"], ["بيت", "new"]]);
+    expect(off.blocking).toBe(false);
+    expect(wordLinkSummary(s, bank, true).blocking).toBe(true);
+  });
+
+  it("a link to an unknown or retired word blocks the save whatever the switch", () => {
+    const s = src(`${wordToken("bab")} ${wordToken("old")} ${wordToken("gone")}`);
+    const summary = wordLinkSummary(s, bank, false);
+    expect(summary.linked.map((l) => [l.wordId, l.word?.id])).toEqual([["bab", "bab"], ["old", undefined], ["gone", undefined]]);
+    expect(summary.blocking).toBe(true);
+    expect(wordLinkSummary(src(wordToken("bab")), bank, true)).toMatchObject({ unlinked: [], blocking: false });
+  });
+
+  it("confirmableGroups keeps the runs that match a library row", () => {
+    const groups = wordLinkSummary(src("باب بيت بـاب"), bank, false).unlinked;
+    expect(confirmableGroups(groups).map((g) => [g.text, g.match.word.id])).toEqual([["باب", "bab"], ["بـاب", "bab"]]);
   });
 });

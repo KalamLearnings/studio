@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CoverImageField } from "@/components/books-games/CoverImageField";
 import { PagesManager } from "@/components/books-games/PagesManager";
+import { ReaderSourceEditor } from "@/components/books-games/ReaderSourceEditor";
 import {
   AvailabilityManager,
   type NewAvailabilityInput,
@@ -222,6 +223,9 @@ export default function BookEditorPage() {
           <TabsTrigger value="pages" disabled={isNew}>
             Pages{!isNew && ` (${book?.page_count ?? 0})`}
           </TabsTrigger>
+          <TabsTrigger value="reader" disabled={isNew}>
+            Reader (v2)
+          </TabsTrigger>
           <TabsTrigger value="availability" disabled={isNew}>
             Availability{!isNew && ` (${availability?.length ?? 0})`}
           </TabsTrigger>
@@ -362,6 +366,11 @@ export default function BookEditorPage() {
         {/* PAGES */}
         <TabsContent value="pages" className="pt-4">
           {!isNew && <PagesManager bookId={bookId} />}
+        </TabsContent>
+
+        {/* READER SOURCE (v2, CM-S10) */}
+        <TabsContent value="reader" className="pt-4">
+          {!isNew && <ReaderSourceEditor bookId={bookId} />}
         </TabsContent>
 
         {/* AVAILABILITY */}

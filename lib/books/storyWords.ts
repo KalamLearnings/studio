@@ -272,3 +272,46 @@ export function issuesByPath(issues: readonly StoryWordIssue[]): Map<string, Sto
   for (const issue of issues) out.set(issue.path, [...(out.get(issue.path) ?? []), issue]);
   return out;
 }
+
+/** A linked word of the source and its library row; no row = unknown or retired (the save refuses it). */
+export interface LinkedStoryWord<W extends StoryBankWord> {
+  wordId: string;
+  word: W | undefined;
+}
+
+/** What the book editor shows about the source's Arabic words, and whether a save would be refused. */
+export interface WordLinkSummary<W extends StoryBankWord> {
+  /** Unlinked runs, one group per text: errors when references are required, else warnings. */
+  unlinked: UnlinkedGroup<W>[];
+  linked: LinkedStoryWord<W>[];
+  /** true: the server would refuse the save (an unknown or retired link, or unlinked text while required). */
+  blocking: boolean;
+}
+
+/**
+ * The editor's view of the source's words. `words` is the live library (the
+ * list route leaves retired rows out), so a linked id with no row there is
+ * unknown or retired, which the publish check refuses whatever the switch.
+ */
+export function wordLinkSummary<W extends StoryBankWord>(
+  source: StorySource,
+  words: readonly W[],
+  requireReferences: boolean,
+): WordLinkSummary<W> {
+  const live = words.filter((w) => !w.retired_at);
+  const byId = new Map(live.map((w) => [w.id, w]));
+  const unlinked = groupUnlinked(unlinkedWords(source, live));
+  const linked = linkedWordIds(source).map((wordId) => ({ wordId, word: byId.get(wordId) }));
+  const blocking = linked.some((l) => !l.word) || (requireReferences && unlinked.length > 0);
+  return { unlinked, linked, blocking };
+}
+
+/** The groups whose run already matches a library row: one click links them all. */
+export function confirmableGroups<W extends StoryBankWord>(
+  groups: readonly UnlinkedGroup<W>[],
+): Array<UnlinkedGroup<W> & { match: { kind: "exact" | "reuse"; spelling: string; word: W } }> {
+  return groups.filter(
+    (g): g is UnlinkedGroup<W> & { match: { kind: "exact" | "reuse"; spelling: string; word: W } } =>
+      g.match.kind === "exact" || g.match.kind === "reuse",
+  );
+}

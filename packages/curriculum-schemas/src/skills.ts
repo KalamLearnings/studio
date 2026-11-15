@@ -9,8 +9,11 @@
  * axes: `recognize` can be answered by a `select` (tap one of 3) or a
  * `construct` (trace it) response.
  *
- * There is no `say` kind: the app captures no read-aloud or pronunciation, so
- * no activity produces "say" evidence.
+ * There is no `say` kind and no `say` response type. Speech practice works
+ * exactly as in v1 (decision R11): the app records the child, the backend
+ * speech endpoint scores it, and v2 keeps the same `activity_progress` and
+ * `speech_assessments` rows; the content model adds no speech evidence to
+ * mastery on top of that, so `speech_practice` is exposure here.
  *
  * CURRICULUM REVIEW. The curriculum lead reviews the kinds and the activity
  * type map (CM-C7). Change them only by pull request, with the curriculum
@@ -18,6 +21,13 @@
  * attempts and mastery store these strings. A new activity type must be added
  * to `ACTIVITY_SKILL_MAP` in the same change that adds it to the curriculum
  * schemas; `content-model.test.ts` fails otherwise.
+ * Review done 2026-11-15 (CM-C7, decision R12; answers in
+ * `content-model-audit/12-curriculum-review-answers.md`): C4 `tap_dot_position`
+ * is recognising the letter's shape (its dots) by choosing, not writing; C5
+ * `drive_to_sukoon` / `drive_to_shadda` are recognising the mark (on the
+ * sukoon or shadda rule), not finding the parts of a word; B1 and B3 add the
+ * `sukoon` and `shadda` contrasts to `DISCRIMINATE_CONTRASTS`; C3 is settled by
+ * R11 (above). C1, C2, C6 to C13 agree with the map as it was.
  *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/skills.ts
@@ -201,6 +211,13 @@ export interface ActivitySkillEntry {
   kindFromPrompt?: boolean;
   /** sound_blend: the response type per stage; null stages are modelled exposure. */
   stages?: Readonly<Record<string, ResponseType | null>>;
+  /**
+   * The unit key namespaces the `kinds` apply to for this type, in place of
+   * each kind's own `units`. The other target units of an item carry no skill
+   * (they are coverage): drive_to_* gives `recognize` on the rule only, not on
+   * the letter that carries the mark.
+   */
+  units?: readonly string[];
 }
 
 const graded = (kinds: readonly SkillKind[], response: ResponseType): ActivitySkillEntry => ({
@@ -254,9 +271,11 @@ export const ACTIVITY_SKILL_MAP: Readonly<Record<string, ActivitySkillEntry>> = 
   letter_discrimination: graded(['recognize'], 'select'),
   // letters: inside a word
   tap_letter_in_word: graded(['segment'], 'select'),
-  drive_to_sukoon: graded(['segment'], 'select'),
-  drive_to_shadda: graded(['segment'], 'select'),
   drag_haraka_to_word: graded(['segment'], 'construct'),
+  // marks: find the letter with the mark (C5). Recognising the mark, on its rule.
+  // A sound prompt ("drive to ab") would make it `decode`; the configs have none today.
+  drive_to_sukoon: { ...graded(['recognize'], 'select'), units: ['rule'] },
+  drive_to_shadda: { ...graded(['recognize'], 'select'), units: ['rule'] },
   // sounds
   audio_letter_match: graded(['decode'], 'select'),
   drag_haraka_to_letter: graded(['decode'], 'construct'),
@@ -264,7 +283,8 @@ export const ACTIVITY_SKILL_MAP: Readonly<Record<string, ActivitySkillEntry>> = 
   trace_letter: graded(['write'], 'construct'),
   drag_dots_to_letter: graded(['write'], 'construct'),
   drag_hamza_to_letter: graded(['write'], 'construct'),
-  tap_dot_position: graded(['write'], 'select'),
+  // dots: choosing where the dots go forms nothing (C4)
+  tap_dot_position: graded(['recognize'], 'select'),
   // words
   build_word_from_letters: graded(['encode'], 'construct'),
   sound_blend: {
@@ -303,6 +323,8 @@ export const DISCRIMINATE_CONTRASTS: readonly string[] = [
   'haraka',
   'tanween_haraka',
   'sun_moon',
+  'sukoon',
+  'shadda',
 ];
 
 /** The entry for an activity type, or null for an unknown type. */

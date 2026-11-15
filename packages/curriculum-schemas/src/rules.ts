@@ -11,6 +11,11 @@
  * only by pull request, with the curriculum lead's review. Never rename or
  * remove an id: index rows, attempts and mastery store these strings. Add a new
  * id instead, and list it in `skill_graph.ts` (its stage) in the same change.
+ * Review done 2026-11-15 (CM-C7; the owner accepted every answer of
+ * `content-model-audit/12-curriculum-review-answers.md`, decision R12): A7 adds
+ * `hamzat_wasl_other` (the connecting hamza outside al-, a later step); A2 makes
+ * `ta_marbuta` the reading of ة (its shape is the letter, `skill_graph.ts`);
+ * B6 counts a long-vowel carrier as madd only after its matching short vowel.
  *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/rules.ts
@@ -35,6 +40,7 @@ export const RULE_IDS = [
   'al_shamsiyya',
   'al_qamariyya',
   'hamzat_wasl',
+  'hamzat_wasl_other',
   'hamza_seat',
   'seat_alif',
   'ta_marbuta',
@@ -91,7 +97,7 @@ export const RULE_META: Record<RuleId, RuleMeta> = {
   madd_ya: {
     id: 'madd_ya',
     label: 'Long i (madd with ya)',
-    meaning: 'Kasra lengthened by ya (or alif maqsura)',
+    meaning: 'Kasra lengthened by ya',
     source: 'unit_tags',
   },
   madd_dagger: {
@@ -139,8 +145,15 @@ export const RULE_META: Record<RuleId, RuleMeta> = {
   hamzat_wasl: {
     id: 'hamzat_wasl',
     label: 'Connecting hamza',
-    meaning: 'A word-initial alif voiced only when the word starts the reading',
+    meaning: 'The alif of al-, voiced only when the word starts the reading',
     source: 'unit_tags',
+  },
+  hamzat_wasl_other: {
+    id: 'hamzat_wasl_other',
+    label: 'Connecting hamza in other words',
+    meaning:
+      'A word-initial connecting alif outside al- (ٱبْن، ٱسْم، ٱذْهَب), voiced only when the word starts the reading',
+    source: 'glyphs',
   },
   hamza_seat: {
     id: 'hamza_seat',
@@ -157,7 +170,8 @@ export const RULE_META: Record<RuleId, RuleMeta> = {
   ta_marbuta: {
     id: 'ta_marbuta',
     label: 'Ta marbuta',
-    meaning: 'ة, read as t when joined and as h at a pause',
+    meaning:
+      'How ة is read: t when it carries a vowel, h at a stop (taught with tanween and stopping)',
     source: 'glyphs',
   },
   alif_maqsura: {
@@ -214,6 +228,13 @@ const HAMZA_SEATS = 'أإآؤئء';
 /** Alif and the alif seats that form the لا ligature after lam. */
 const LIGATURE_ALIFS = 'اأإآ';
 
+/**
+ * The carriers that lengthen each short vowel (review B6): fatha + ا or ى, damma
+ * + و, kasra + ي. A carrier with its own vowel, sukoon or shadda is a letter, and
+ * the silent alif of fathatan is not a long mark.
+ */
+export const MADD_CARRIERS: Record<'a' | 'i' | 'u', string> = { a: 'اى', u: 'و', i: 'ي' };
+
 const MADD_BY_VOWEL: Record<'a' | 'i' | 'u', RuleId> = {
   a: 'madd_alif',
   u: 'madd_waw',
@@ -230,12 +251,53 @@ function baseLetters(text: string): string {
   return text.replace(/[ً-ٰٟ]/g, '');
 }
 
+/** A harakat mark (fathatan to sukoon, U+064B to U+0652). */
+const MARK = /[ً-ْ]/;
+/** Any mark a letter can carry, the dagger alif included. */
+const ANY_MARK = /[ً-ٰٟ]/;
+
+/** A unit's text holds a bare carrier of its vowel (B6), or آ for the long a. */
+function hasMatchingCarrier(text: string, v: 'a' | 'i' | 'u'): boolean {
+  const chars = Array.from(text);
+  for (let i = 1; i < chars.length; i++) {
+    if (MADD_CARRIERS[v].indexOf(chars[i] ?? '') >= 0 && !MARK.test(chars[i + 1] ?? '')) {
+      return true;
+    }
+  }
+  return v === 'a' && text.indexOf('آ') >= 0;
+}
+
+const WASL_ALIF = 'ٱ';
+const SUKUN_MARK = 'ْ';
+
+/**
+ * A word that starts with a connecting hamza outside al- (review A7): ٱ (alif
+ * wasla) not before lam, or a bare alif whose next letter carries a sukoon
+ * (ابْن، اسْم: no word starts on a vowelless letter, so the alif connects).
+ * al- (ال) is the `hamzat_wasl` rule, from the splitter's `wasl` tag.
+ */
+export function startsWithWaslOutsideAl(text: string): boolean {
+  const chars = Array.from(text.normalize('NFC').replace(/ـ/g, ''));
+  const first = chars[0];
+  if (first !== WASL_ALIF && first !== 'ا') return false;
+  if (first === 'ا' && ANY_MARK.test(chars[1] ?? '')) return false;
+  let i = 1;
+  while (i < chars.length && ANY_MARK.test(chars[i] ?? '')) i++;
+  const next = chars[i];
+  if (!next || next === LAM) return false;
+  if (first === WASL_ALIF) return true;
+  let j = i + 1;
+  let marks = '';
+  while (j < chars.length && ANY_MARK.test(chars[j] ?? '')) marks += chars[j++];
+  return marks.indexOf(SUKUN_MARK) >= 0;
+}
+
 function rulesOfUnit(unit: RuleUnit, found: Set<RuleId>): void {
   const tags = unit.tags;
   const has = (tag: string) => tags.indexOf(tag) >= 0;
   if (has('sukoon')) found.add('sukoon');
   if (has('shaddaFirst') || has('shaddaSecond')) found.add('shadda');
-  if (has('madd') && unit.vowel) {
+  if (has('madd') && unit.vowel && hasMatchingCarrier(unit.text, unit.vowel.v)) {
     found.add(MADD_BY_VOWEL[unit.vowel.v]);
     if (unit.vowel.v === 'a' && unit.text.indexOf(ALIF_MAQSURA) >= 0) found.add('alif_maqsura');
   }
@@ -258,13 +320,16 @@ function rulesOfUnit(unit: RuleUnit, found: Set<RuleId>): void {
  * The rule ids a word's units carry, deduplicated, in `RULE_IDS` order.
  *
  * Mapping (design 2.5): `sukoon` -> sukoon; `shaddaFirst` / `shaddaSecond` ->
- * shadda; `madd` + the unit's vowel -> madd_alif / madd_waw / madd_ya (and
- * alif_maqsura when the long a is spelled with ى); `madd:dagger` -> madd_dagger;
+ * shadda; `madd` + the unit's vowel -> madd_alif / madd_waw / madd_ya when the
+ * unit holds the matching bare carrier (B6: ا or ى after fatha, و after damma,
+ * ي after kasra; plus alif_maqsura when the long a is spelled with ى);
+ * `madd:dagger` -> madd_dagger;
  * `tanween` + the vowel -> tanween_fath / tanween_damm / tanween_kasr;
  * `qalqala` -> qalqala; `sunLam` -> al_shamsiyya; `wasl` -> hamzat_wasl, plus
  * al_qamariyya when the wasl unit closes on a pronounced lam; `seatAlif` ->
  * seat_alif. From the glyphs: a hamza seat letter -> hamza_seat; ة ->
- * ta_marbuta; lam followed by an alif -> lam_alif. `non_connector` needs the
+ * ta_marbuta; lam followed by an alif -> lam_alif; a connecting hamza outside
+ * al- (`startsWithWaslOutsideAl`) -> hamzat_wasl_other. `non_connector` needs the
  * `letters` rows and is never returned here.
  *
  * Pass the units of the `full` split when the word's own rules are wanted: the
@@ -274,7 +339,9 @@ function rulesOfUnit(unit: RuleUnit, found: Set<RuleId>): void {
 export function rulesFromUnits(units: readonly RuleUnit[]): RuleId[] {
   const found = new Set<RuleId>();
   for (const unit of units) rulesOfUnit(unit, found);
-  const letters = baseLetters(units.map((u) => u.text).join(''));
+  const spelled = units.map((u) => u.text).join('');
+  if (startsWithWaslOutsideAl(spelled)) found.add('hamzat_wasl_other');
+  const letters = baseLetters(spelled);
   for (let i = 0; i + 1 < letters.length; i++) {
     if (letters[i] === LAM && LIGATURE_ALIFS.indexOf(letters[i + 1] ?? '') >= 0) {
       found.add('lam_alif');

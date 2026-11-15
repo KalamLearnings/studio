@@ -17,15 +17,27 @@
  * few dozen lines: `*` matches any one key segment, and `$name` matches one
  * segment and must match the same value on both ends of the link
  * (`letter:$l` -> `sound:$l:*`: a letter before its own sounds). Only firm links
- * go in. Tanween's place relative to madd and sukoon is disputed, so it is an
- * order choice in `teaching_sequences.ts`, not a link. Node-level assumptions
- * stay in `teaching_targets` with role `prerequisite`.
+ * go in. Tanween comes after all three short vowels (a firm link, review A15);
+ * its place relative to madd and sukoon is disputed, so that is an order choice
+ * in `teaching_sequences.ts`, not a link. Node-level assumptions stay in
+ * `teaching_targets` with role `prerequisite`.
+ *
+ * A `child_of` link whose origin is one concrete key (no `*` or `$name`) takes
+ * the place of the pattern links for that key: `letter:ta_marbuta` sits in
+ * `letter_forms`, not with every other `letter:*` in `letters_isolated`.
  *
  * CURRICULUM REVIEW. The curriculum lead reviews these links (CM-C7). Change
  * them only by pull request, with the curriculum lead's review. An AI may
  * propose a link, but it enters only through that review. The test
  * `content-model.test.ts` fails on a prerequisite cycle, an invalid key pattern,
  * a unit with no stage or two, and a sequence that breaks a prerequisite.
+ * Review done 2026-11-15 (CM-C7, decision R12; answers in
+ * `content-model-audit/12-curriculum-review-answers.md`): A2 ة is shown as a
+ * shape in `letter_forms` and its reading (`rule:ta_marbuta`) is taught with
+ * tanween; A7 the connecting hamza is introduced with al- and its other words
+ * (`rule:hamzat_wasl_other`) are a later step in `hamza`; A15 tanween after all
+ * three short vowels. A1, A3 to A6, A8 to A14 and A16 to A18 agree with the
+ * links as they were.
  *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/skill_graph.ts
@@ -187,6 +199,9 @@ function childOf(origin: string, destination: string): SkillLink {
   return { origin, destination, type: 'child_of' };
 }
 
+const SHORT_VOWEL_HARAKAT = ['haraka:fatha', 'haraka:kasra', 'haraka:damma'];
+const TANWEEN_RULES = ['rule:tanween_fath', 'rule:tanween_damm', 'rule:tanween_kasr'];
+
 export const SKILL_LINKS: readonly SkillLink[] = [
   // --- prerequisites (design 2.14, CM-B19 seed) ---------------------------
   prerequisite('rule:sukoon', 'rule:shadda'),
@@ -199,6 +214,10 @@ export const SKILL_LINKS: readonly SkillLink[] = [
   prerequisite('sound:*:fatha', 'rule:madd_dagger'),
   // letter -> sound: a letter before its own sounds
   prerequisite('letter:$l', 'sound:$l:*'),
+  // tanween after all three short vowels (review A15): each mark is a doubled short vowel
+  ...SHORT_VOWEL_HARAKAT.flatMap((h) => TANWEEN_RULES.map((t) => prerequisite(h, t))),
+  // the connecting hamza: al- first, its other words later (review A7)
+  prerequisite('rule:hamzat_wasl', 'rule:hamzat_wasl_other'),
 
   // --- taxonomy: connected forms (N1, 2.4) ---------------------------------
   childOf('joined:ayn', 'joined:any'),
@@ -233,7 +252,8 @@ export const SKILL_LINKS: readonly SkillLink[] = [
   childOf('joined:any', 'stage:letter_forms'),
   childOf('rule:non_connector', 'stage:letter_forms'),
   childOf('rule:lam_alif', 'stage:letter_forms'),
-  childOf('rule:ta_marbuta', 'stage:letter_forms'),
+  // ة: its shape with the letter shapes, its reading (t / h at a stop) with tanween (review A2)
+  childOf('letter:ta_marbuta', 'stage:letter_forms'),
   childOf('haraka:fatha', 'stage:fatha'),
   childOf('haraka:kasra', 'stage:kasra'),
   childOf('haraka:damma', 'stage:damma'),
@@ -251,10 +271,12 @@ export const SKILL_LINKS: readonly SkillLink[] = [
   childOf('rule:tanween_damm', 'stage:tanween'),
   childOf('rule:tanween_kasr', 'stage:tanween'),
   childOf('rule:seat_alif', 'stage:tanween'),
+  childOf('rule:ta_marbuta', 'stage:tanween'),
   childOf('rule:al_shamsiyya', 'stage:al'),
   childOf('rule:al_qamariyya', 'stage:al'),
   childOf('rule:hamzat_wasl', 'stage:al'),
   childOf('rule:hamza_seat', 'stage:hamza'),
+  childOf('rule:hamzat_wasl_other', 'stage:hamza'),
 ];
 
 // ---------------------------------------------------------------------------
@@ -300,6 +322,23 @@ export function prerequisitesOf(key: string, links: readonly SkillLink[] = SKILL
   return linksInto(key, 'prerequisite', links);
 }
 
+/** True when a key pattern has no `*` or `$name` segment. */
+function isConcretePattern(pattern: string): boolean {
+  return pattern.split(':').every((s) => !isWildcard(s));
+}
+
+/**
+ * The `child_of` parents of a concrete key. A link whose origin is exactly the
+ * key takes the place of the pattern links that also match it.
+ */
+export function parentsOf(key: string, links: readonly SkillLink[] = SKILL_LINKS): string[] {
+  const exact = links.filter((l) =>
+    l.type === 'child_of' && l.origin === key && isConcretePattern(l.origin)
+  );
+  if (exact.length) return exact.map((l) => l.destination);
+  return linksFrom(key, 'child_of', links);
+}
+
 /**
  * The stage labels a concrete key reaches through `child_of` links (every
  * ancestor of the form `stage:<label>`). A unit that belongs to a stage has
@@ -317,7 +356,7 @@ export function stagesOf(key: string, links: readonly SkillLink[] = SKILL_LINKS)
       stages.push(current.slice('stage:'.length));
       continue;
     }
-    for (const parent of linksFrom(current, 'child_of', links)) queue.push(parent);
+    for (const parent of parentsOf(current, links)) queue.push(parent);
   }
   return stages;
 }

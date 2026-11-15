@@ -18,6 +18,13 @@
  * only by pull request, with the curriculum lead's review. Never rename a stage
  * label or a sequence id; add a new sequence for a new order. The test
  * `content-model.test.ts` fails when a sequence breaks a prerequisite link.
+ * Review done 2026-11-15 (CM-C7, decision R12; answers in
+ * `content-model-audit/12-curriculum-review-answers.md`): A9 keeps the built
+ * order; tanween stays planned, and moving it earlier (right after damma, or
+ * with sukoon, as most Qaidas do) would break no link as long as tanween comes
+ * after all three short vowels (A15, a link in `skill_graph.ts`). A2 and A7
+ * put the reading of ة in `tanween` and the connecting hamza outside al- in
+ * `hamza`; no stage label or order changed.
  *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/teaching_sequences.ts

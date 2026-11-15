@@ -11,7 +11,15 @@
  * CURRICULUM REVIEW. The curriculum lead reviews the ids and the derivation
  * table below (CM-C7). Change them only by pull request, with the curriculum
  * lead's review. Never rename or remove an id: index rows and attempts store
- * these strings.
+ * these strings. A new id also needs the `content_index.contrast` CHECK widened
+ * by a migration.
+ * Review done 2026-11-15 (CM-C7, decision R12; answers in
+ * `content-model-audit/12-curriculum-review-answers.md`): B1 adds `sukoon`
+ * (sukoon against a vowel, no longer `haraka`); B3 adds `shadda` (a shadda on
+ * one side only, derived); B4 adds the joined dots group (ب ت ث ن ي in their
+ * start and middle shapes); B6 is applied where a word becomes references
+ * (content-index `wordShape`). B2, B5, B7 to B12 agree as they were; B2's "store
+ * both kinds" refinement and B11's "sounds alike" kind are not built.
  *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/contrast.ts
@@ -29,6 +37,8 @@ export const CONTRAST_IDS = [
   'tanween_haraka',
   'sun_moon',
   'shape',
+  'sukoon',
+  'shadda',
 ] as const;
 
 export type ContrastId = (typeof CONTRAST_IDS)[number];
@@ -37,10 +47,12 @@ export const CONTRAST_META: Record<ContrastId, { id: ContrastId; differsBy: stri
   dots: { id: 'dots', differsBy: 'Same base shape, different dots (ب ت ث)' },
   form: { id: 'form', differsBy: 'The wrong positional form of the same letter' },
   short_long: { id: 'short_long', differsBy: 'Short against long vowel (بَ against بَا)' },
-  haraka: { id: 'haraka', differsBy: 'One short vowel (or sukoon) against another' },
+  haraka: { id: 'haraka', differsBy: 'One short vowel against another (بَ against بِ)' },
   tanween_haraka: { id: 'tanween_haraka', differsBy: 'Tanween against the plain haraka' },
   sun_moon: { id: 'sun_moon', differsBy: 'A sun letter against a moon letter after al-' },
   shape: { id: 'shape', differsBy: 'An unrelated letter or unit' },
+  sukoon: { id: 'sukoon', differsBy: 'Sukoon against a short vowel (بْ against بَ)' },
+  shadda: { id: 'shadda', differsBy: 'A shadda on one side only (بَّ against بَ)' },
 };
 
 export function isContrastId(value: unknown): value is ContrastId {
@@ -50,7 +62,7 @@ export function isContrastId(value: unknown): value is ContrastId {
 /**
  * Letters that share a base shape and differ only by dots: seven pairs and two
  * triplets (`letters.id`). ن and ي share the tooth of ب only when joined, so
- * they are not listed; a joined-form contrast is picked by the author.
+ * they are not listed here; `JOINED_DOT_GROUP` covers their joined shapes.
  */
 export const DOT_GROUPS: readonly (readonly string[])[] = [
   ['ba', 'ta', 'tha'],
@@ -63,6 +75,15 @@ export const DOT_GROUPS: readonly (readonly string[])[] = [
   ['ayn', 'ghayn'],
   ['faa', 'qaf'],
 ];
+
+/**
+ * In their start and middle shapes (نـ يـ بـ, review B4) these five share one
+ * tooth and differ only by dots. Used when both references name one of those
+ * forms.
+ */
+export const JOINED_DOT_GROUP: readonly string[] = ['ba', 'ta', 'tha', 'noon', 'yaa'];
+
+const JOINED_FORMS = ['initial', 'medial'];
 
 /** The sun letters (ت ث د ذ ر ز س ش ص ض ط ظ ل ن); every other base letter is a moon letter. */
 export const SUN_LETTER_IDS: readonly string[] = [
@@ -135,15 +156,21 @@ function isSun(letterId: string): boolean {
 
 /** Compare the marks of two references to the same letter. */
 function marksContrast(t: Marks, d: Marks): ContrastId | null {
-  if (t.shadda !== d.shadda) return null;
+  if (t.shadda !== d.shadda) {
+    // B3: the shadda is the only difference
+    const same = t.vowel === d.vowel && t.tanween === d.tanween && t.madd === d.madd;
+    return same ? 'shadda' : null;
+  }
   if (t.vowel === d.vowel && t.vowel !== null && t.vowel !== 'sukoon') {
     if (t.tanween !== d.tanween && !t.madd && !d.madd) return 'tanween_haraka';
     if (t.madd !== d.madd && !t.tanween && !d.tanween) return 'short_long';
     return null;
   }
   const plain = (m: Marks) => m.vowel !== null && !m.tanween && !m.madd;
-  if (plain(t) && plain(d)) return 'haraka';
-  return null;
+  if (!plain(t) || !plain(d)) return null;
+  // B1: sukoon against a short vowel is its own kind
+  if (t.vowel === 'sukoon' || d.vowel === 'sukoon') return 'sukoon';
+  return 'haraka';
 }
 
 /**
@@ -155,15 +182,18 @@ function marksContrast(t: Marks, d: Marks): ContrastId | null {
  * | same | same | different | `form` |
  * | same | same vowel, tanween on one only | same | `tanween_haraka` |
  * | same | same vowel, madd on one only | same | `short_long` |
- * | same | two different short vowels or sukoon, no tanween, no madd | same | `haraka` |
+ * | same | two different short vowels, no tanween, no madd | same | `haraka` |
+ * | same | sukoon against a short vowel, no tanween, no madd | same | `sukoon` |
+ * | same | shadda on one side only, the rest of the marks the same | same | `shadda` |
  * | different (one sun, one moon), after al- | same | any | `sun_moon` |
  * | different, same dot group | same | any | `dots` |
+ * | different, both in ب ت ث ن ي, both start or middle shapes | same | start or middle | `dots` |
  * | different, otherwise | same | any | `shape` |
  *
  * Anything else is null: identical references (a domain-check error), two
- * differences at once (letter and marks, or marks and form), a shadda on one
- * side only, and a bare letter against a vowelled one. A missing form on either
- * side counts as the same form.
+ * differences at once (letter and marks, marks and form, or a shadda and
+ * another mark), and a bare letter against a vowelled one. A missing form on
+ * either side counts as the same form.
  */
 export function deriveContrast(
   target: ContrastRef,
@@ -182,6 +212,9 @@ export function deriveContrast(
     }
     const group = dotGroupOf(target.letterId);
     if (group >= 0 && group === dotGroupOf(distractor.letterId)) return 'dots';
+    const joined = (r: ContrastRef) =>
+      JOINED_FORMS.indexOf(r.form ?? '') >= 0 && JOINED_DOT_GROUP.indexOf(r.letterId) >= 0;
+    if (joined(target) && joined(distractor)) return 'dots';
     return 'shape';
   }
   if (marksEqual) return formEqual ? null : 'form';
@@ -193,7 +226,8 @@ export function deriveContrast(
  * The contrast between a target word and a distractor word (R10 (4)), or null.
  * Each word is its letters in order, one reference per letter, without forms
  * (a letter's form in a word follows from its neighbours) and without
- * long-vowel carriers (their length is the `madd` of the letter before them).
+ * long-vowel carriers (their length is the `madd` of the letter before them;
+ * review B6: only a bare carrier after its matching short vowel is one).
  *
  * When the two words have the same number of letters and differ in exactly one
  * position (another letter, or other marks on the same letter), the contrast

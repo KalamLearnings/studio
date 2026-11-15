@@ -176,7 +176,7 @@ export {
 // tags, the skill graph and teaching sequences; byte-identical copies of the
 // backend's core/domain/content-model/, synced by kalam-readers-backend
 // scripts/sync-content-model.ts and kept so by test/content-model-drift.test.ts.
-// The curriculum lead reviews them (CM-C7).)
+// The curriculum lead reviewed them (CM-C7, done 2026-11-15, decision R12).)
 // ============================================================================
 
 export {
@@ -185,6 +185,8 @@ export {
   isRuleId,
   ruleKey,
   rulesFromUnits,
+  startsWithWaslOutsideAl,
+  MADD_CARRIERS,
   type RuleId,
   type RuleSource,
   type RuleMeta,
@@ -215,6 +217,7 @@ export {
   CONTRAST_IDS,
   CONTRAST_META,
   DOT_GROUPS,
+  JOINED_DOT_GROUP,
   SUN_LETTER_IDS,
   isContrastId,
   deriveContrast,
@@ -236,6 +239,7 @@ export {
   linksInto,
   linksFrom,
   prerequisitesOf,
+  parentsOf,
   stagesOf,
   expandLinks,
   sequenceViolations,

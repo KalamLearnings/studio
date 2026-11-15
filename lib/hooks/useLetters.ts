@@ -8,6 +8,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient, getEnvironmentBaseUrl, getEdgeFunctionAuthHeaders } from '@/lib/supabase/client';
 import { HARAKA_CHARS, applyHaraka } from '@kalam/curriculum-schemas';
+import { withMaddGlyph } from '@/lib/utils/letterMadd';
 
 export interface LetterForm {
   isolated: string;
@@ -79,7 +80,7 @@ export { HARAKA_CHARS, applyHaraka };
  * Use within a component that has access to getLetter from useLetters
  */
 export function getLetterDisplayChar(
-  ref: { letterId: string; form: string; haraka?: string } | null | undefined,
+  ref: { letterId: string; form: string; haraka?: string; madd?: boolean } | null | undefined,
   getLetter: (id: string) => Letter | undefined
 ): string {
   if (!ref) return "";
@@ -87,20 +88,21 @@ export function getLetterDisplayChar(
   if (!letterData) return "?";
   const form = ref.form as keyof LetterForm;
   const baseChar = letterData.forms?.[form] || letterData.letter;
-  return applyHaraka(baseChar, ref.haraka);
+  return withMaddGlyph(applyHaraka(baseChar, ref.haraka), ref);
 }
 
 type LooseLetterReference = {
   letterId?: string;
   form?: string;
   haraka?: string;
+  madd?: boolean;
 };
 
 /**
  * Resolve a possibly-legacy letter value into a normalized LetterReference.
  *
  * Accepts:
- *  - a proper LetterReference object `{ letterId, form, haraka? }` (passed through)
+ *  - a proper LetterReference object `{ letterId, form, haraka?, madd? }` (passed through)
  *  - a raw Arabic glyph string (e.g. "ذ" or a per-form glyph) — matched back to
  *    its letter id + form via the letters table (legacy `letterForm` configs)
  *
@@ -110,7 +112,7 @@ type LooseLetterReference = {
 export function resolveLetterReference(
   value: unknown,
   letters: Letter[]
-): { letterId: string; form: keyof LetterForm; haraka?: string } | null {
+): { letterId: string; form: keyof LetterForm; haraka?: string; madd?: true } | null {
   if (!value) return null;
 
   // Already a reference-like object.
@@ -121,6 +123,7 @@ export function resolveLetterReference(
         letterId: ref.letterId,
         form: (ref.form as keyof LetterForm) || "isolated",
         ...(ref.haraka ? { haraka: ref.haraka } : {}),
+        ...(ref.madd === true ? { madd: true as const } : {}),
       };
     }
     return null;

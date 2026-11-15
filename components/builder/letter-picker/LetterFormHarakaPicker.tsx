@@ -8,7 +8,10 @@ import {
   applyHaraka,
   type Letter,
 } from "@/lib/hooks/useLetters";
-import { HARAKA_META } from "@kalam/curriculum-schemas";
+import { HARAKA_META, isMaddHaraka } from "@kalam/curriculum-schemas";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { carryMadd, maddState, setMadd, withMaddGlyph } from "@/lib/utils/letterMadd";
 import { HarakaChoiceGrid } from "../forms/shared/HarakaChoiceGrid";
 import type { LetterForm, LetterReference, HarakaType } from "../forms/types";
 
@@ -22,6 +25,8 @@ import type { LetterForm, LetterReference, HarakaType } from "../forms/types";
  * This is the single source of truth for the picker UI so the topic and activity
  * pickers can never drift apart. Haraka metadata comes from the shared
  * `curriculum-schemas` package (`HARAKA_META`), not re-declared locally.
+ * A form with fatha, damma or kasra can also be marked madd (D7): the
+ * reference then carries `madd: true` (helpers in `lib/utils/letterMadd`).
  */
 
 export const LETTER_FORMS: LetterForm[] = [
@@ -53,6 +58,12 @@ interface BaseProps {
   showFormSelector?: boolean;
   /** Show the diacritic selector. Default true. */
   showHarakaSelector?: boolean;
+  /**
+   * Show the madd (long vowel) switch under the diacritics when a form has
+   * fatha, damma or kasra. Default: same as `showHarakaSelector`. Turn it off
+   * where the consumer cannot store `madd` on the reference.
+   */
+  showMaddToggle?: boolean;
 }
 
 interface SingleProps extends BaseProps {
@@ -88,6 +99,7 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
     showFormSelector = true,
     showHarakaSelector = true,
   } = props;
+  const showMaddToggle = props.showMaddToggle ?? showHarakaSelector;
 
   const { letters, loading } = useLetters();
   const isMulti = mode === "multi";
@@ -164,10 +176,14 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
         onChange([...value, { letterId, form }]);
       }
     } else {
-      // Single form: replace this letter's form, preserving its haraka.
-      const haraka = refsFor(letterId)[0]?.haraka;
+      // Single form: replace this letter's form, preserving its haraka and madd.
+      const previous = refsFor(letterId)[0];
+      const haraka = previous?.haraka;
       const others = value.filter((r) => r.letterId !== letterId);
-      onChange([...others, { letterId, form, ...(haraka && { haraka }) }]);
+      onChange([
+        ...others,
+        { letterId, form, ...(haraka && { haraka }), ...carryMadd(previous, haraka) },
+      ]);
     }
   };
 
@@ -200,12 +216,19 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
         onChange([...withoutNone, { letterId, form, haraka }]);
       }
     } else {
-      // Single form, single haraka: replace this letter's ref.
-      const refForm = refsFor(letterId)[0]?.form ?? form;
+      // Single form, single haraka: replace this letter's ref. Madd carries
+      // over only to another short vowel.
+      const previous = refsFor(letterId)[0];
+      const refForm = previous?.form ?? form;
       const others = value.filter((r) => r.letterId !== letterId);
       onChange([
         ...others,
-        { letterId, form: refForm, ...(haraka !== "none" && { haraka }) },
+        {
+          letterId,
+          form: refForm,
+          ...(haraka !== "none" && { haraka }),
+          ...carryMadd(previous, haraka === "none" ? undefined : haraka),
+        },
       ]);
     }
   };
@@ -273,6 +296,7 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
               const harakat = harakatFor(activeLetter.id, form);
               const displayHaraka =
                 harakat.find((h) => h !== "none") ?? "none";
+              const maddOn = maddState(value, activeLetter.id, form).on;
               const isExpanded = expandedForm === form && isFormSelected;
 
               return (
@@ -296,9 +320,14 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
                   )}
                 >
                   <div className="font-arabic text-xl">
-                    {applyHaraka(
-                      formChar,
-                      displayHaraka === "none" ? undefined : displayHaraka,
+                    {withMaddGlyph(
+                      applyHaraka(
+                        formChar,
+                        displayHaraka === "none" ? undefined : displayHaraka,
+                      ),
+                      displayHaraka === "none"
+                        ? undefined
+                        : { haraka: displayHaraka, madd: maddOn },
                     )}
                   </div>
                   <div className="text-[10px] text-muted-foreground">
@@ -311,6 +340,7 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
                           .filter((h) => h !== "none")
                           .map((h) => HARAKA_META[h].short)
                           .join("+")}
+                        {maddOn && "+madd"}
                       </span>
                     )}
                   {isFormSelected && showHarakaSelector && (
@@ -342,6 +372,9 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
               const form = expandedForm;
               const formChar = activeLetter.forms?.[form] || activeLetter.letter;
               const harakat = harakatFor(activeLetter.id, form);
+              const madd = maddState(value, activeLetter.id, form);
+              const maddSample = harakat.find(isMaddHaraka);
+              const maddId = `madd-${activeLetter.id}-${form}`;
               return (
                 <div className="mt-3 rounded-md border border-primary bg-primary/5 p-3">
                   <p className="mb-2 text-xs text-muted-foreground">
@@ -362,6 +395,26 @@ export function LetterFormHarakaPicker(props: LetterFormHarakaPickerProps) {
                     onNone={() => setHaraka(form, "none")}
                     onSelect={(id) => setHaraka(form, id)}
                   />
+                  {showMaddToggle && madd.available && maddSample && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <Switch
+                        id={maddId}
+                        checked={madd.on}
+                        onCheckedChange={(on) =>
+                          onChange(setMadd(value, activeLetter.id, form, on))
+                        }
+                      />
+                      <Label htmlFor={maddId} className="text-xs font-medium">
+                        Madd (long vowel)
+                      </Label>
+                      <span className="font-arabic text-lg">
+                        {withMaddGlyph(applyHaraka(formChar, maddSample), {
+                          haraka: maddSample,
+                          madd: true,
+                        })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })()}

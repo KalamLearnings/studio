@@ -184,6 +184,8 @@ export function SoundBlendActivityForm({
             showFormSelector
             value={letterValue}
             onChange={handleLetterSelect}
+            // The legacy sound_blend letter is baked into a glyph string; no madd field.
+            showMaddToggle={false}
           />
         </FormField>
       )}

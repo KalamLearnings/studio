@@ -136,6 +136,8 @@ function MatchItemEditor({ item, onChange }: MatchItemEditorProps) {
           value={getLetterRef()}
           onChange={handleLetterChange}
           showFormSelector
+          // match_pairs stores a flat letter item with no madd field.
+          showMaddToggle={false}
         />
       )}
 

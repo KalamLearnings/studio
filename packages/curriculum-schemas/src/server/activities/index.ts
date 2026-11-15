@@ -42,6 +42,9 @@ export * from './drag_dots_to_letter.ts';
 export * from './tap_dot_position.ts';
 export * from './camel_narration.ts';
 export * from './activity_request.ts';
+export * from './read_and_match.ts';
+export * from './sentence_builder.ts';
+export * from './sound_sort.ts';
 
 // Import schemas for discriminated union and config schemas for helper function
 import {
@@ -143,6 +146,21 @@ import {
   ActivityRequestConfigSchema,
   ActivityRequestReadSchema,
 } from './activity_request.ts';
+import {
+  ReadAndMatchActivitySchema,
+  ReadAndMatchConfigSchema,
+  ReadAndMatchReadSchema,
+} from './read_and_match.ts';
+import {
+  SentenceBuilderActivitySchema,
+  SentenceBuilderConfigSchema,
+  SentenceBuilderReadSchema,
+} from './sentence_builder.ts';
+import {
+  SoundSortActivitySchema,
+  SoundSortConfigSchema,
+  SoundSortReadSchema,
+} from './sound_sort.ts';
 import { THEMED_LETTER_HUNT_CONFIG_SCHEMAS, ThemedLetterHuntReadSchema } from './letter_hunt.ts';
 import { ShowLetterOrWordReadSchema } from './show_letter_or_word.ts';
 import { AnimationIntroReadSchema } from './animation_intro.ts';
@@ -220,6 +238,9 @@ export const ActivitySchema = z.discriminatedUnion('type', [
   TapDotPositionActivitySchema,
   CamelNarrationActivitySchema,
   ActivityRequestActivitySchema,
+  ReadAndMatchActivitySchema,
+  SentenceBuilderActivitySchema,
+  SoundSortActivitySchema,
 ]);
 
 export type Activity = z.infer<typeof ActivitySchema>;
@@ -264,6 +285,9 @@ const ACTIVITY_CONFIG_SCHEMAS: Record<ActivityType, z.ZodTypeAny> = {
   drive_to_shadda: DriveToShaddaConfigSchema,
   match_pairs: MatchPairsConfigSchema,
   camel_narration: CamelNarrationConfigSchema,
+  read_and_match: ReadAndMatchConfigSchema,
+  sentence_builder: SentenceBuilderConfigSchema,
+  sound_sort: SoundSortConfigSchema,
 };
 
 /**
@@ -331,6 +355,9 @@ const ACTIVITY_READ_SCHEMAS: Record<ActivityType, z.ZodTypeAny> = {
   drive_to_shadda: DriveToShaddaReadSchema,
   match_pairs: MatchPairsReadSchema,
   camel_narration: CamelNarrationReadSchema,
+  read_and_match: ReadAndMatchReadSchema,
+  sentence_builder: SentenceBuilderReadSchema,
+  sound_sort: SoundSortReadSchema,
 } as Record<ActivityType, z.ZodTypeAny>;
 
 /**

@@ -31,8 +31,10 @@
  *
  * READING STRANDS (ADR 0002, CM-B32; ADR status Proposed): `identify` and
  * `comprehend` are built kinds now (`pa:`/`listen:` and `comp:`), and
- * `decode` applies to `read:`. No activity type uses them yet (the reading
- * set types come with CM-B33); `read_fluently` stays reserved.
+ * `decode` applies to `read:`. CM-B35 adds the types that use them:
+ * `read_and_match` (decode the phrase or sentence, comprehend it, by
+ * `select`), `sentence_builder` (decode it, by `construct`) and `sound_sort`
+ * (identify a sound, by `select`); `read_fluently` stays reserved.
  *
  * IDENTICAL COPIES of this file live in:
  *   kalam-readers-backend/supabase/functions/_shared/core/domain/content-model/skills.ts
@@ -348,6 +350,10 @@ export const ACTIVITY_SKILL_MAP: Readonly<Record<string, ActivitySkillEntry>> = 
   // structured prompts
   multiple_choice_question: { ...graded(['recognize'], 'select'), kindFromPrompt: true },
   match_pairs: { ...graded(['recognize'], 'select'), kindFromPrompt: true },
+  // reading beyond the word (ADR 0002, CM-B35): phrases, sentences and heard sounds
+  read_and_match: graded(['decode', 'comprehend'], 'select'),
+  sentence_builder: graded(['decode'], 'construct'),
+  sound_sort: graded(['identify'], 'select'),
   // shown, not answered
   show_letter_or_word: exposure(['recognize']),
   color_letter: exposure(['recognize']),

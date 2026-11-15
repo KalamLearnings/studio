@@ -45,13 +45,17 @@ export function resolveActivityStorageUrls<
     }
   }
 
-  // Resolve image URLs in config.options (for multiple choice activities)
+  // Resolve image URLs in config.options (for multiple choice activities). Only a
+  // stored path string: a canonical picture item (`image: { assetId }`, the v2-only
+  // read_and_match, CM-B35) is a reference, not a path, and passes as it is.
   if (resolved.config?.options && Array.isArray(resolved.config.options)) {
     resolved.config = {
       ...resolved.config,
-      options: (resolved.config.options as Array<{ image?: string }>).map(
+      options: (resolved.config.options as Array<{ image?: unknown }>).map(
         (option) => {
-          if (option.image && !option.image.startsWith('http')) {
+          if (
+            typeof option.image === 'string' && option.image && !option.image.startsWith('http')
+          ) {
             return {
               ...option,
               image: urls.image(option.image),

@@ -138,6 +138,10 @@ export const ActivityTypeSchema = z.enum([
   'drive_to_shadda',
   'match_pairs',
   'camel_narration',
+  // Reading beyond the word (CM-B35, ADR 0002); v2 only (`visibility.ts`)
+  'read_and_match',
+  'sentence_builder',
+  'sound_sort',
 ]);
 
 export type ActivityType = z.infer<typeof ActivityTypeSchema>;
@@ -195,6 +199,9 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   drive_to_shadda: 'Shadda Racetrack',
   match_pairs: 'Match Pairs (Draw Lines)',
   camel_narration: 'Camel Mascot Narration',
+  read_and_match: 'Read and Match (Phrase or Sentence)',
+  sentence_builder: 'Sentence Builder (Word Order)',
+  sound_sort: 'Sound Sort (Baskets)',
 };
 
 // ============================================================================

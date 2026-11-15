@@ -192,6 +192,31 @@ export {
   ThemedLetterHuntReadSchema,
 } from './activities/index.ts';
 
+// ============================================================================
+// READING BEYOND THE WORD (CM-B35, ADR 0002; v2 only)
+// ============================================================================
+
+export {
+  type ReadAndMatchActivity,
+  ReadAndMatchActivitySchema,
+  type ReadAndMatchConfig,
+  ReadAndMatchConfigSchema,
+  ReadAndMatchReadSchema,
+  type SentenceBuilderActivity,
+  SentenceBuilderActivitySchema,
+  type SentenceBuilderConfig,
+  SentenceBuilderConfigSchema,
+  SentenceBuilderReadSchema,
+  SOUND_SORT_BY,
+  SOUND_SORT_ITEM_KINDS,
+  type SoundSortActivity,
+  SoundSortActivitySchema,
+  type SoundSortBy,
+  type SoundSortConfig,
+  SoundSortConfigSchema,
+  SoundSortReadSchema,
+} from './activities/index.ts';
+
 export {
   AssetRefWriteSchema,
   ConditionalAudioSchema,
@@ -214,6 +239,24 @@ export {
   TargetLetterWriteSchema,
   WordRefWriteSchema,
 } from './references.ts';
+
+export {
+  isPhraseItem,
+  PHRASE_KIND,
+  PHRASE_MAX_WORDS,
+  PHRASE_MIN_WORDS,
+  type PhraseChoiceWrite,
+  PhraseChoiceWriteSchema,
+  PhraseItemReadSchema,
+  phraseKey,
+  type PhraseRefWrite,
+  PhraseRefWriteSchema,
+  type PhraseWrite,
+  PhraseWriteSchema,
+  readPhraseItem,
+  readPhraseValue,
+  SENTENCE_MAX_WORDS,
+} from './phrase.ts';
 
 export { LETTER_IDS, letterIdOfGlyph } from './letter-glyphs.ts';
 

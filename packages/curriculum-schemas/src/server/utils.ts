@@ -143,6 +143,9 @@ export function getActivityCategory(type: ActivityType): string {
     balance_scale: 'Interactive',
     ice_cream_stacking: 'Game',
     content_with_cards: 'Interactive',
+    read_and_match: 'Reading',
+    sentence_builder: 'Reading',
+    sound_sort: 'Listening',
   } as Record<ActivityType, string>;
 
   return categories[type];
@@ -191,6 +194,9 @@ export function getEstimatedDuration(type: ActivityType): number {
     balance_scale: 90,
     ice_cream_stacking: 60,
     content_with_cards: 120,
+    read_and_match: 30,
+    sentence_builder: 60,
+    sound_sort: 60,
   } as Record<ActivityType, number>;
 
   return durations[type];
@@ -532,6 +538,20 @@ export function createDefaultConfig(type: ActivityType): Record<string, any> {
     },
     camel_narration: {
       narrationSteps: [],
+    },
+    // Reading types (CM-B35): the author picks the reviewed words, pictures and sounds.
+    read_and_match: {
+      sentence: { kind: 'phrase', phrase: { wordIds: [], isSentence: true } },
+      options: [],
+    },
+    sentence_builder: {
+      sentence: { kind: 'phrase', phrase: { wordIds: [], isSentence: true } },
+    },
+    sound_sort: {
+      sortBy: 'first_sound',
+      bins: [],
+      items: [],
+      playItemAudio: true,
     },
   } as Record<ActivityType, Record<string, any>>;
 

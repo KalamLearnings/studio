@@ -7,6 +7,7 @@ import { suggestHarakatRequest, type SuggestHarakatResponse } from '@/lib/blendW
 import type { BlendEnding } from '@/lib/blendWord/config';
 import type { AiCheckResult, BlendReviewList, SplitReviewBody, WordBlend } from '@/lib/blendWord/review';
 import type { GenerateAudioInput, TakeReviewBody } from '@/lib/blendWord/takes';
+import type { Word } from '@/lib/hooks/useWords';
 
 /**
  * `POST /words/suggest-harakat` (staff only, SB-B8). Writes nothing. Throws
@@ -18,6 +19,29 @@ export async function suggestHarakat(text: string): Promise<SuggestHarakatRespon
     method: 'POST',
     body: JSON.stringify(suggestHarakatRequest(text)),
   });
+}
+
+/** `POST /words` input: one Arabic spelling, optional English and transliteration. */
+export interface CreateWordInput {
+  arabic: string;
+  english?: string;
+  transliteration?: string;
+}
+
+export interface CreatedWord {
+  word: Word & { reviewed_at?: string | null; retired_at?: string | null };
+  /** false: the library already had the spelling and that row is answered unchanged. */
+  created: boolean;
+}
+
+/**
+ * `POST /words` (staff, CM-S10): finds or creates the word for a spelling
+ * through the backend's `saveWord`. A new word is not reviewed yet, so it
+ * enters the review queue. An invalid spelling is an `ApiError`
+ * `WORD_SPELLING_INVALID` (read it with `parseWordSpellingError`).
+ */
+export async function createWord(input: CreateWordInput): Promise<CreatedWord> {
+  return fetchWithAuth<CreatedWord>('/words', { method: 'POST', body: JSON.stringify(input) });
 }
 
 // ---------------------------------------------------------------------------

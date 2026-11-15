@@ -233,6 +233,9 @@ export default function BuilderPage() {
             instructionAudioUrl={newActivity ? undefined : selectedActivity?.instruction?.audio_url}
             instructionVoiceId={newActivity ? undefined : selectedActivity?.instruction?.voiceId}
             topic={currentTopic}
+            isExemplar={selectedActivity?.is_exemplar}
+            isAiDraft={selectedActivity?.provenance != null}
+            isPublished={selectedActivity?.is_published}
             isNew={!!newActivity}
             onSave={
               newActivity

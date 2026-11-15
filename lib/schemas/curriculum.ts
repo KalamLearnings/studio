@@ -203,6 +203,10 @@ export const ArticleSchema = z.object({
   instruction: InstructionSchema,
   config: ArticleConfigSchema,
   is_published: z.boolean().default(true),
+  // Generation columns (CM-B22), written by the server only: never sent on a save.
+  is_exemplar: z.boolean().optional(),
+  provenance: z.unknown().optional(),
+  approved_by: z.string().nullable().optional(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { ActivityForm } from "@/components/builder/activity-form";
+import { ExemplarToggle } from "@/components/builder/ExemplarToggle";
 import type { Topic } from "@/lib/schemas/curriculum";
 import type { ActivityConfig } from "@/components/builder/forms/types";
 
@@ -14,6 +15,10 @@ interface FormPanelProps {
   instructionAudioUrl?: string | null;
   instructionVoiceId?: string | null;
   topic: Topic | null;
+  /** The saved activity's generation columns (CM-S9). */
+  isExemplar?: boolean;
+  isAiDraft?: boolean;
+  isPublished?: boolean;
   isNew: boolean;
   onSave?: (data: Record<string, unknown>) => Promise<unknown> | void;
   onCancel?: () => void;
@@ -28,12 +33,23 @@ export function FormPanel({
   instructionAudioUrl,
   instructionVoiceId,
   topic,
+  isExemplar,
+  isAiDraft,
+  isPublished,
   isNew,
   onSave,
   onCancel,
 }: FormPanelProps) {
   return (
     <div className="flex-1 overflow-hidden bg-background">
+      {!isNew && activityId && (
+        <ExemplarToggle
+          activityId={activityId}
+          isExemplar={!!isExemplar}
+          isAiDraft={!!isAiDraft}
+          isPublished={!!isPublished}
+        />
+      )}
       <ActivityForm
         key={formKey}
         activityId={activityId}

@@ -16,6 +16,7 @@ import type { Article, CreateArticle, UpdateArticle, BatchReorder } from '@/lib/
 import type { ActivityTypeGroup } from '@/lib/api/curricula';
 import type { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { describeGenerationError } from '@/lib/generation/drafts';
 import { sortBySequence } from '@/lib/utils/reorder';
 
 // ============================================================================
@@ -166,7 +167,7 @@ export function useUpdateActivity() {
       toast.success('Activity updated successfully');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update activity');
+      toast.error(describeGenerationError(error) || 'Failed to update activity');
     },
   });
 }

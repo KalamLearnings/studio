@@ -20,8 +20,9 @@ import {
   type TopicContext,
 } from "./forms";
 import { normalizeActivityConfig } from "./forms/normalizeActivityConfig";
-import { toBlendSaveParts } from "@/lib/blendWord/config";
+import { isBlendActivityType, toBlendSaveParts } from "@/lib/blendWord/config";
 import { BLEND_INVALID } from "@/lib/blendWord/saveErrors";
+import { WORD_SPELLING_INVALID } from "@/lib/words/spelling";
 import { ConditionalAudioSection } from "./forms/shared/ConditionalAudioSection";
 import { DEFAULT_VOICE } from "@/lib/constants/voices";
 
@@ -91,7 +92,8 @@ export function ActivityForm({
   // confirm before saving since saving will remove the audio (backend deletes it).
   const [confirmClearAudio, setConfirmClearAudio] = React.useState(false);
   // The last save's refusal, shown inline by forms that understand it
-  // (the blend forms: BLEND_INVALID). Cleared on the next config edit.
+  // (the blend forms: BLEND_INVALID, and WORD_SPELLING_INVALID on the word
+  // field). Cleared on the next config edit.
   const [saveError, setSaveError] = React.useState<{ code?: string; details?: unknown } | null>(null);
 
   // Get letter data from topic if available
@@ -152,8 +154,11 @@ export function ActivityForm({
     } catch (error) {
       console.error("Error saving activity:", error);
       const apiError = error as { code?: string; details?: unknown };
-      if (apiError?.code === BLEND_INVALID) {
-        // Shown inline in the form, next to the split it is about.
+      if (
+        apiError?.code === BLEND_INVALID ||
+        (apiError?.code === WORD_SPELLING_INVALID && isBlendActivityType(activityType))
+      ) {
+        // Shown inline in the form, next to the split or the word it is about.
         setSaveError({ code: apiError.code, details: apiError.details });
         return;
       }

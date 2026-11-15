@@ -8,7 +8,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient, getEnvironmentBaseUrl, getEdgeFunctionAuthHeaders } from '@/lib/supabase/client';
 
 export interface LetterComposition {
+  /** The old analyser's id; kept with its old value until S7 (content model 2.7). */
   letter_id: string;
+  /** The canonical `letters.id` (CM-B1); absent on rows the rebuild has not reached. Read via `compositionLetterId`. */
+  letterId?: string;
   position: number;
   form: 'isolated' | 'initial' | 'medial' | 'final';
   character: string;

@@ -36,7 +36,7 @@ export function BlendWordSection<C extends BlendWordConfig>({
   onWordChange,
   generalErrors,
 }: BlendWordSectionProps<C>) {
-  const { sourceText, wordEdit, preview, ending, saveErrors, harakat, harakatReason, showHarakat } = state;
+  const { sourceText, wordEdit, preview, ending, saveErrors, spellingErrors, harakat, harakatReason, showHarakat } = state;
   const wordId = config.wordRef?.wordId;
   const audioNote = audioUnavailableReason(wordId, !!(wordEdit?.override || wordEdit?.harakatSource));
   return (
@@ -47,6 +47,7 @@ export function BlendWordSection<C extends BlendWordConfig>({
         label="Arabic Word"
         required
         placeholder="Type to search word library..."
+        error={spellingErrors ?? undefined}
       />
 
       {showHarakat && (

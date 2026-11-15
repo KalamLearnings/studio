@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, Image, Volume2 } from "lucide-react";
 import { useWords, type Word } from "@/lib/hooks/useWords";
+import { plainSpellingIssue, previewWordSpelling } from "@/lib/words/spelling";
+import { compositionLetterId } from "@/lib/words/composition";
 
 // Words are loaded into the dropdown a page at a time; scrolling near the
 // bottom reveals the next page (client-side, the full list is already in memory).
@@ -23,6 +25,8 @@ interface WordSelectorProps {
   translationValue?: string;
   className?: string;
   placeholder?: string;
+  /** The server's refusal of the word on the last save (WORD_SPELLING_INVALID), one line each. */
+  error?: string[];
 }
 
 export function WordSelector({
@@ -35,6 +39,7 @@ export function WordSelector({
   translationValue = "",
   className = "",
   placeholder = "Type to search or enter new word...",
+  error: fieldError,
 }: WordSelectorProps) {
   const { words, loading, error } = useWords();
   const [inputValue, setInputValue] = useState(value || "");
@@ -60,6 +65,10 @@ export function WordSelector({
 
   // Check if input exactly matches an existing word
   const exactMatch = words.find((w) => w.arabic === inputValue);
+
+  // What saving this text does to the library (CM-S1): the backend reuses the
+  // row with the same normalised spelling, or creates one stored normalised.
+  const spellingPreview = useMemo(() => previewWordSpelling(value || "", words), [value, words]);
 
   // Sync input value with prop value
   useEffect(() => {
@@ -188,7 +197,8 @@ export function WordSelector({
           required={required}
           placeholder={placeholder}
           dir="rtl"
-          className="text-xl font-arabic"
+          aria-invalid={fieldError && fieldError.length > 0 ? true : undefined}
+          className={cn("text-xl font-arabic", fieldError && fieldError.length > 0 && "border-destructive")}
         />
 
         {/* Autocomplete Dropdown */}
@@ -252,9 +262,25 @@ export function WordSelector({
           {inputValue.trim()
             ? filteredWords.length > 0
               ? `${filteredWords.length} word${filteredWords.length === 1 ? "" : "s"} found`
-              : "New word - will be added to library when saved"
+              : spellingPreview?.kind === "reuse"
+                ? "Same spelling as an existing library word - see below"
+                : spellingPreview?.kind === "invalid"
+                  ? "Not a valid Arabic spelling - see below"
+                  : "New word - will be added to library when saved"
             : `${words.length} words in library`}
         </p>
+
+        {/* The server refused the word on the last save */}
+        {fieldError && fieldError.length > 0 && (
+          <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">
+            <p className="font-medium">The server refused this word: it is not a valid Arabic spelling.</p>
+            <ul className="mt-1 list-disc pl-5">
+              {fieldError.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Show Translation Input */}
@@ -327,7 +353,7 @@ export function WordSelector({
                     >
                       <span className="font-arabic text-base">{comp.character}</span>
                       <span className="text-muted-foreground">
-                        {comp.letter_id} ({comp.form})
+                        {compositionLetterId(comp)} ({comp.form})
                       </span>
                     </span>
                   ))}
@@ -345,8 +371,42 @@ export function WordSelector({
         </div>
       )}
 
+      {/* Same spelling as an existing word: the save reuses it */}
+      {!selectedWord && spellingPreview?.kind === "reuse" && (
+        <div className="mt-3 p-3 bg-blue-500/10 rounded-md border border-blue-500/30 text-sm text-blue-600 dark:text-blue-400">
+          <div>
+            <strong className="font-arabic text-base">{value}</strong> has the same spelling as the library word{" "}
+            <strong className="font-arabic text-base">{spellingPreview.word.arabic}</strong>
+            {spellingPreview.word.english && ` (${spellingPreview.word.english})`}. Saving will use the existing word; no
+            new word is added.
+          </div>
+          <button
+            type="button"
+            className="mt-1 text-xs font-medium underline underline-offset-2"
+            onClick={() => handleSelectWord(spellingPreview.word)}
+          >
+            Use the existing word
+          </button>
+        </div>
+      )}
+
+      {/* Not a valid spelling: the library will not take it */}
+      {!selectedWord && spellingPreview?.kind === "invalid" && !(fieldError && fieldError.length > 0) && (
+        <div className="mt-3 p-3 rounded-md border border-destructive/40 bg-destructive/5 text-sm text-destructive">
+          <div>
+            <strong className="font-arabic text-base">{value}</strong> is not a valid Arabic spelling, so it cannot be
+            added to the word library:
+          </div>
+          <ul className="mt-1 list-disc pl-5">
+            {spellingPreview.issues.map((issue, i) => (
+              <li key={i}>{plainSpellingIssue(issue, spellingPreview.spelling)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* New Word Info */}
-      {!selectedWord && value && !exactMatch && (
+      {!selectedWord && value && !exactMatch && spellingPreview?.kind === "new" && (
         <div className="mt-3 p-3 bg-blue-500/10 rounded-md border border-blue-500/30">
           <div className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400">
             <svg
@@ -365,6 +425,12 @@ export function WordSelector({
             <div>
               <strong className="font-arabic text-base">{value}</strong> will be
               added to the word library when you save this activity.
+              {spellingPreview.changed && (
+                <>
+                  {" "}It is stored as its normalised spelling{" "}
+                  <strong className="font-arabic text-base">{spellingPreview.spelling}</strong>.
+                </>
+              )}
             </div>
           </div>
         </div>

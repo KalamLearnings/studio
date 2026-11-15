@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { useAssets } from "@/lib/hooks/useAssets";
-import { AssetUploadModal, AssetEditModal } from "@/components/assets";
+import { AssetUploadModal, AssetEditModal, AssetLabelDialog } from "@/components/assets";
 import type { Asset, AssetCategory } from "@/lib/types/assets";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,7 @@ import {
 export default function AssetsPage() {
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false);
+  const [labellingAsset, setLabellingAsset] = React.useState<Asset | null>(null);
   const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
 
   const {
@@ -27,53 +28,18 @@ export default function AssetsPage() {
     searchQuery,
     setCategory,
     setSearchQuery,
+    selectedStatus,
+    setStatus,
     uploadNewAsset,
-    updateExistingAsset,
-    removeAsset,
+    editAsset,
+    changeAssetStatus,
+    applyRegistryAsset,
   } = useAssets();
 
   const handleCopyUrl = React.useCallback((url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard");
   }, []);
-
-  const handleEdit = React.useCallback((asset: Asset) => {
-    setEditingAsset(asset);
-  }, []);
-
-  const handleSaveEdit = React.useCallback(
-    async (
-      id: string,
-      data: {
-        displayName?: string;
-        category?: AssetCategory;
-        tags?: string[];
-        file?: File;
-      }
-    ) => {
-      try {
-        await updateExistingAsset(id, data);
-        toast.success("Asset updated");
-      } catch {
-        toast.error("Failed to update asset");
-        throw new Error("Failed to update asset");
-      }
-    },
-    [updateExistingAsset]
-  );
-
-  const handleDelete = React.useCallback(
-    async (id: string) => {
-      if (!confirm("Are you sure you want to delete this asset?")) return;
-      try {
-        await removeAsset(id);
-        toast.success("Asset deleted");
-      } catch {
-        toast.error("Failed to delete asset");
-      }
-    },
-    [removeAsset]
-  );
 
   const handleUpload = React.useCallback(
     async (data: {
@@ -93,7 +59,50 @@ export default function AssetsPage() {
     [uploadNewAsset]
   );
 
-  const hasFilters = !!(searchQuery || selectedCategory);
+  // Library fields, or a replace when a new file is chosen (the old image is
+  // superseded, and every activity that used it now uses the new one).
+  const handleSaveEdit = React.useCallback(
+    async (
+      asset: Asset,
+      data: { displayName: string; category: AssetCategory; tags: string[]; file?: File }
+    ) => {
+      const { repointedActivities: n } = await editAsset(asset, data);
+      toast.success(
+        data.file
+          ? `Image replaced${n > 0 ? `; ${n} ${n === 1 ? "activity now uses" : "activities now use"} the new image` : ""}`
+          : "Asset updated"
+      );
+    },
+    [editAsset]
+  );
+
+  // Nothing is deleted (D9): retiring hides the image from the library.
+  const handleRetire = React.useCallback(
+    async (asset: Asset) => {
+      if (!confirm("Retire this asset? It is hidden from the library but keeps showing where it is already used.")) return;
+      try {
+        await changeAssetStatus(asset, "retired");
+        toast.success("Asset retired");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to retire asset");
+      }
+    },
+    [changeAssetStatus]
+  );
+
+  const handleRestore = React.useCallback(
+    async (asset: Asset) => {
+      try {
+        await changeAssetStatus(asset, "active");
+        toast.success("Asset restored");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to restore asset");
+      }
+    },
+    [changeAssetStatus]
+  );
+
+  const hasFilters = !!(searchQuery || selectedCategory || selectedStatus);
 
   return (
     <div className="space-y-6">
@@ -104,6 +113,8 @@ export default function AssetsPage() {
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
         onCategoryChange={setCategory}
+        selectedStatus={selectedStatus}
+        onStatusChange={setStatus}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
@@ -126,8 +137,10 @@ export default function AssetsPage() {
       {!loading && assets.length > 0 && viewMode === "grid" && (
         <AssetGrid
           assets={assets}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={setEditingAsset}
+          onLabel={setLabellingAsset}
+          onRetire={handleRetire}
+          onRestore={handleRestore}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -136,8 +149,10 @@ export default function AssetsPage() {
       {!loading && assets.length > 0 && viewMode === "list" && (
         <AssetTable
           assets={assets}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={setEditingAsset}
+          onLabel={setLabellingAsset}
+          onRetire={handleRetire}
+          onRestore={handleRestore}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -164,6 +179,15 @@ export default function AssetsPage() {
         open={!!editingAsset}
         onOpenChange={(open) => !open && setEditingAsset(null)}
         onSave={handleSaveEdit}
+      />
+
+      {/* Label Dialog */}
+      <AssetLabelDialog
+        assetId={labellingAsset?.registryId ?? null}
+        name={labellingAsset?.displayName || labellingAsset?.name}
+        open={!!labellingAsset}
+        onOpenChange={(open) => !open && setLabellingAsset(null)}
+        onLabelled={applyRegistryAsset}
       />
     </div>
   );

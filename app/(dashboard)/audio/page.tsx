@@ -14,9 +14,14 @@ import {
   type AudioSubmitData,
 } from "@/components/audio/AudioInputField";
 import { MediaEmptyState } from "@/components/media";
+import { AssetLabelDialog } from "@/components/assets/AssetLabelDialog";
 import type { AudioAsset } from "@/lib/types/audio";
 import { toast } from "sonner";
 import { AudioHeader, AudioFilters, AudioTable } from "./_components";
+
+/** ", now used by N activities" after a replace; empty when none used it. */
+const usedBy = (n: number) =>
+  n > 0 ? `; ${n} ${n === 1 ? "activity now uses" : "activities now use"} the new audio` : "";
 
 export default function AudioPage() {
   const [playingId, setPlayingId] = React.useState<string | null>(null);
@@ -24,6 +29,7 @@ export default function AudioPage() {
   // distinguishes the two: null = create, a row = edit.
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAudio, setEditingAudio] = React.useState<AudioAsset | null>(null);
+  const [labellingAudio, setLabellingAudio] = React.useState<AudioAsset | null>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const {
@@ -34,10 +40,13 @@ export default function AudioPage() {
     searchQuery,
     setCategory,
     setSearchQuery,
+    selectedStatus,
+    setStatus,
     uploadNewAudio,
     updateAudio,
-    replaceAudioFile,
-    removeAudio,
+    replaceAudio,
+    changeAudioStatus,
+    applyRegistryAsset,
   } = useAudio();
 
   const handleCopyUrl = React.useCallback((url: string) => {
@@ -61,10 +70,11 @@ export default function AudioPage() {
   }, []);
 
   // Single submit path for the shared add/edit dialog.
-  // - Create (no editingAudio): upload a brand-new asset.
-  // - Edit with a file (regenerated/replaced): overwrite the file in place so
-  //   activities referencing its URL serve the new audio.
-  // - Edit without a file: only metadata changed.
+  // - Create (no editingAudio): upload a brand-new asset through the backend.
+  // - Edit without a file: the library fields, written by the backend.
+  // - Edit with a new file: the backend stores it as a new clip and marks the
+  //   old one superseded (files are never overwritten, D8), and repoints every
+  //   activity that used the old clip to the new one, as an overwrite did.
   const handleDialogSubmit = React.useCallback(
     async (data: AudioSubmitData) => {
       try {
@@ -72,8 +82,7 @@ export default function AudioPage() {
           // Create requires a file (the component enforces generate/upload
           // before submit when not editing).
           if (!data.file) {
-            toast.error("Please generate or upload audio first");
-            throw new Error("Missing audio file");
+            throw new Error("Please generate or upload audio first");
           }
           await uploadNewAudio({
             displayName: data.displayName,
@@ -84,42 +93,57 @@ export default function AudioPage() {
           });
           toast.success("Audio uploaded successfully");
         } else if (data.file) {
-          await replaceAudioFile(editingAudio.id, {
-            file: data.file,
+          const { repointedActivities } = await replaceAudio(editingAudio.id, {
             displayName: data.displayName,
             category: data.category,
             tags: data.tags,
+            file: data.file,
             metadata: data.metadata,
           });
-          toast.success("Audio regenerated and saved");
+          toast.success(`Audio regenerated and saved${usedBy(repointedActivities)}`);
         } else {
           await updateAudio(editingAudio.id, {
             displayName: data.displayName,
+            category: data.category,
             tags: data.tags,
             ...(data.metadata ? { metadata: data.metadata } : {}),
           });
           toast.success("Audio updated");
         }
         closeDialog();
-      } catch {
-        toast.error("Failed to save audio");
-        throw new Error("Failed to save audio");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to save audio");
+        throw err;
       }
     },
-    [editingAudio, uploadNewAudio, replaceAudioFile, updateAudio, closeDialog]
+    [editingAudio, uploadNewAudio, updateAudio, replaceAudio, closeDialog]
   );
 
-  const handleDelete = React.useCallback(
-    async (id: string) => {
-      if (!confirm("Are you sure you want to delete this audio file?")) return;
+  // Nothing is deleted (D9): retiring hides the clip from the library and the
+  // picker; its file stays and keeps playing where it is already used.
+  const handleRetire = React.useCallback(
+    async (audio: AudioAsset) => {
+      if (!confirm("Retire this audio? It is hidden from the library but keeps playing where it is already used.")) return;
       try {
-        await removeAudio(id);
-        toast.success("Audio deleted");
-      } catch {
-        toast.error("Failed to delete audio");
+        await changeAudioStatus(audio.id, "retired");
+        toast.success("Audio retired");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to retire audio");
       }
     },
-    [removeAudio]
+    [changeAudioStatus]
+  );
+
+  const handleRestore = React.useCallback(
+    async (audio: AudioAsset) => {
+      try {
+        await changeAudioStatus(audio.id, "active");
+        toast.success("Audio restored");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to restore audio");
+      }
+    },
+    [changeAudioStatus]
   );
 
   const handleTogglePlay = React.useCallback(
@@ -145,7 +169,7 @@ export default function AudioPage() {
     [playingId, audioAssets]
   );
 
-  const hasFilters = !!(searchQuery || selectedCategory);
+  const hasFilters = !!(searchQuery || selectedCategory || selectedStatus);
 
   return (
     <div className="space-y-6">
@@ -156,6 +180,8 @@ export default function AudioPage() {
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
         onCategoryChange={setCategory}
+        selectedStatus={selectedStatus}
+        onStatusChange={setStatus}
       />
 
       {/* Error State */}
@@ -179,7 +205,9 @@ export default function AudioPage() {
           playingId={playingId}
           onTogglePlay={handleTogglePlay}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onLabel={setLabellingAudio}
+          onRetire={handleRetire}
+          onRestore={handleRestore}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -223,6 +251,14 @@ export default function AudioPage() {
           />
         </DialogContent>
       </Dialog>
+
+      <AssetLabelDialog
+        assetId={labellingAudio?.id ?? null}
+        name={labellingAudio?.displayName || labellingAudio?.name}
+        open={!!labellingAudio}
+        onOpenChange={(open) => !open && setLabellingAudio(null)}
+        onLabelled={applyRegistryAsset}
+      />
     </div>
   );
 }

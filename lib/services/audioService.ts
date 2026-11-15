@@ -1,8 +1,12 @@
 /**
  * Audio Service Layer
  *
- * Handles all Supabase interactions for audio asset management.
- * Uses audio_assets table for metadata + storage for files.
+ * The audio library. Reads come from the `audio_assets` catalogue joined with
+ * the `assets` registry (status, label). Every write goes through the backend
+ * (`assets` function, CM-B5): uploads, replaces, status changes and edits of
+ * the display name, category, tags and metadata. Studio never writes library
+ * files, `audio_assets` or `assets` rows itself, and never deletes a file
+ * (D9) (CM-S4).
  */
 
 import {
@@ -12,6 +16,15 @@ import {
 } from '@/lib/supabase/client';
 import type { AudioAsset, AudioCategory, AudioUploadData } from '@/lib/types/audio';
 import { SUPPORTED_AUDIO_TYPES, MAX_AUDIO_FILE_SIZE } from '@/lib/types/audio';
+import type { AssetProvenance, PersonStatus, StatusFilter } from '@/lib/types/assetRegistry';
+import {
+  replaceRegistryAsset,
+  setRegistryAssetStatus,
+  updateRegistryAssetLibrary,
+  uploadLibraryAsset,
+} from '@/lib/api/assets';
+import { getRegistryEntries, type RegistryEntry } from '@/lib/services/assetRegistryService';
+import { matchesStatusFilter } from '@/lib/assets/label';
 
 const BUCKET_NAME = 'curriculum-audio';
 const AUDIO_FOLDER = 'audio';
@@ -114,6 +127,8 @@ export interface AudioFilters {
   category?: AudioCategory;
   searchQuery?: string;
   tags?: string[];
+  /** Registry status (quarantined, orphan, ...) or `unregistered`. */
+  status?: StatusFilter;
 }
 
 interface AudioAssetRow {
@@ -146,7 +161,11 @@ function withCacheBuster(publicUrl: string, updatedAt: string): string {
   return `${publicUrl}${separator}v=${version}`;
 }
 
-function rowToAudioAsset(row: AudioAssetRow, publicUrl: string): AudioAsset {
+function rowToAudioAsset(
+  row: AudioAssetRow,
+  publicUrl: string,
+  registry: RegistryEntry | undefined,
+): AudioAsset {
   return {
     id: row.id,
     name: row.name,
@@ -161,7 +180,21 @@ function rowToAudioAsset(row: AudioAssetRow, publicUrl: string): AudioAsset {
     metadata: row.metadata ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    status: registry?.status ?? null,
+    label: registry?.label ?? null,
   };
+}
+
+/** Maps catalogue rows to library assets with their registry status and label. */
+async function withRegistry(rows: AudioAssetRow[]): Promise<AudioAsset[]> {
+  const supabase = createClient();
+  const registry = await getRegistryEntries(rows.map((row) => row.id));
+  return rows.map((row) => {
+    const { data: { publicUrl } } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(row.storage_path);
+    return rowToAudioAsset(row, publicUrl, registry.get(row.id));
+  });
 }
 
 /**
@@ -205,13 +238,10 @@ export async function getAudioAssets(filters?: AudioFilters): Promise<AudioAsset
     );
   }
 
-  return rows.map((row: AudioAssetRow) => {
-    const { data: { publicUrl } } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(row.storage_path);
-
-    return rowToAudioAsset(row, publicUrl);
-  });
+  const assets = await withRegistry(rows);
+  return filters?.status
+    ? assets.filter((asset) => matchesStatusFilter(asset.status, filters.status))
+    : assets;
 }
 
 /**
@@ -232,33 +262,8 @@ export async function getAudioAsset(id: string): Promise<AudioAsset | null> {
     throw new Error(`Failed to fetch audio asset: ${error.message}`);
   }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(data.storage_path);
-
-  return rowToAudioAsset(data, publicUrl);
-}
-
-/**
- * Read an audio file's duration (ms) in the browser via an <audio> element.
- * Returns null when the duration can't be determined (corrupt file, format
- * the browser won't decode) — callers store NULL rather than a wrong value.
- */
-export async function getAudioDurationMs(file: Blob): Promise<number | null> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const audio = new window.Audio();
-    const finish = (value: number | null) => {
-      URL.revokeObjectURL(url);
-      resolve(value);
-    };
-    audio.onloadedmetadata = () => {
-      const seconds = audio.duration;
-      finish(Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : null);
-    };
-    audio.onerror = () => finish(null);
-    audio.src = url;
-  });
+  const [asset] = await withRegistry([data as AudioAssetRow]);
+  return asset;
 }
 
 /**
@@ -275,225 +280,109 @@ function validateAudioFile(file: File): void {
 }
 
 /**
- * Uploads a new audio asset
+ * The provenance of a library clip made by the `/tts` function (ElevenLabs),
+ * from the catalogue metadata the audio form writes; null for an upload.
+ */
+function ttsProvenance(metadata: Record<string, unknown> | undefined): AssetProvenance | null {
+  const text = metadata?.ttsText;
+  const voiceId = metadata?.voiceId;
+  if (typeof text !== 'string' || typeof voiceId !== 'string' || !voiceId) return null;
+  return {
+    provider: 'elevenlabs',
+    model: null,
+    voiceId,
+    promptVersion: null,
+    request: { text, language: 'ar' },
+  };
+}
+
+/**
+ * Uploads a new audio asset through the backend (`POST /assets/library`).
+ * The backend measures the file, names its path and writes both the `assets`
+ * and the `audio_assets` rows under one id; the same file uploaded twice
+ * answers the asset already registered.
  */
 export async function uploadAudioAsset(data: AudioUploadData): Promise<AudioAsset> {
-  const supabase = createClient();
   const { displayName, file, category, tags, metadata } = data;
 
   validateAudioFile(file);
 
-  const durationMs = await getAudioDurationMs(file);
+  const provenance = ttsProvenance(metadata);
+  const result = await uploadLibraryAsset({
+    file,
+    displayName,
+    category,
+    tags,
+    metadata: metadata || {},
+    ...(provenance ? { provenance, locale: 'ar' } : {}),
+  });
 
-  const extension = file.name.split('.').pop() || 'mp3';
-  const sanitizedDisplayName = displayName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
-  const timestamp = Date.now();
-  const filename = `${sanitizedDisplayName}__${timestamp}.${extension}`;
-  const storagePath = `${AUDIO_FOLDER}/${category}/${filename}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(storagePath, file, {
-      cacheControl: '31536000',
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error('Error uploading audio file:', uploadError);
-    throw new Error(`Failed to upload audio: ${uploadError.message}`);
+  const audioId = result.audioAssetId ?? result.asset.id;
+  const asset = await getAudioAsset(audioId);
+  if (!asset) {
+    throw new Error('The audio was stored but its library row could not be read');
   }
-
-  const { data: insertedRow, error: insertError } = await supabase
-    .from('audio_assets')
-    .insert({
-      name: filename,
-      display_name: displayName,
-      storage_path: storagePath,
-      category,
-      tags,
-      duration_ms: durationMs,
-      file_size: file.size,
-      mime_type: file.type,
-      metadata: metadata || {},
-    })
-    .select()
-    .single();
-
-  if (insertError) {
-    await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
-    console.error('Error inserting audio asset record:', insertError);
-    throw new Error(`Failed to save audio metadata: ${insertError.message}`);
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(storagePath);
-
-  return rowToAudioAsset(insertedRow, publicUrl);
+  return asset;
 }
 
 /**
- * Updates audio asset metadata
+ * Updates the library fields (display name, category, tags, metadata) through
+ * the backend (`PUT /assets/:assetId/library`), which writes the
+ * `audio_assets` row and the `assets` row of the same id. The file, its path
+ * and its label are untouched.
  */
 export async function updateAudioAsset(
   id: string,
-  updates: Partial<Pick<AudioAsset, 'displayName' | 'tags' | 'metadata'>>
+  updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>
 ): Promise<AudioAsset> {
-  const supabase = createClient();
-
-  const updateData: Record<string, unknown> = {};
-  if (updates.displayName !== undefined) updateData.display_name = updates.displayName;
-  if (updates.tags !== undefined) updateData.tags = updates.tags;
-  if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
-
-  const { data, error } = await supabase
-    .from('audio_assets')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating audio asset:', error);
-    throw new Error(`Failed to update audio asset: ${error.message}`);
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(data.storage_path);
-
-  return rowToAudioAsset(data, publicUrl);
+  await updateRegistryAssetLibrary(id, {
+    ...(updates.displayName !== undefined ? { displayName: updates.displayName } : {}),
+    ...(updates.category !== undefined ? { category: updates.category } : {}),
+    ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
+    ...(updates.metadata !== undefined ? { metadata: updates.metadata } : {}),
+  });
+  const asset = await getAudioAsset(id);
+  if (!asset) throw new Error('The audio was updated but its library row could not be read');
+  return asset;
 }
 
 /**
- * Replaces the underlying file of an existing audio asset (regenerate-in-place).
- *
- * BAND-AID: activities embed the audio's public URL (its storage_path) directly
- * in their config — there is no live audio_assets-id reference at playback time
- * (see ASSET_ASSOCIATION_MODEL_PLAN.md). So to fix a wrong clip without
- * re-authoring every referencing config, we OVERWRITE the bytes at the SAME
- * storage_path. The URL is unchanged, so every consumer (the library row and any
- * activity config pointing at that path) serves the corrected audio.
- *
- * cacheControl is set low here (unlike uploads' 1-year) so the corrected clip
- * actually propagates instead of being masked by the old cached object.
- *
- * Also persists displayName/category/tags and merges metadata (so ttsText /
- * voiceId are saved for next time).
+ * Replaces the file of a library clip ("Replace with File", "Regenerate from
+ * Text") through the backend (`POST /assets/:assetId/replace`). The new file
+ * gets a new id and its own library row; the old clip becomes `superseded`
+ * and stays stored. Every activity that used the old clip now uses the new
+ * one (the backend repoints them in the same transaction). Returns the new
+ * clip and how many activities were repointed.
  */
-export async function replaceAudioAssetFile(
+export async function replaceAudioAsset(
   id: string,
-  data: {
-    file: File;
-    displayName?: string;
-    category?: AudioCategory;
-    tags?: string[];
-    metadata?: Record<string, unknown>;
-  }
-): Promise<AudioAsset> {
-  const supabase = createClient();
-  const { file, displayName, category, tags, metadata } = data;
-
-  validateAudioFile(file);
-
-  const durationMs = await getAudioDurationMs(file);
-
-  // Read the existing row so we overwrite the SAME path and merge metadata.
-  const { data: existing, error: fetchError } = await supabase
-    .from('audio_assets')
-    .select('storage_path, metadata')
-    .eq('id', id)
-    .single();
-
-  if (fetchError) {
-    console.error('Error fetching audio asset for replace:', fetchError);
-    throw new Error(`Failed to find audio asset: ${fetchError.message}`);
-  }
-
-  const storagePath = existing.storage_path as string;
-
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(storagePath, file, {
-      // Short cache so the corrected clip is not masked by the previously
-      // cached object at this same path.
-      cacheControl: '60',
-      upsert: true,
-    });
-
-  if (uploadError) {
-    console.error('Error overwriting audio file:', uploadError);
-    throw new Error(`Failed to replace audio: ${uploadError.message}`);
-  }
-
-  const mergedMetadata = {
-    ...((existing.metadata as Record<string, unknown> | null) ?? {}),
-    ...(metadata ?? {}),
-  };
-
-  const updateData: Record<string, unknown> = {
-    duration_ms: durationMs,
-    file_size: file.size,
-    mime_type: file.type,
-    metadata: mergedMetadata,
-  };
-  if (displayName !== undefined) updateData.display_name = displayName;
-  if (category !== undefined) updateData.category = category;
-  if (tags !== undefined) updateData.tags = tags;
-
-  const { data: updatedRow, error: updateError } = await supabase
-    .from('audio_assets')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (updateError) {
-    console.error('Error updating audio asset after replace:', updateError);
-    throw new Error(`Failed to save audio metadata: ${updateError.message}`);
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(storagePath);
-
-  return rowToAudioAsset(updatedRow, publicUrl);
+  data: Omit<AudioUploadData, 'file'> & { file: File },
+): Promise<{ audio: AudioAsset; repointedActivities: number }> {
+  validateAudioFile(data.file);
+  const provenance = ttsProvenance(data.metadata);
+  const result = await replaceRegistryAsset(id, {
+    file: data.file,
+    displayName: data.displayName,
+    category: data.category,
+    tags: data.tags,
+    ...(data.metadata ? { metadata: data.metadata } : {}),
+    ...(provenance ? { provenance } : {}),
+  });
+  const asset = await getAudioAsset(result.audioAssetId ?? result.asset.id);
+  if (!asset) throw new Error('The new audio was stored but its library row could not be read');
+  return { audio: asset, repointedActivities: result.repointed.activities };
 }
 
 /**
- * Deletes an audio asset (both file and metadata)
+ * Changes a clip's registry status (`PUT /assets/:assetId/status`): retire,
+ * or make active again. Nothing is deleted; the clip keeps playing wherever
+ * it is already used. Returns the clip with its new status.
  */
-export async function deleteAudioAsset(id: string): Promise<void> {
-  const supabase = createClient();
-
-  const { data: asset, error: fetchError } = await supabase
-    .from('audio_assets')
-    .select('storage_path')
-    .eq('id', id)
-    .single();
-
-  if (fetchError) {
-    console.error('Error fetching audio asset for deletion:', fetchError);
-    throw new Error(`Failed to find audio asset: ${fetchError.message}`);
-  }
-
-  const { error: storageError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .remove([asset.storage_path]);
-
-  if (storageError) {
-    console.warn('Error deleting audio file from storage:', storageError);
-  }
-
-  const { error: deleteError } = await supabase
-    .from('audio_assets')
-    .delete()
-    .eq('id', id);
-
-  if (deleteError) {
-    console.error('Error deleting audio asset record:', deleteError);
-    throw new Error(`Failed to delete audio asset: ${deleteError.message}`);
-  }
+export async function setAudioStatus(id: string, status: PersonStatus): Promise<AudioAsset> {
+  await setRegistryAssetStatus(id, status);
+  const asset = await getAudioAsset(id);
+  if (!asset) throw new Error('The status was changed but the library row could not be read');
+  return asset;
 }
 
 /**
@@ -513,11 +402,5 @@ export async function getAudioByLetterId(letterId: string): Promise<AudioAsset[]
     throw new Error(`Failed to fetch audio for letter: ${error.message}`);
   }
 
-  return (data || []).map((row: AudioAssetRow) => {
-    const { data: { publicUrl } } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(row.storage_path);
-
-    return rowToAudioAsset(row, publicUrl);
-  });
+  return withRegistry((data || []) as AudioAssetRow[]);
 }

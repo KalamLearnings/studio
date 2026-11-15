@@ -6,11 +6,20 @@ import { AssetCard } from "./AssetCard";
 interface AssetGridProps {
   assets: Asset[];
   onEdit: (asset: Asset) => void;
-  onDelete: (id: string) => void;
+  onLabel: (asset: Asset) => void;
+  onRetire: (asset: Asset) => void;
+  onRestore: (asset: Asset) => void;
   onCopyUrl: (url: string) => void;
 }
 
-export function AssetGrid({ assets, onEdit, onDelete, onCopyUrl }: AssetGridProps) {
+export function AssetGrid({
+  assets,
+  onEdit,
+  onLabel,
+  onRetire,
+  onRestore,
+  onCopyUrl,
+}: AssetGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {assets.map((asset) => (
@@ -18,7 +27,9 @@ export function AssetGrid({ assets, onEdit, onDelete, onCopyUrl }: AssetGridProp
           key={asset.id}
           asset={asset}
           onEdit={onEdit}
-          onDelete={onDelete}
+          onLabel={onLabel}
+          onRetire={onRetire}
+          onRestore={onRestore}
           onCopyUrl={onCopyUrl}
         />
       ))}

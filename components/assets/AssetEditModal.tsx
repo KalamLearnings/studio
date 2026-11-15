@@ -35,10 +35,14 @@ interface AssetEditModalProps {
   asset: Asset | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (id: string, data: {
-    displayName?: string;
-    category?: AssetCategory;
-    tags?: string[];
+  /**
+   * Saves through the backend: the library fields, or a replace when a new
+   * file is chosen (the old image is superseded, never deleted).
+   */
+  onSave: (asset: Asset, data: {
+    displayName: string;
+    category: AssetCategory;
+    tags: string[];
     file?: File;
   }) => Promise<void>;
 }
@@ -65,7 +69,7 @@ export function AssetEditModal({
   React.useEffect(() => {
     if (asset) {
       setDisplayName(asset.displayName || asset.name);
-      setCategory(asset.category);
+      setCategory(asset.category ?? "misc");
       setTags(asset.tags || []);
       setNewFile(null);
       setNewPreview(null);
@@ -129,7 +133,7 @@ export function AssetEditModal({
     setError(null);
 
     try {
-      await onSave(asset.id, {
+      await onSave(asset, {
         displayName: displayName.trim(),
         category,
         tags,

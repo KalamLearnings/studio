@@ -4,6 +4,8 @@
  * Centralized asset management for curriculum images
  */
 
+import type { AssetLabel, RegistryStatus } from './assetRegistry';
+
 export type AssetCategory =
   | 'letters'
   | 'books'
@@ -16,11 +18,19 @@ export type AssetCategory =
   | 'misc';
 
 export interface Asset {
+  /** The registry id when registered, else the legacy storage path. */
   id: string;
+  /** The `assets` registry id; null for a legacy file not in the registry yet. */
+  registryId: string | null;
   name: string; // Original filename stored in Supabase
   displayName: string; // Human-readable name for the asset
   url: string;
-  category: AssetCategory;
+  /** The legacy folder category; null for files the backend placed (no category in the registry). */
+  category: AssetCategory | null;
+  /** The registry status; null when not in the registry. */
+  status: RegistryStatus;
+  /** The registry label; null when not in the registry. */
+  label: AssetLabel | null;
   tags: string[];
   createdAt: string;
   updatedAt: string;

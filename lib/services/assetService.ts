@@ -1,14 +1,31 @@
 /**
- * Asset Service Layer
+ * Image library service.
  *
- * Handles all Supabase interactions for asset management.
- * Single source of truth for CRUD operations on assets.
+ * Lists the `assets` registry's images (staff read) together with the legacy
+ * files under `assets/<category>/` in the `curriculum-images` bucket that are
+ * not registered yet. Uploads, replaces, status changes and edits of the
+ * display name, category and tags go through the backend (`assets`
+ * function, CM-B5), which names paths and writes the registry. Studio never
+ * writes, moves or deletes image files or registry rows itself (D8, D9; CM-S4).
  */
 
 import { createClient } from '@/lib/supabase/client';
 import type { Asset, AssetCategory, AssetUploadData } from '@/lib/types/assets';
 import { ASSET_CATEGORIES } from '@/lib/types/assets';
+import type { PersonStatus, RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
 import { compressImage } from '@/lib/utils/imageUpload';
+import {
+  replaceRegistryAsset,
+  setRegistryAssetStatus,
+  updateRegistryAssetLibrary,
+  uploadLibraryAsset,
+} from '@/lib/api/assets';
+import {
+  listRegistryEntries,
+  registryPublicUrl,
+  type RegistryEntry,
+} from '@/lib/services/assetRegistryService';
+import { describeLabel, matchesStatusFilter } from '@/lib/assets/label';
 
 const BUCKET_NAME = 'curriculum-images';
 const ASSETS_FOLDER = 'assets';
@@ -17,42 +34,59 @@ export interface AssetFilters {
   category?: AssetCategory;
   searchQuery?: string;
   tags?: string[];
+  /** Registry status (quarantined, orphan, ...) or `unregistered`. */
+  status?: StatusFilter;
 }
 
 /**
- * Fetches all assets from storage with optional filtering
+ * Fetches the image library: registered images plus legacy files not yet in
+ * the registry, newest first, with optional filtering.
  */
 export async function getAssets(filters?: AssetFilters): Promise<Asset[]> {
+  const [legacy, registered] = await Promise.all([
+    listLegacyFiles(filters?.category),
+    listRegistryEntries('image'),
+  ]);
+
+  const byPath = new Map<string, RegistryEntry>();
+  for (const entry of registered) {
+    if (entry.bucket === BUCKET_NAME) byPath.set(entry.path, entry);
+  }
+
+  // A legacy file that the registry knows shows as the registered asset,
+  // keeping its folder category and file-name display name.
+  const merged: Asset[] = legacy.map((asset) => {
+    const entry = byPath.get(asset.id);
+    if (!entry) return asset;
+    byPath.delete(asset.id);
+    return withRegistryEntry(asset, entry);
+  });
+  byPath.forEach((entry) => merged.push(registeredOnlyAsset(entry)));
+
+  merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const query = filters?.searchQuery?.toLowerCase();
+  return merged.filter(
+    (asset) =>
+      (!filters?.category || asset.category === filters.category) &&
+      matchesStatusFilter(asset.status, filters?.status) &&
+      (!query ||
+        asset.name.toLowerCase().includes(query) ||
+        asset.displayName.toLowerCase().includes(query) ||
+        asset.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+        (describeLabel(asset.label) ?? '').toLowerCase().includes(query))
+  );
+}
+
+/** The legacy files under `assets/<category>/` (one category, or all). */
+async function listLegacyFiles(category?: AssetCategory): Promise<Asset[]> {
   const supabase = createClient();
+  // Derived from ASSET_CATEGORIES so adding a category needs one edit, not three
+  const categories = category ? [category] : (Object.keys(ASSET_CATEGORIES) as AssetCategory[]);
 
-  let allAssets: Asset[] = [];
-
-  // If specific category is selected, list only that category
-  if (filters?.category) {
-    const folderPath = `${ASSETS_FOLDER}/${filters.category}`;
-    const { data: files, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .list(folderPath, {
-        limit: 1000,
-        sortBy: { column: 'created_at', order: 'desc' },
-      });
-
-    if (error) {
-      console.error('Error fetching assets:', error);
-      throw new Error(`Failed to fetch assets: ${error.message}`);
-    }
-
-    if (files) {
-      allAssets = convertFilesToAssets(files, filters.category, supabase);
-    }
-  } else {
-    // No category selected - fetch from all categories
-    // Derived from ASSET_CATEGORIES so adding a category needs one edit, not three
-    const categories = Object.keys(ASSET_CATEGORIES) as AssetCategory[];
-
-    // Fetch files from each category folder
-    const promises = categories.map(async (category) => {
-      const folderPath = `${ASSETS_FOLDER}/${category}`;
+  const results = await Promise.all(
+    categories.map(async (cat) => {
+      const folderPath = `${ASSETS_FOLDER}/${cat}`;
       const { data: files, error } = await supabase.storage
         .from(BUCKET_NAME)
         .list(folderPath, {
@@ -61,34 +95,89 @@ export async function getAssets(filters?: AssetFilters): Promise<Asset[]> {
         });
 
       if (error) {
-        console.warn(`Error fetching assets from ${category}:`, error);
+        if (category) {
+          console.error('Error fetching assets:', error);
+          throw new Error(`Failed to fetch assets: ${error.message}`);
+        }
+        console.warn(`Error fetching assets from ${cat}:`, error);
         return [];
       }
 
-      return files ? convertFilesToAssets(files, category, supabase) : [];
-    });
+      return files ? convertFilesToAssets(files, cat, supabase) : [];
+    })
+  );
+  return results.flat();
+}
 
-    const results = await Promise.all(promises);
-    allAssets = results.flat();
+/** A known image category, else null (the registry keeps any slug; Studio shows its own). */
+function imageCategory(value: string | null): AssetCategory | null {
+  return value && value in ASSET_CATEGORIES ? (value as AssetCategory) : null;
+}
 
-    // Sort by creation date (newest first)
-    allAssets.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }
+function withRegistryEntry(asset: Asset, entry: RegistryEntry): Asset {
+  return {
+    ...asset,
+    id: entry.id,
+    registryId: entry.id,
+    displayName: entry.displayName ?? asset.displayName,
+    category: imageCategory(entry.category) ?? asset.category,
+    tags: entry.tags.length > 0 ? entry.tags : asset.tags,
+    status: entry.status,
+    label: entry.label,
+    fileSize: entry.bytes,
+    dimensions:
+      entry.width && entry.height ? { width: entry.width, height: entry.height } : asset.dimensions,
+  };
+}
 
-  console.log('Total assets loaded:', allAssets.length);
+/** The legacy folder category of a path (`assets/<category>/...`), else null. */
+function categoryOfPath(path: string): AssetCategory | null {
+  const [folder, cat] = path.split('/');
+  return folder === ASSETS_FOLDER && !!cat && cat in ASSET_CATEGORIES ? (cat as AssetCategory) : null;
+}
 
-  // Apply search filter
-  if (filters?.searchQuery) {
-    const query = filters.searchQuery.toLowerCase();
-    return allAssets.filter(asset =>
-      asset.name.toLowerCase().includes(query) ||
-      asset.tags.some(tag => tag.toLowerCase().includes(query))
-    );
-  }
+/** A registered image (backend-named path), named and filed by its library fields. */
+function registeredOnlyAsset(entry: RegistryEntry): Asset {
+  const name = entry.path.split('/').pop() ?? entry.path;
+  return {
+    id: entry.id,
+    registryId: entry.id,
+    name,
+    displayName: entry.displayName ?? describeLabel(entry.label) ?? 'Unlabelled image',
+    url: registryPublicUrl(entry),
+    category: imageCategory(entry.category) ?? categoryOfPath(entry.path),
+    status: entry.status,
+    label: entry.label,
+    tags: entry.tags,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+    fileSize: entry.bytes,
+    dimensions:
+      entry.width && entry.height ? { width: entry.width, height: entry.height } : undefined,
+  };
+}
 
-  return allAssets;
+/** The library entry for an image the backend just registered. */
+export function assetFromRegistry(asset: RegistryAsset): Asset {
+  return registeredOnlyAsset({
+    id: asset.id,
+    bucket: asset.bucket,
+    path: asset.path,
+    media: asset.media,
+    mime: asset.mime,
+    bytes: asset.bytes,
+    width: asset.width,
+    height: asset.height,
+    durationMs: asset.durationMs,
+    status: asset.status,
+    supersededBy: asset.supersededBy,
+    displayName: asset.library.displayName,
+    category: asset.library.category,
+    tags: asset.library.tags,
+    label: asset.label,
+    createdAt: asset.createdAt,
+    updatedAt: asset.updatedAt,
+  });
 }
 
 /**
@@ -113,14 +202,15 @@ function convertFilesToAssets(
         .from(BUCKET_NAME)
         .getPublicUrl(filePath);
 
-      console.log('Asset URL:', publicUrl);
-
       return {
         id: filePath,
+        registryId: null,
         name: file.name,
         displayName: extractDisplayNameFromFilename(file.name),
         url: publicUrl,
         category,
+        status: null,
+        label: null,
         tags: extractTagsFromFilename(file.name),
         createdAt: file.created_at || new Date().toISOString(),
         updatedAt: file.updated_at || new Date().toISOString(),
@@ -130,187 +220,60 @@ function convertFilesToAssets(
 }
 
 /**
- * Uploads a new asset to storage
+ * Uploads a new image through the backend (`POST /assets/library`). The
+ * backend names the path, registers the file and keeps its display name,
+ * category and tags; with no label it starts quarantined until a person
+ * labels it.
  */
 export async function uploadAsset(data: AssetUploadData): Promise<Asset> {
-  const supabase = createClient();
-  const { displayName, file, category, tags } = data;
-
-  // Compress image
+  const { displayName, category, file, tags } = data;
   const compressedFile = await compressImage(file);
+  const result = await uploadLibraryAsset({ file: compressedFile, displayName, category, tags });
+  return assetFromRegistry(result.asset);
+}
 
-  // Get file extension
-  const extension = file.name.split('.').pop() || 'png';
-
-  // Sanitize display name (remove special characters)
-  const sanitizedDisplayName = displayName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
-
-  // Generate filename: {displayName}__{timestamp}.{ext}
-  // Format allows easy extraction of displayName later
-  const timestamp = Date.now();
-  const filename = `${sanitizedDisplayName}__${timestamp}.${extension}`;
-  const filePath = `${ASSETS_FOLDER}/${category}/${filename}`;
-
-  // Upload to Supabase Storage
-  const { data: uploadData, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(filePath, compressedFile, {
-      cacheControl: '31536000',
-      upsert: false,
-    });
-
-  if (error) {
-    console.error('Error uploading asset:', error);
-    throw new Error(`Failed to upload asset: ${error.message}`);
-  }
-
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(filePath);
-
-  return {
-    id: uploadData.path,
-    name: filename,
-    displayName: displayName,
-    url: publicUrl,
-    category,
-    tags,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+export interface AssetEditData {
+  displayName: string;
+  category: AssetCategory;
+  tags: string[];
+  /** A new file: replaces the image (the old one is superseded, never deleted). */
+  file?: File;
 }
 
 /**
- * Deletes an asset from storage
- */
-export async function deleteAsset(assetId: string): Promise<void> {
-  const supabase = createClient();
-
-  const { error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .remove([assetId]);
-
-  if (error) {
-    console.error('Error deleting asset:', error);
-    throw new Error(`Failed to delete asset: ${error.message}`);
-  }
-}
-
-/**
- * Updates an asset (rename, change category, update tags, replace image)
- * Since Supabase Storage doesn't support metadata updates,
- * we re-upload with new filename/path if needed
+ * Saves the image edit form through the backend. Without a file: the library
+ * fields (`PUT /assets/:assetId/library`). With a file: a replace (`POST
+ * /assets/:assetId/replace`); the new image gets a new id, the old one is
+ * superseded and stays stored, and every activity that used it now uses the
+ * new one. Returns the image as it now is (the new one after a replace) and
+ * how many activities were repointed (0 without a file).
  */
 export async function updateAsset(
-  oldAsset: Asset,
-  updates: {
-    displayName?: string;
-    category?: AssetCategory;
-    tags?: string[];
-    file?: File;
-  }
-): Promise<Asset> {
-  const supabase = createClient();
-
-  const newDisplayName = updates.displayName || oldAsset.displayName;
-  const newCategory = updates.category || oldAsset.category;
-  const newTags = updates.tags || oldAsset.tags;
-
-  // If there's a new file or the category changed, we need to re-upload
-  const needsReupload = updates.file || updates.category !== oldAsset.category || updates.displayName !== oldAsset.displayName;
-
-  if (!needsReupload) {
-    // No structural changes - just return updated local state
-    // Note: Tags are stored in filename, so changing just tags would also need re-upload
-    // For simplicity, we'll still re-upload if tags changed
-    if (JSON.stringify(newTags) !== JSON.stringify(oldAsset.tags)) {
-      // Re-upload with new tags
-    } else {
-      return {
-        ...oldAsset,
-        displayName: newDisplayName,
-        tags: newTags,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-  }
-
-  // Get the file to upload (either new file or download existing)
-  let fileToUpload: File | Blob;
-  let extension: string;
-
-  if (updates.file) {
-    fileToUpload = await compressImage(updates.file);
-    extension = updates.file.name.split('.').pop() || 'png';
-  } else {
-    // Download existing file
-    const response = await fetch(oldAsset.url);
-    if (!response.ok) {
-      throw new Error('Failed to fetch existing asset');
-    }
-    fileToUpload = await response.blob();
-    extension = oldAsset.name.split('.').pop() || 'png';
-  }
-
-  // Generate new filename
-  const sanitizedDisplayName = newDisplayName.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
-  const timestamp = Date.now();
-  const filename = `${sanitizedDisplayName}__${timestamp}.${extension}`;
-  const newFilePath = `${ASSETS_FOLDER}/${newCategory}/${filename}`;
-
-  // Upload new file
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(newFilePath, fileToUpload, {
-      cacheControl: '31536000',
-      upsert: false,
+  registryId: string,
+  data: AssetEditData,
+): Promise<{ asset: Asset; repointedActivities: number }> {
+  const { displayName, category, tags, file } = data;
+  if (file) {
+    const compressedFile = await compressImage(file);
+    const result = await replaceRegistryAsset(registryId, {
+      file: compressedFile,
+      displayName,
+      category,
+      tags,
     });
-
-  if (uploadError) {
-    console.error('Error uploading updated asset:', uploadError);
-    throw new Error(`Failed to update asset: ${uploadError.message}`);
+    return {
+      asset: assetFromRegistry(result.asset),
+      repointedActivities: result.repointed.activities,
+    };
   }
-
-  // Delete old file
-  const { error: deleteError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .remove([oldAsset.id]);
-
-  if (deleteError) {
-    console.warn('Failed to delete old asset file:', deleteError);
-    // Don't throw - the new file is already uploaded
-  }
-
-  // Get public URL for new file
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(newFilePath);
-
-  return {
-    id: uploadData.path,
-    name: filename,
-    displayName: newDisplayName,
-    url: publicUrl,
-    category: newCategory,
-    tags: newTags,
-    createdAt: oldAsset.createdAt,
-    updatedAt: new Date().toISOString(),
-  };
+  const result = await updateRegistryAssetLibrary(registryId, { displayName, category, tags });
+  if (!result.asset) throw new Error('The image is not in the registry');
+  return { asset: assetFromRegistry(result.asset), repointedActivities: 0 };
 }
 
-/**
- * Helper: Extract category from file path or name
- */
-function extractCategoryFromPath(path: string): AssetCategory {
-  const parts = path.split('/');
-  const categoryPart = parts[parts.length - 2];
-
-  const validCategories = Object.keys(ASSET_CATEGORIES) as AssetCategory[];
-
-  return validCategories.includes(categoryPart as AssetCategory)
-    ? (categoryPart as AssetCategory)
-    : 'misc';
+/** Retires an image or makes it active again (`PUT /assets/:assetId/status`); nothing is deleted. */
+export async function setAssetStatus(registryId: string, status: PersonStatus): Promise<RegistryAsset> {
+  return setRegistryAssetStatus(registryId, status);
 }
 
 /**

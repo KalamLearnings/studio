@@ -10,12 +10,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AUDIO_CATEGORIES, type AudioCategory } from "@/lib/types/audio";
+import type { StatusFilter } from "@/lib/types/assetRegistry";
+import { AssetStatusFilter } from "@/components/assets/AssetStatusFilter";
 
 interface AudioFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedCategory: AudioCategory | undefined;
   onCategoryChange: (category: AudioCategory | undefined) => void;
+  selectedStatus: StatusFilter | undefined;
+  onStatusChange: (status: StatusFilter | undefined) => void;
 }
 
 export function AudioFilters({
@@ -23,6 +27,8 @@ export function AudioFilters({
   onSearchChange,
   selectedCategory,
   onCategoryChange,
+  selectedStatus,
+  onStatusChange,
 }: AudioFiltersProps) {
   const handleCategoryChange = (value: string) => {
     onCategoryChange(value === "all" ? undefined : (value as AudioCategory));
@@ -56,6 +62,8 @@ export function AudioFilters({
           ))}
         </SelectContent>
       </Select>
+
+      <AssetStatusFilter value={selectedStatus} onChange={onStatusChange} />
     </div>
   );
 }

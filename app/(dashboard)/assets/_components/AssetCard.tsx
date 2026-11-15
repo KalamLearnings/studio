@@ -8,6 +8,8 @@ import {
   Download,
   Copy,
   Pencil,
+  Tag,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,18 +21,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Asset } from "@/lib/types/assets";
+import { AssetStatusBadge } from "@/components/assets/AssetStatusBadge";
 
 interface AssetCardProps {
   asset: Asset;
   onEdit: (asset: Asset) => void;
-  onDelete: (id: string) => void;
+  onLabel: (asset: Asset) => void;
+  onRetire: (asset: Asset) => void;
+  onRestore: (asset: Asset) => void;
   onCopyUrl: (url: string) => void;
 }
 
 export const AssetCard = React.memo(function AssetCard({
   asset,
   onEdit,
-  onDelete,
+  onLabel,
+  onRetire,
+  onRestore,
   onCopyUrl,
 }: AssetCardProps) {
   return (
@@ -56,9 +63,19 @@ export const AssetCard = React.memo(function AssetCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onEdit(asset)}>
+              <DropdownMenuItem
+                disabled={asset.registryId === null}
+                onClick={() => onEdit(asset)}
+              >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={asset.registryId === null}
+                onClick={() => onLabel(asset)}
+              >
+                <Tag className="mr-2 h-4 w-4" />
+                Label
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onCopyUrl(asset.url)}>
                 <Copy className="mr-2 h-4 w-4" />
@@ -71,13 +88,24 @@ export const AssetCard = React.memo(function AssetCard({
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => onDelete(asset.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {/* Nothing is deleted (D9): retiring is a status change; the file keeps
+                  showing where it is already used. A superseded image was replaced:
+                  change the newer one. Unregistered images wait for the backfill. */}
+              {asset.status === "retired" ? (
+                <DropdownMenuItem onClick={() => onRestore(asset)}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Restore
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={asset.registryId === null || asset.status === "superseded"}
+                  onClick={() => onRetire(asset)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Retire
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -87,7 +115,10 @@ export const AssetCard = React.memo(function AssetCard({
           {asset.displayName || asset.name}
         </p>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-xs text-muted-foreground capitalize">{asset.category}</p>
+          {asset.category && (
+            <p className="text-xs text-muted-foreground capitalize">{asset.category}</p>
+          )}
+          <AssetStatusBadge status={asset.status} />
           {asset.tags && asset.tags.length > 0 && (
             <p className="text-xs text-muted-foreground">
               · {asset.tags.length} tag{asset.tags.length !== 1 ? "s" : ""}

@@ -9,14 +9,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { AudioAsset, AudioCategory, AudioUploadData } from '@/lib/types/audio';
+import type { PersonStatus, RegistryAsset, StatusFilter } from '@/lib/types/assetRegistry';
 import {
   getAudioAssets,
+  replaceAudioAsset,
+  setAudioStatus,
   uploadAudioAsset,
-  deleteAudioAsset,
   updateAudioAsset,
-  replaceAudioAssetFile,
   type AudioFilters,
 } from '@/lib/services/audioService';
+import { matchesStatusFilter } from '@/lib/assets/label';
 
 interface UseAudioOptions {
   initialCategory?: AudioCategory;
@@ -32,18 +34,18 @@ interface UseAudioReturn {
 
   loadAudio: () => Promise<void>;
   uploadNewAudio: (data: AudioUploadData) => Promise<AudioAsset>;
-  removeAudio: (audioId: string) => Promise<void>;
-  updateAudio: (id: string, updates: Partial<Pick<AudioAsset, 'displayName' | 'tags' | 'metadata'>>) => Promise<AudioAsset>;
-  replaceAudioFile: (
+  updateAudio: (id: string, updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>) => Promise<AudioAsset>;
+  /** Replaces a clip's file; the old clip is superseded and the new one takes its place in the list. */
+  replaceAudio: (
     id: string,
-    data: {
-      file: File;
-      displayName?: string;
-      category?: AudioCategory;
-      tags?: string[];
-      metadata?: Record<string, unknown>;
-    }
-  ) => Promise<AudioAsset>;
+    data: AudioUploadData,
+  ) => Promise<{ audio: AudioAsset; repointedActivities: number }>;
+  /** Retires a clip or makes it active again; the file is never deleted. */
+  changeAudioStatus: (id: string, status: PersonStatus) => Promise<AudioAsset>;
+  /** Puts a relabelled registry row's status and label on its library row. */
+  applyRegistryAsset: (asset: RegistryAsset) => void;
+  selectedStatus: StatusFilter | undefined;
+  setStatus: (status: StatusFilter | undefined) => void;
   setCategory: (category: AudioCategory | undefined) => void;
   setSearchQuery: (query: string) => void;
   refetch: () => Promise<void>;
@@ -60,6 +62,7 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<AudioCategory | undefined>(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter | undefined>(undefined);
 
   const loadAudio = useCallback(async () => {
     setLoading(true);
@@ -69,6 +72,7 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
       const filters: AudioFilters = {
         category: selectedCategory,
         searchQuery: searchQuery || undefined,
+        status: selectedStatus,
       };
 
       const fetchedAudio = await getAudioAssets(filters);
@@ -80,7 +84,7 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, selectedStatus]);
 
   const uploadNewAudio = useCallback(async (data: AudioUploadData): Promise<AudioAsset> => {
     setError(null);
@@ -88,9 +92,15 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
     try {
       const newAudio = await uploadAudioAsset(data);
 
-      if (!selectedCategory || selectedCategory === data.category) {
-        setAudioAssets(prev => [newAudio, ...prev]);
-      }
+      // The backend answers the registered asset when the same file was
+      // uploaded before, so the row may already be in the list.
+      setAudioAssets(prev => {
+        const rest = prev.filter(audio => audio.id !== newAudio.id);
+        const shown =
+          (!selectedCategory || selectedCategory === newAudio.category) &&
+          matchesStatusFilter(newAudio.status, selectedStatus);
+        return shown ? [newAudio, ...rest] : rest;
+      });
 
       return newAudio;
     } catch (err) {
@@ -98,24 +108,11 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
       setError(errorMessage);
       throw err;
     }
-  }, [selectedCategory]);
-
-  const removeAudio = useCallback(async (audioId: string): Promise<void> => {
-    setError(null);
-
-    try {
-      await deleteAudioAsset(audioId);
-      setAudioAssets(prev => prev.filter(audio => audio.id !== audioId));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete audio';
-      setError(errorMessage);
-      throw err;
-    }
-  }, []);
+  }, [selectedCategory, selectedStatus]);
 
   const updateAudio = useCallback(async (
     id: string,
-    updates: Partial<Pick<AudioAsset, 'displayName' | 'tags' | 'metadata'>>
+    updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>
   ): Promise<AudioAsset> => {
     setError(null);
 
@@ -130,31 +127,63 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
     }
   }, []);
 
-  const replaceAudioFile = useCallback(async (
-    id: string,
-    data: {
-      file: File;
-      displayName?: string;
-      category?: AudioCategory;
-      tags?: string[];
-      metadata?: Record<string, unknown>;
-    }
-  ): Promise<AudioAsset> => {
+  const replaceAudio = useCallback(async (id: string, data: AudioUploadData) => {
     setError(null);
-
     try {
-      const updated = await replaceAudioAssetFile(id, data);
-      setAudioAssets(prev => prev.map(audio => audio.id === id ? updated : audio));
-      return updated;
+      const result = await replaceAudioAsset(id, data);
+      const next = result.audio;
+      // The superseded clip leaves the default list; the new one takes its place.
+      setAudioAssets(prev => {
+        const shown =
+          (!selectedCategory || selectedCategory === next.category) &&
+          matchesStatusFilter(next.status, selectedStatus);
+        const rest = prev
+          .filter(audio => audio.id !== next.id)
+          .map(audio => (audio.id === id ? { ...audio, status: 'superseded' as const } : audio))
+          .filter(audio => matchesStatusFilter(audio.status, selectedStatus));
+        return shown ? [next, ...rest] : rest;
+      });
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to replace audio';
       setError(errorMessage);
       throw err;
     }
-  }, []);
+  }, [selectedCategory, selectedStatus]);
+
+  const changeAudioStatus = useCallback(async (id: string, status: PersonStatus): Promise<AudioAsset> => {
+    setError(null);
+    try {
+      const updated = await setAudioStatus(id, status);
+      setAudioAssets(prev =>
+        prev
+          .map(audio => (audio.id === id ? updated : audio))
+          .filter(audio => matchesStatusFilter(audio.status, selectedStatus))
+      );
+      return updated;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change the audio status';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [selectedStatus]);
+
+  const applyRegistryAsset = useCallback((asset: RegistryAsset) => {
+    setAudioAssets(prev =>
+      prev
+        .map(audio =>
+          audio.id === asset.id ? { ...audio, status: asset.status, label: asset.label } : audio
+        )
+        .filter(audio => matchesStatusFilter(audio.status, selectedStatus))
+    );
+  }, [selectedStatus]);
 
   const setCategory = useCallback((category: AudioCategory | undefined) => {
     setSelectedCategory(category);
+  }, []);
+
+  const setStatus = useCallback((status: StatusFilter | undefined) => {
+    setSelectedStatus(status);
   }, []);
 
   const refetch = useCallback(() => loadAudio(), [loadAudio]);
@@ -173,9 +202,12 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
     searchQuery,
     loadAudio,
     uploadNewAudio,
-    removeAudio,
     updateAudio,
-    replaceAudioFile,
+    replaceAudio,
+    changeAudioStatus,
+    applyRegistryAsset,
+    selectedStatus,
+    setStatus,
     setCategory,
     setSearchQuery,
     refetch,

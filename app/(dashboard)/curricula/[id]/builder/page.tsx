@@ -8,11 +8,17 @@ import { ActivityTypePicker } from "@/components/builder/activity-type-picker";
 import { LetterSelectorModal } from "@/components/builder/letter-selector-modal";
 import { NodeNameModal } from "@/components/builder/node-name-modal";
 import {
+  LevelTargetsPanel,
+  NodeRolePanel,
+  TopicTargetsPanel,
+} from "@/components/builder/targets";
+import {
   useBuilderData,
   useTreeState,
   useBuilderActions,
   useResizablePanel,
   useActivitiesByType,
+  useIntentContext,
 } from "./_hooks";
 import {
   BuilderHeader,
@@ -136,6 +142,25 @@ export default function BuilderPage() {
     [activities, nodes, tree, expandedIds, setSelectedNode, handleToggleExpand],
   );
 
+  // Topic, node and level pages in the form pane (CM-S8): targets, stage,
+  // node role and roll-up findings with links back to each activity.
+  const openActivityFromFinding = React.useCallback(
+    (id: string) => {
+      selectActivityById(id);
+    },
+    [selectActivityById],
+  );
+  const intentContext = useIntentContext({
+    curriculumId,
+    topics,
+    nodes,
+    activities,
+    onOpenActivity: openActivityFromFinding,
+  });
+  const selectedTreeNode = selectedNode?.type === "node"
+    ? nodes?.find((n) => n.id === selectedNode.id)
+    : undefined;
+
   const handleOpenActivityById = () => {
     const id = activitySearchId.trim();
     if (!id) return;
@@ -165,6 +190,10 @@ export default function BuilderPage() {
         onActivitySearchIdChange={setActivitySearchId}
         onOpenActivityById={handleOpenActivityById}
         onOpenRewards={() => setRewardsModalOpen(true)}
+        onOpenLevel={() => {
+          handleCancelNewActivity();
+          clearSelection();
+        }}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -194,25 +223,54 @@ export default function BuilderPage() {
           onMoveActivity={handleMoveActivity}
         />
 
-        <FormPanel
-          formKey={newActivity ? "new-activity" : selectedActivity?.id}
-          activityId={newActivity ? undefined : selectedActivity?.id}
-          activityType={formActivityType}
-          config={newActivity ? undefined : (selectedActivity?.config as Record<string, unknown> | undefined)}
-          instruction={newActivity ? undefined : selectedActivity?.instruction?.en}
-          instructionAudioUrl={newActivity ? undefined : selectedActivity?.instruction?.audio_url}
-          instructionVoiceId={newActivity ? undefined : selectedActivity?.instruction?.voiceId}
-          topic={currentTopic}
-          isNew={!!newActivity}
-          onSave={
-            newActivity
-              ? (data) => handleSaveNewActivity(newActivity, data)
-              : selectedActivity
-              ? (data) => handleSaveActivity(selectedActivity.id, data)
-              : undefined
-          }
-          onCancel={newActivity ? handleCancelNewActivity : undefined}
-        />
+        {formActivityType ? (
+          <FormPanel
+            formKey={newActivity ? "new-activity" : selectedActivity?.id}
+            activityId={newActivity ? undefined : selectedActivity?.id}
+            activityType={formActivityType}
+            config={newActivity ? undefined : (selectedActivity?.config as Record<string, unknown> | undefined)}
+            instruction={newActivity ? undefined : selectedActivity?.instruction?.en}
+            instructionAudioUrl={newActivity ? undefined : selectedActivity?.instruction?.audio_url}
+            instructionVoiceId={newActivity ? undefined : selectedActivity?.instruction?.voiceId}
+            topic={currentTopic}
+            isNew={!!newActivity}
+            onSave={
+              newActivity
+                ? (data) => handleSaveNewActivity(newActivity, data)
+                : selectedActivity
+                ? (data) => handleSaveActivity(selectedActivity.id, data)
+                : undefined
+            }
+            onCancel={newActivity ? handleCancelNewActivity : undefined}
+          />
+        ) : selectedNode?.type === "topic" ? (
+          <div className="flex-1 overflow-hidden bg-background">
+            <TopicTargetsPanel
+              key={selectedNode.id}
+              topicId={selectedNode.id}
+              topicTitle={selectedNode.title}
+              ctx={intentContext}
+            />
+          </div>
+        ) : selectedNode?.type === "node" && selectedTreeNode ? (
+          <div className="flex-1 overflow-hidden bg-background">
+            <NodeRolePanel
+              key={selectedTreeNode.id}
+              curriculumId={curriculumId}
+              topicId={selectedTreeNode.topic_id}
+              nodeId={selectedTreeNode.id}
+              nodeTitle={selectedNode.title}
+              type={selectedTreeNode.type}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-hidden bg-background">
+            <LevelTargetsPanel
+              levelTitle={curriculum?.title?.en || "This level"}
+              ctx={intentContext}
+            />
+          </div>
+        )}
 
         <PreviewPanel
           activityType={selectedNode?.type === "activity" ? selectedNode.activityType : undefined}

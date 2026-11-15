@@ -7,3 +7,4 @@ export {
   type ActivityTypeGroup,
   type ActivityWithContext,
 } from "./useActivitiesByType";
+export { useIntentContext } from "./useIntentContext";

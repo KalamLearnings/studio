@@ -64,6 +64,17 @@ export const CurriculumSchema = z.object({
   updated_at: z.string().datetime(),
 });
 
+/**
+ * A declared teaching target as a save carries it (CM-B15): a unit key, an
+ * optional skill kind and a role. The backend checks the vocabularies and
+ * answers INVALID_TEACHING_TARGETS (details: index, field, message).
+ */
+export const TeachingTargetInputSchema = z.object({
+  unit_key: z.string().min(1),
+  skill: z.string().nullable().optional(),
+  role: z.enum(['focus', 'review', 'objective', 'prerequisite']),
+});
+
 export const CreateCurriculumSchema = z.object({
   title: LocalizedTextSchema,
 });
@@ -72,6 +83,10 @@ export const CreateCurriculumSchema = z.object({
 // to be updatable here the way it is for topics/nodes/articles.
 export const UpdateCurriculumSchema = CreateCurriculumSchema.partial().extend({
   is_published: z.boolean().optional(),
+  // CM-B15: the level's stage label (null clears it) and its objective and
+  // prerequisite targets (the list replaces them).
+  stage: z.string().nullable().optional(),
+  targets: z.array(TeachingTargetInputSchema).optional(),
 });
 
 // ============================================================================
@@ -113,17 +128,28 @@ export const CreateTopicSchema = z.object({
 
 export const UpdateTopicSchema = CreateTopicSchema.extend({
   is_published: z.boolean().optional(),
+  // CM-B15: focus, review and prerequisite targets (the list replaces them).
+  targets: z.array(TeachingTargetInputSchema).optional(),
 }).partial();
 
 // ============================================================================
 // NODE (formerly "Node" - keeping backend naming)
 // ============================================================================
 
+/**
+ * A node's role (content model 2.11): the backend accepts `intro`, `lesson`,
+ * `practice`, `review` and `boss` (NODE_ROLES). `assessment` is an older Studio
+ * value kept only so existing callers still type-check.
+ */
+export const NODE_ROLES = ['intro', 'lesson', 'practice', 'review', 'boss'] as const;
+export type NodeRole = (typeof NODE_ROLES)[number];
+export const NodeTypeSchema = z.enum([...NODE_ROLES, 'assessment']);
+
 export const NodeSchema = z.object({
   id: z.string().uuid(),
   topic_id: z.string().uuid(),
   sequence_number: z.number().int().positive(),
-  type: z.enum(['lesson', 'assessment', 'intro']).default('lesson'),
+  type: NodeTypeSchema.default('lesson'),
   title: LocalizedTextSchema,
   description: LocalizedTextSchema.optional(),
   is_published: z.boolean().default(true),
@@ -137,7 +163,7 @@ export const NodeSchema = z.object({
 
 export const CreateNodeSchema = z.object({
   // sequence_number intentionally omitted — backend assigns max+1. See CreateTopicSchema.
-  type: z.enum(['lesson', 'assessment', 'intro']).default('lesson'),
+  type: NodeTypeSchema.default('lesson'),
   title: LocalizedTextSchema,
   description: LocalizedTextSchema.optional(),
   position: z.object({
@@ -227,6 +253,7 @@ export type TopicType = z.infer<typeof TopicTypeSchema>;
 export type Node = z.infer<typeof NodeSchema>;
 export type CreateNode = z.infer<typeof CreateNodeSchema>;
 export type UpdateNode = z.infer<typeof UpdateNodeSchema>;
+export type TeachingTargetInput = z.infer<typeof TeachingTargetInputSchema>;
 
 export type Article = z.infer<typeof ArticleSchema>;
 export type CreateArticle = z.infer<typeof CreateArticleSchema>;

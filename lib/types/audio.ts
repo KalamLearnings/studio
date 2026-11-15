@@ -4,6 +4,8 @@
  * Centralized audio asset management for curriculum sounds
  */
 
+import type { AssetLabel, RegistryStatus } from './assetRegistry';
+
 export type AudioCategory =
   | 'letter_sounds'
   | 'letter_names'
@@ -27,6 +29,10 @@ export interface AudioAsset {
   metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  /** The `assets` registry status (same id); null when the file is not in the registry yet. */
+  status: RegistryStatus;
+  /** The registry label; null when the file is not in the registry yet. */
+  label: AssetLabel | null;
 }
 
 export interface AudioUploadData {

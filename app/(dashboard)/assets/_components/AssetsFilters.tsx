@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { AssetCategory } from "@/lib/types/assets";
+import type { StatusFilter } from "@/lib/types/assetRegistry";
+import { AssetStatusFilter } from "@/components/assets/AssetStatusFilter";
 
 const CATEGORIES: { value: AssetCategory | "all"; label: string }[] = [
   { value: "all", label: "All Categories" },
@@ -29,6 +31,8 @@ interface AssetsFiltersProps {
   onSearchChange: (query: string) => void;
   selectedCategory: AssetCategory | undefined;
   onCategoryChange: (category: AssetCategory | undefined) => void;
+  selectedStatus: StatusFilter | undefined;
+  onStatusChange: (status: StatusFilter | undefined) => void;
   viewMode: "grid" | "list";
   onViewModeChange: (mode: "grid" | "list") => void;
 }
@@ -38,6 +42,8 @@ export function AssetsFilters({
   onSearchChange,
   selectedCategory,
   onCategoryChange,
+  selectedStatus,
+  onStatusChange,
   viewMode,
   onViewModeChange,
 }: AssetsFiltersProps) {
@@ -73,6 +79,8 @@ export function AssetsFilters({
           ))}
         </SelectContent>
       </Select>
+
+      <AssetStatusFilter value={selectedStatus} onChange={onStatusChange} />
 
       <div className="flex items-center rounded-md border">
         <Button

@@ -6,7 +6,7 @@ import {
   Trash2,
   Download,
   Copy,
-  Pencil,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,15 +17,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Asset } from "@/lib/types/assets";
+import { AssetStatusBadge } from "@/components/assets/AssetStatusBadge";
 
 interface AssetTableProps {
   assets: Asset[];
-  onEdit: (asset: Asset) => void;
-  onDelete: (id: string) => void;
+  onLabel: (asset: Asset) => void;
   onCopyUrl: (url: string) => void;
 }
 
-export function AssetTable({ assets, onEdit, onDelete, onCopyUrl }: AssetTableProps) {
+export function AssetTable({ assets, onLabel, onCopyUrl }: AssetTableProps) {
   return (
     <div className="rounded-md border">
       <table className="w-full">
@@ -57,10 +57,11 @@ export function AssetTable({ assets, onEdit, onDelete, onCopyUrl }: AssetTablePr
                   <span className="font-medium truncate max-w-[200px]">
                     {asset.displayName || asset.name}
                   </span>
+                  <AssetStatusBadge status={asset.status} />
                 </div>
               </td>
               <td className="p-3 text-muted-foreground capitalize">
-                {asset.category}
+                {asset.category ?? "-"}
               </td>
               <td className="p-3 text-muted-foreground text-sm">
                 {asset.tags && asset.tags.length > 0
@@ -81,9 +82,12 @@ export function AssetTable({ assets, onEdit, onDelete, onCopyUrl }: AssetTablePr
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(asset)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
+                    <DropdownMenuItem
+                      disabled={asset.registryId === null}
+                      onClick={() => onLabel(asset)}
+                    >
+                      <Tag className="mr-2 h-4 w-4" />
+                      Label
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onCopyUrl(asset.url)}>
                       <Copy className="mr-2 h-4 w-4" />
@@ -96,12 +100,10 @@ export function AssetTable({ assets, onEdit, onDelete, onCopyUrl }: AssetTablePr
                       </a>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => onDelete(asset.id)}
-                    >
+                    {/* Nothing is deleted (D9): retiring is a status change with no backend route yet. */}
+                    <DropdownMenuItem disabled>
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                      Retire (not available yet)
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

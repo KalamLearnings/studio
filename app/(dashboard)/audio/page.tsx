@@ -14,6 +14,7 @@ import {
   type AudioSubmitData,
 } from "@/components/audio/AudioInputField";
 import { MediaEmptyState } from "@/components/media";
+import { AssetLabelDialog } from "@/components/assets/AssetLabelDialog";
 import type { AudioAsset } from "@/lib/types/audio";
 import { toast } from "sonner";
 import { AudioHeader, AudioFilters, AudioTable } from "./_components";
@@ -24,6 +25,7 @@ export default function AudioPage() {
   // distinguishes the two: null = create, a row = edit.
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAudio, setEditingAudio] = React.useState<AudioAsset | null>(null);
+  const [labellingAudio, setLabellingAudio] = React.useState<AudioAsset | null>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const {
@@ -34,10 +36,11 @@ export default function AudioPage() {
     searchQuery,
     setCategory,
     setSearchQuery,
+    selectedStatus,
+    setStatus,
     uploadNewAudio,
     updateAudio,
-    replaceAudioFile,
-    removeAudio,
+    applyRegistryAsset,
   } = useAudio();
 
   const handleCopyUrl = React.useCallback((url: string) => {
@@ -61,10 +64,10 @@ export default function AudioPage() {
   }, []);
 
   // Single submit path for the shared add/edit dialog.
-  // - Create (no editingAudio): upload a brand-new asset.
-  // - Edit with a file (regenerated/replaced): overwrite the file in place so
-  //   activities referencing its URL serve the new audio.
-  // - Edit without a file: only metadata changed.
+  // - Create (no editingAudio): upload a brand-new asset through the backend.
+  // - Edit without a file: only catalogue fields changed.
+  // - Edit with a new file: refused. Files are content-addressed and never
+  //   overwritten (D8); replacing one needs a backend supersede route.
   const handleDialogSubmit = React.useCallback(
     async (data: AudioSubmitData) => {
       try {
@@ -72,8 +75,7 @@ export default function AudioPage() {
           // Create requires a file (the component enforces generate/upload
           // before submit when not editing).
           if (!data.file) {
-            toast.error("Please generate or upload audio first");
-            throw new Error("Missing audio file");
+            throw new Error("Please generate or upload audio first");
           }
           await uploadNewAudio({
             displayName: data.displayName,
@@ -84,14 +86,9 @@ export default function AudioPage() {
           });
           toast.success("Audio uploaded successfully");
         } else if (data.file) {
-          await replaceAudioFile(editingAudio.id, {
-            file: data.file,
-            displayName: data.displayName,
-            category: data.category,
-            tags: data.tags,
-            metadata: data.metadata,
-          });
-          toast.success("Audio regenerated and saved");
+          throw new Error(
+            "Replacing the file of existing audio is not available yet. Add it as new audio instead."
+          );
         } else {
           await updateAudio(editingAudio.id, {
             displayName: data.displayName,
@@ -101,25 +98,12 @@ export default function AudioPage() {
           toast.success("Audio updated");
         }
         closeDialog();
-      } catch {
-        toast.error("Failed to save audio");
-        throw new Error("Failed to save audio");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to save audio");
+        throw err;
       }
     },
-    [editingAudio, uploadNewAudio, replaceAudioFile, updateAudio, closeDialog]
-  );
-
-  const handleDelete = React.useCallback(
-    async (id: string) => {
-      if (!confirm("Are you sure you want to delete this audio file?")) return;
-      try {
-        await removeAudio(id);
-        toast.success("Audio deleted");
-      } catch {
-        toast.error("Failed to delete audio");
-      }
-    },
-    [removeAudio]
+    [editingAudio, uploadNewAudio, updateAudio, closeDialog]
   );
 
   const handleTogglePlay = React.useCallback(
@@ -145,7 +129,7 @@ export default function AudioPage() {
     [playingId, audioAssets]
   );
 
-  const hasFilters = !!(searchQuery || selectedCategory);
+  const hasFilters = !!(searchQuery || selectedCategory || selectedStatus);
 
   return (
     <div className="space-y-6">
@@ -156,6 +140,8 @@ export default function AudioPage() {
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
         onCategoryChange={setCategory}
+        selectedStatus={selectedStatus}
+        onStatusChange={setStatus}
       />
 
       {/* Error State */}
@@ -179,7 +165,7 @@ export default function AudioPage() {
           playingId={playingId}
           onTogglePlay={handleTogglePlay}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onLabel={setLabellingAudio}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -223,6 +209,14 @@ export default function AudioPage() {
           />
         </DialogContent>
       </Dialog>
+
+      <AssetLabelDialog
+        assetId={labellingAudio?.id ?? null}
+        name={labellingAudio?.displayName || labellingAudio?.name}
+        open={!!labellingAudio}
+        onOpenChange={(open) => !open && setLabellingAudio(null)}
+        onLabelled={applyRegistryAsset}
+      />
     </div>
   );
 }

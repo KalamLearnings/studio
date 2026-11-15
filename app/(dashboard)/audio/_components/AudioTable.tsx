@@ -10,6 +10,7 @@ import {
   Download,
   Copy,
   Pencil,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,13 +21,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AUDIO_CATEGORIES, type AudioAsset } from "@/lib/types/audio";
+import { AssetStatusBadge } from "@/components/assets/AssetStatusBadge";
 
 interface AudioTableProps {
   audioAssets: AudioAsset[];
   playingId: string | null;
   onTogglePlay: (id: string) => void;
   onEdit: (audio: AudioAsset) => void;
-  onDelete: (id: string) => void;
+  onLabel: (audio: AudioAsset) => void;
   onCopyUrl: (url: string) => void;
 }
 
@@ -45,14 +47,14 @@ const AudioRow = React.memo(function AudioRow({
   isPlaying,
   onTogglePlay,
   onEdit,
-  onDelete,
+  onLabel,
   onCopyUrl,
 }: {
   audio: AudioAsset;
   isPlaying: boolean;
   onTogglePlay: (id: string) => void;
   onEdit: (audio: AudioAsset) => void;
-  onDelete: (id: string) => void;
+  onLabel: (audio: AudioAsset) => void;
   onCopyUrl: (url: string) => void;
 }) {
   return (
@@ -75,6 +77,7 @@ const AudioRow = React.memo(function AudioRow({
         <div className="flex items-center gap-2">
           <Volume2 className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">{audio.displayName || audio.name}</span>
+          <AssetStatusBadge status={audio.status} />
         </div>
       </td>
       <td className="p-3">
@@ -133,13 +136,19 @@ const AudioRow = React.memo(function AudioRow({
                 Download
               </a>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => onDelete(audio.id)}
+              disabled={audio.status === null}
+              onClick={() => onLabel(audio)}
             >
+              <Tag className="mr-2 h-4 w-4" />
+              Label
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {/* Nothing is deleted (D9): retiring a file is a status change,
+                and the backend has no route for it yet. */}
+            <DropdownMenuItem disabled>
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Retire (not available yet)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -153,7 +162,7 @@ export function AudioTable({
   playingId,
   onTogglePlay,
   onEdit,
-  onDelete,
+  onLabel,
   onCopyUrl,
 }: AudioTableProps) {
   return (
@@ -178,7 +187,7 @@ export function AudioTable({
               isPlaying={playingId === audio.id}
               onTogglePlay={onTogglePlay}
               onEdit={onEdit}
-              onDelete={onDelete}
+              onLabel={onLabel}
               onCopyUrl={onCopyUrl}
             />
           ))}

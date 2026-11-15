@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { useAssets } from "@/lib/hooks/useAssets";
-import { AssetUploadModal, AssetEditModal } from "@/components/assets";
+import { AssetUploadModal, AssetLabelDialog } from "@/components/assets";
 import type { Asset, AssetCategory } from "@/lib/types/assets";
 import { toast } from "sonner";
 import {
@@ -17,7 +17,7 @@ import {
 export default function AssetsPage() {
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false);
-  const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
+  const [labellingAsset, setLabellingAsset] = React.useState<Asset | null>(null);
 
   const {
     assets,
@@ -27,53 +27,16 @@ export default function AssetsPage() {
     searchQuery,
     setCategory,
     setSearchQuery,
+    selectedStatus,
+    setStatus,
     uploadNewAsset,
-    updateExistingAsset,
-    removeAsset,
+    applyRegistryAsset,
   } = useAssets();
 
   const handleCopyUrl = React.useCallback((url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard");
   }, []);
-
-  const handleEdit = React.useCallback((asset: Asset) => {
-    setEditingAsset(asset);
-  }, []);
-
-  const handleSaveEdit = React.useCallback(
-    async (
-      id: string,
-      data: {
-        displayName?: string;
-        category?: AssetCategory;
-        tags?: string[];
-        file?: File;
-      }
-    ) => {
-      try {
-        await updateExistingAsset(id, data);
-        toast.success("Asset updated");
-      } catch {
-        toast.error("Failed to update asset");
-        throw new Error("Failed to update asset");
-      }
-    },
-    [updateExistingAsset]
-  );
-
-  const handleDelete = React.useCallback(
-    async (id: string) => {
-      if (!confirm("Are you sure you want to delete this asset?")) return;
-      try {
-        await removeAsset(id);
-        toast.success("Asset deleted");
-      } catch {
-        toast.error("Failed to delete asset");
-      }
-    },
-    [removeAsset]
-  );
 
   const handleUpload = React.useCallback(
     async (data: {
@@ -93,7 +56,7 @@ export default function AssetsPage() {
     [uploadNewAsset]
   );
 
-  const hasFilters = !!(searchQuery || selectedCategory);
+  const hasFilters = !!(searchQuery || selectedCategory || selectedStatus);
 
   return (
     <div className="space-y-6">
@@ -104,6 +67,8 @@ export default function AssetsPage() {
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
         onCategoryChange={setCategory}
+        selectedStatus={selectedStatus}
+        onStatusChange={setStatus}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
@@ -126,8 +91,7 @@ export default function AssetsPage() {
       {!loading && assets.length > 0 && viewMode === "grid" && (
         <AssetGrid
           assets={assets}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onLabel={setLabellingAsset}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -136,8 +100,7 @@ export default function AssetsPage() {
       {!loading && assets.length > 0 && viewMode === "list" && (
         <AssetTable
           assets={assets}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onLabel={setLabellingAsset}
           onCopyUrl={handleCopyUrl}
         />
       )}
@@ -158,12 +121,13 @@ export default function AssetsPage() {
         defaultCategory={selectedCategory}
       />
 
-      {/* Edit Modal */}
-      <AssetEditModal
-        asset={editingAsset}
-        open={!!editingAsset}
-        onOpenChange={(open) => !open && setEditingAsset(null)}
-        onSave={handleSaveEdit}
+      {/* Label Dialog */}
+      <AssetLabelDialog
+        assetId={labellingAsset?.registryId ?? null}
+        name={labellingAsset?.displayName || labellingAsset?.name}
+        open={!!labellingAsset}
+        onOpenChange={(open) => !open && setLabellingAsset(null)}
+        onLabelled={applyRegistryAsset}
       />
     </div>
   );

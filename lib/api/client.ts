@@ -34,7 +34,8 @@ export async function fetchWithAuth<T>(
   const res = await fetch(`${config.url}/functions/v1${path}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      // A multipart body sets its own Content-Type (with the boundary).
+      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       Authorization: `Bearer ${token}`,
       apikey: config.anonKey,
       ...options.headers,

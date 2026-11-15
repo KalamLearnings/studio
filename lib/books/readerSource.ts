@@ -53,12 +53,21 @@ export interface ReaderPage {
   narration?: unknown;
 }
 
+export interface ReaderAssessmentChoice {
+  id: string;
+  text: string;
+  illustration_url?: string;
+}
+
 export interface ReaderAssessmentQuestion {
   id: string;
   prompt: string;
-  choices: Array<{ id: string; text: string; illustration_url?: string }>;
+  choices: ReaderAssessmentChoice[];
   correct_choice_id: string;
 }
+
+/** The backend's limits on a private assessment (`ReaderQuestionSchema`, `ReaderAssessmentSchema`). */
+export const QUESTION_LIMITS = { questions: 20, choices: { min: 2, max: 6 }, prompt: 1000, choice: 500 } as const;
 
 export interface ReaderSourceContent {
   edition: {
@@ -112,6 +121,65 @@ export function newRevision(now: Date = new Date()): string {
   return `s-${now.getTime().toString(36)}`;
 }
 
+/** A question id not used by `questions`. */
+export function newQuestionId(questions: ReadonlyArray<Pick<ReaderAssessmentQuestion, "id">>): string {
+  const used = new Set(questions.map((q) => q.id));
+  let n = questions.length + 1;
+  while (used.has(`q${n}`)) n += 1;
+  return `q${n}`;
+}
+
+/** A choice id not used by `choices`. */
+export function newChoiceId(choices: ReadonlyArray<Pick<ReaderAssessmentChoice, "id">>): string {
+  const used = new Set(choices.map((c) => c.id));
+  let n = choices.length + 1;
+  while (used.has(`c${n}`)) n += 1;
+  return `c${n}`;
+}
+
+/** A new question with two empty choices, the first correct. */
+export function blankQuestion(id: string): ReaderAssessmentQuestion {
+  return {
+    id,
+    prompt: "",
+    choices: [
+      { id: "c1", text: "" },
+      { id: "c2", text: "" },
+    ],
+    correct_choice_id: "c1",
+  };
+}
+
+/** Removes a choice; when it was the correct one the first remaining choice becomes correct. */
+export function removeChoice(q: ReaderAssessmentQuestion, choiceId: string): ReaderAssessmentQuestion {
+  const choices = q.choices.filter((c) => c.id !== choiceId);
+  return {
+    ...q,
+    choices,
+    correct_choice_id: choices.some((c) => c.id === q.correct_choice_id) ? q.correct_choice_id : (choices[0]?.id ?? ""),
+  };
+}
+
+/**
+ * The source with its questions replaced. The edition's public reference
+ * (`{id, question_count}`) must match the private definition, so it is kept in
+ * step here; no questions means no assessment at all.
+ */
+export function withQuestions(
+  source: ReaderSourceContent,
+  questions: ReaderAssessmentQuestion[],
+): ReaderSourceContent {
+  const { assessment: _ref, ...edition } = source.edition;
+  const { assessment: current, ...rest } = source;
+  if (!questions.length) return { ...rest, edition };
+  const id = current?.id ?? "assessment";
+  return {
+    ...rest,
+    edition: { ...edition, assessment: { id, question_count: questions.length } },
+    assessment: { id, questions },
+  };
+}
+
 export function blankPage(id: string): ReaderPage {
   return { id, layout: "text", text: "", words: [] };
 }
@@ -161,8 +229,9 @@ export function draftFromV1Pages(title: string, pages: readonly V1Page[]): Reade
  * narration left out (the server generates it), and `revision`.
  */
 export function prepareSource(source: ReaderSourceContent, revision: string): ReaderSourceContent {
+  const synced = withQuestions(source, source.assessment?.questions ?? []);
   return {
-    ...source,
+    ...synced,
     edition: {
       ...source.edition,
       revision,
@@ -214,7 +283,35 @@ export function pageProblems(source: ReaderSourceContent): PageProblem[] {
   return out;
 }
 
+/** The assessment rules of the backend schema that an author can break in the editor, in plain words. */
+export function questionProblems(source: ReaderSourceContent): PageProblem[] {
+  const out: PageProblem[] = [];
+  const questions = source.assessment?.questions ?? [];
+  if (questions.length > QUESTION_LIMITS.questions) {
+    out.push({ path: "assessment", message: `A book has at most ${QUESTION_LIMITS.questions} questions.` });
+  }
+  questions.forEach((q, i) => {
+    const path = `assessment.questions[${i}]`;
+    const add = (message: string) => out.push({ path, message });
+    if (!q.prompt.trim()) add("The question needs text.");
+    else if (q.prompt.length > QUESTION_LIMITS.prompt) add(`The question is at most ${QUESTION_LIMITS.prompt} characters.`);
+    if (q.choices.length < QUESTION_LIMITS.choices.min) add(`A question needs at least ${QUESTION_LIMITS.choices.min} answers.`);
+    if (q.choices.length > QUESTION_LIMITS.choices.max) add(`A question has at most ${QUESTION_LIMITS.choices.max} answers.`);
+    if (q.choices.some((c) => !c.text.trim())) add("Every answer needs text.");
+    if (q.choices.some((c) => c.text.length > QUESTION_LIMITS.choice)) {
+      add(`An answer is at most ${QUESTION_LIMITS.choice} characters.`);
+    }
+    if (q.choices.some((c) => c.illustration_url && !c.illustration_url.startsWith("https://"))) {
+      add("An answer picture address must start with https://.");
+    }
+    if (!q.choices.some((c) => c.id === q.correct_choice_id)) add("Mark one answer as correct.");
+  });
+  return out;
+}
+
 export function pageLabel(path: string): string {
+  const q = path.match(/^assessment\.questions\[(\d+)\]/);
+  if (q) return `Question ${Number(q[1]) + 1}`;
   const m = path.match(/^edition\.pages\[(\d+)\]/);
   return m ? `Page ${Number(m[1]) + 1}` : path === "edition.title" ? "Title" : "Book";
 }

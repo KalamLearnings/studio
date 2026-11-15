@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
+  blankQuestion,
+  newQuestionId,
+  newChoiceId,
+  questionProblems,
+  removeChoice,
+  withQuestions,
   blankSource,
   draftFromV1Pages,
   newPageId,
@@ -124,5 +130,52 @@ describe("ids", () => {
     expect(newPageId([{ id: "p1" }, { id: "p3" }])).toBe("p4");
     expect(newPageId([{ id: "p1" }, { id: "p2" }])).toBe("p3");
     expect(newRevision(new Date(1_700_000_000_000))).toBe("s-loyw3v28");
+  });
+});
+
+describe("questions", () => {
+  const base = source([{ id: "p1", layout: "text", text: "Hi", words: [] }]);
+
+  it("withQuestions keeps the public reference in step and drops it when empty", () => {
+    const one = withQuestions(base, [blankQuestion("q1")]);
+    expect(one.assessment?.id).toBe("assessment");
+    expect(one.edition.assessment).toEqual({ id: "assessment", question_count: 1 });
+    const two = withQuestions(one, [blankQuestion("q1"), blankQuestion("q2")]);
+    expect(two.edition.assessment).toEqual({ id: "assessment", question_count: 2 });
+    const none = withQuestions(two, []);
+    expect(none.assessment).toBeUndefined();
+    expect(none.edition.assessment).toBeUndefined();
+  });
+
+  it("prepareSource repairs a stale reference", () => {
+    const stale = { ...withQuestions(base, [blankQuestion("q1")]), edition: { ...base.edition } };
+    expect(prepareSource(stale, "r").edition.assessment).toEqual({ id: "assessment", question_count: 1 });
+  });
+
+  it("ids skip ones in use", () => {
+    expect(newQuestionId([{ id: "q1" }, { id: "q3" }])).toBe("q4");
+    expect(newChoiceId([{ id: "c1" }, { id: "c2" }])).toBe("c3");
+  });
+
+  it("removeChoice moves the correct mark when the correct answer goes", () => {
+    const q = { ...blankQuestion("q1"), choices: [{ id: "c1", text: "a" }, { id: "c2", text: "b" }, { id: "c3", text: "c" }] };
+    expect(removeChoice(q, "c1").correct_choice_id).toBe("c2");
+    expect(removeChoice(q, "c3").correct_choice_id).toBe("c1");
+  });
+
+  it("questionProblems names the schema rules by question", () => {
+    const q = withQuestions(base, [
+      blankQuestion("q1"),
+      { id: "q2", prompt: "Ok?", choices: [{ id: "c1", text: "a", illustration_url: "http://x" }], correct_choice_id: "zz" },
+    ]);
+    expect(questionProblems(q).map((p) => [pageLabel(p.path), p.message])).toEqual([
+      ["Question 1", "The question needs text."],
+      ["Question 1", "Every answer needs text."],
+      ["Question 2", "A question needs at least 2 answers."],
+      ["Question 2", "An answer picture address must start with https://."],
+      ["Question 2", "Mark one answer as correct."],
+    ]);
+    const ok = withQuestions(base, [{ ...blankQuestion("q1"), prompt: "Q", choices: [{ id: "c1", text: "a" }, { id: "c2", text: "b" }] }]);
+    expect(questionProblems(ok)).toEqual([]);
   });
 });

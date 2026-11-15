@@ -25,6 +25,7 @@ import { useBook, useBookPages } from "@/lib/hooks/useBooks";
 import { useWords } from "@/lib/hooks/useWords";
 import { useReaderSource, useSaveReaderSource } from "@/lib/hooks/useReaderSource";
 import { ReaderPageFields } from "@/components/books-games/ReaderPageFields";
+import { ReaderQuestionFields } from "@/components/books-games/ReaderQuestionFields";
 import { StoryWordLinks } from "@/components/books-games/StoryWordLinks";
 import {
   displayStoryText,
@@ -38,9 +39,14 @@ import {
 } from "@/lib/books/storyWords";
 import {
   blankPage,
+  blankQuestion,
   blankSource,
   draftFromV1Pages,
   newPageId,
+  newQuestionId,
+  QUESTION_LIMITS,
+  questionProblems,
+  withQuestions,
   newRevision,
   pageLabel,
   pageProblems,
@@ -80,7 +86,7 @@ export function ReaderSourceEditor({ bookId }: { bookId: string }) {
     () => (draft ? wordLinkSummary(draft, words, requireReferences) : null),
     [draft, words, requireReferences],
   );
-  const problems = React.useMemo(() => (draft ? pageProblems(draft) : []), [draft]);
+  const problems = React.useMemo(() => (draft ? [...pageProblems(draft), ...questionProblems(draft)] : []), [draft]);
   const serverByPath = React.useMemo(() => issuesByPath(server?.issues ?? []), [server]);
 
   if (isLoading) {
@@ -132,6 +138,14 @@ export function ReaderSourceEditor({ bookId }: { bookId: string }) {
 
   const setPages = (pages: ReaderPage[]) => setDraft({ ...draft, edition: { ...edition, pages } });
   const updatePage = (i: number, page: ReaderPage) => setPages(edition.pages.map((p, j) => (j === i ? page : p)));
+  const questions = draft.assessment?.questions ?? [];
+  const setQuestions = (next: typeof questions) => setDraft(withQuestions(draft, next));
+  const moveQuestion = (i: number, delta: -1 | 1) => {
+    const next = [...questions];
+    const [q] = next.splice(i, 1);
+    next.splice(i + delta, 0, q);
+    setQuestions(next);
+  };
   const movePage = (i: number, delta: -1 | 1) => {
     const pages = [...edition.pages];
     const [page] = pages.splice(i, 1);
@@ -170,9 +184,10 @@ export function ReaderSourceEditor({ bookId }: { bookId: string }) {
   };
 
   const titleIssues = serverByPath.get("edition.title") ?? [];
-  const bookProblems = problems.filter((p) => !p.path.startsWith("edition.pages["));
+  const bookProblems = problems.filter((p) => !p.path.startsWith("edition.pages[") && !p.path.startsWith("assessment.questions["));
   const otherServer = (server?.issues ?? []).filter(
-    (i) => i.path !== "edition.title" && !/^edition\.pages\[\d+\]\.(text|illustration\.alt)$/.test(i.path),
+    (i) => i.path !== "edition.title" && !/^edition\.pages\[\d+\]\.(text|illustration\.alt)$/.test(i.path) &&
+      !/^assessment\.questions\[\d+\]\.(prompt|choices\[\d+\]\.text)$/.test(i.path),
   );
 
   return (
@@ -256,12 +271,30 @@ export function ReaderSourceEditor({ bookId }: { bookId: string }) {
             Add page
           </Button>
 
-          {draft.assessment && (
-            <p className="text-sm text-muted-foreground">
-              Comprehension questions: {draft.assessment.questions.length}, kept as saved. Their Arabic words are
-              linked here too.
-            </p>
-          )}
+          <h3 className="pt-2 font-medium">Comprehension questions</h3>
+          {questions.map((q, i) => (
+            <ReaderQuestionFields
+              key={q.id}
+              question={q}
+              index={i}
+              count={questions.length}
+              onChange={(next) => setQuestions(questions.map((x, j) => (j === i ? next : x)))}
+              onMove={(delta) => moveQuestion(i, delta)}
+              onRemove={() => setQuestions(questions.filter((_, j) => j !== i))}
+              spellingOf={spellingOf}
+              problems={problems.filter((p) => p.path === `assessment.questions[${i}]`)}
+              serverIssues={serverByPath}
+            />
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={questions.length >= QUESTION_LIMITS.questions}
+            onClick={() => setQuestions([...questions, blankQuestion(newQuestionId(questions))])}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add question
+          </Button>
           {otherServer.length > 0 && (
             <ul className="list-disc pl-5 text-sm text-destructive" role="alert">
               {otherServer.map((issue, i) => (

@@ -38,6 +38,9 @@ export { ContentItemEditor, CONTENT_KIND_OPTIONS } from "./ContentItemEditor";
 export { ContentItemGrid } from "./ContentItemGrid";
 export { PromptKindPicker } from "./PromptKindPicker";
 
+// Phrase item (CM-S11): reviewed words in order and the sentence flag
+export { PhraseBuilder } from "./PhraseBuilder";
+
 // Letter selector with modal
 export { LetterSelector } from "./LetterSelector";
 

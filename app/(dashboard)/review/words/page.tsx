@@ -15,7 +15,9 @@ import {
   type QueueSlice,
   type ReviewNote,
 } from "@/lib/words/review/queue";
-import { loadNotes, saveNotes, withNote } from "@/lib/words/review/notes";
+import { toast } from "sonner";
+import { clearReviewDecision, setReviewDecision } from "@/lib/api/wordReviewDecisions";
+import { loadNotes, withNote } from "@/lib/words/review/notes";
 import { WordReviewRow } from "./_components/WordReviewRow";
 
 const PAGE = 50;
@@ -44,17 +46,27 @@ export default function WordReviewPage() {
   const [limit, setLimit] = React.useState(PAGE);
   const [notes, setNotes] = React.useState<ReviewNote[]>([]);
 
-  React.useEffect(() => setNotes(loadNotes()), []);
+  React.useEffect(() => {
+    loadNotes()
+      .then(setNotes)
+      .catch((e) => toast.error(`Notes could not be loaded: ${e instanceof Error ? e.message : "unknown error"}`));
+  }, []);
 
   const counts = React.useMemo(() => queueCounts(rows), [rows]);
   const shown = React.useMemo(() => filterQueue(rows, { status, slice, search }), [rows, status, slice, search]);
   const noteById = React.useMemo(() => new Map(notes.map((n) => [n.wordId, n])), [notes]);
 
   const onNote = React.useCallback((wordId: string, note: Omit<ReviewNote, "wordId"> | null) => {
+    const full = note ? { ...note, wordId } : null;
+    let before: ReviewNote | null = null;
     setNotes((prev) => {
-      const next = withNote(prev, wordId, note ? { ...note, wordId } : null);
-      saveNotes(next);
-      return next;
+      before = prev.find((n) => n.wordId === wordId) ?? null;
+      return withNote(prev, wordId, full);
+    });
+    // Saved on the server; a failed save puts the previous note back.
+    (full ? setReviewDecision(full) : clearReviewDecision(wordId)).catch((e) => {
+      setNotes((prev) => withNote(prev, wordId, before));
+      toast.error(`The note was not saved: ${e instanceof Error ? e.message : "unknown error"}`);
     });
   }, []);
 
@@ -75,7 +87,7 @@ export default function WordReviewPage() {
           <h1 className="text-2xl font-bold">Word review</h1>
           <p className="max-w-2xl text-muted-foreground">
             Real vowelled spellings, most used first. Approve a spelling to add it to the allow-list (it records who
-            approved it and when). Pseudo and wrong-harakat notes are kept in this browser and exported for the
+            approved it and when). Pseudo and wrong-harakat notes are saved on the server for all reviewers and can be exported for the
             clean-up run; they change nothing in the bank.
           </p>
         </div>

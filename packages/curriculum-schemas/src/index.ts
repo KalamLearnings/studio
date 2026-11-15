@@ -218,6 +218,7 @@ export {
   SUN_LETTER_IDS,
   isContrastId,
   deriveContrast,
+  deriveWordContrast,
   type ContrastId,
   type ContrastRef,
   type ContrastContext,

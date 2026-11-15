@@ -204,6 +204,9 @@ export function getActivityCategory(type: ActivityType): string {
     drag_haraka_to_word: 'Phonics',
     match_pairs: 'Recognition',
     camel_narration: 'Introduction',
+    read_and_match: 'Reading',
+    sentence_builder: 'Reading',
+    sound_sort: 'Listening',
   };
 
   return categories[type];
@@ -264,6 +267,9 @@ export function getEstimatedDuration(type: ActivityType): number {
     drag_haraka_to_word: 45,
     match_pairs: 45,
     camel_narration: 30,
+    read_and_match: 30,
+    sentence_builder: 60,
+    sound_sort: 60,
   };
 
   return durations[type];
@@ -585,6 +591,20 @@ export function createDefaultConfig(type: ActivityType): Record<string, any> {
     match_pairs: {
       pairs: [],
       matchType: 'letter_to_letter',
+    },
+    // Reading types (CM-B35): the author picks the reviewed words, pictures and sounds.
+    read_and_match: {
+      sentence: { kind: 'phrase', phrase: { wordIds: [], isSentence: true } },
+      options: [],
+    },
+    sentence_builder: {
+      sentence: { kind: 'phrase', phrase: { wordIds: [], isSentence: true } },
+    },
+    sound_sort: {
+      sortBy: 'first_sound',
+      bins: [],
+      items: [],
+      playItemAudio: true,
     },
   };
 

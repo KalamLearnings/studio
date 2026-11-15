@@ -188,3 +188,42 @@ export function deriveContrast(
   if (!formEqual) return null;
   return marksContrast(tm, dm);
 }
+
+/**
+ * The contrast between a target word and a distractor word (R10 (4)), or null.
+ * Each word is its letters in order, one reference per letter, without forms
+ * (a letter's form in a word follows from its neighbours) and without
+ * long-vowel carriers (their length is the `madd` of the letter before them).
+ *
+ * When the two words have the same number of letters and differ in exactly one
+ * position (another letter, or other marks on the same letter), the contrast
+ * is `deriveContrast` of that position, with `afterAl` when both words start
+ * with al- (ا ل) and the position is the letter right after it. Anything else
+ * is null and the author picks: two or more differences, different lengths,
+ * identical words.
+ */
+export function deriveWordContrast(
+  target: readonly ContrastRef[],
+  distractor: readonly ContrastRef[],
+): ContrastId | null {
+  if (target.length !== distractor.length || target.length === 0) return null;
+  let at = -1;
+  for (let i = 0; i < target.length; i++) {
+    const t = target[i] as ContrastRef;
+    const d = distractor[i] as ContrastRef;
+    if (t.letterId === d.letterId && sameMarks(marksOf(t), marksOf(d))) continue;
+    if (at >= 0) return null;
+    at = i;
+  }
+  if (at < 0) return null;
+  const startsWithAl = (w: readonly ContrastRef[]) =>
+    w.length > 2 && (w[0] as ContrastRef).letterId === 'alif' &&
+    (w[1] as ContrastRef).letterId === 'lam';
+  const t = target[at] as ContrastRef;
+  const d = distractor[at] as ContrastRef;
+  return deriveContrast(
+    { letterId: t.letterId, haraka: t.haraka, madd: t.madd },
+    { letterId: d.letterId, haraka: d.haraka, madd: d.madd },
+    { afterAl: at === 2 && startsWithAl(target) && startsWithAl(distractor) },
+  );
+}

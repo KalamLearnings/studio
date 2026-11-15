@@ -233,6 +233,7 @@ export default function BuilderPage() {
             instructionAudioUrl={newActivity ? undefined : selectedActivity?.instruction?.audio_url}
             instructionVoiceId={newActivity ? undefined : selectedActivity?.instruction?.voiceId}
             topic={currentTopic}
+            nodeId={newActivity ? newActivity.nodeId : selectedActivity?.node_id}
             isExemplar={selectedActivity?.is_exemplar}
             isAiDraft={selectedActivity?.provenance != null}
             isPublished={selectedActivity?.is_published}

@@ -15,6 +15,8 @@ interface FormPanelProps {
   instructionAudioUrl?: string | null;
   instructionVoiceId?: string | null;
   topic: Topic | null;
+  /** The node the activity sits in (or will, for a new one). */
+  nodeId?: string;
   /** The saved activity's generation columns (CM-S9). */
   isExemplar?: boolean;
   isAiDraft?: boolean;
@@ -33,6 +35,7 @@ export function FormPanel({
   instructionAudioUrl,
   instructionVoiceId,
   topic,
+  nodeId,
   isExemplar,
   isAiDraft,
   isPublished,
@@ -59,6 +62,7 @@ export function FormPanel({
         instructionAudioUrl={instructionAudioUrl}
         instructionVoiceId={instructionVoiceId}
         topic={topic}
+        nodeId={nodeId}
         isNew={isNew}
         onSave={onSave}
         onCancel={onCancel}

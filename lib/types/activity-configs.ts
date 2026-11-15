@@ -8,6 +8,14 @@
 import type { ArticleType } from '@/lib/schemas/curriculum';
 import type { LetterReference as LetterRef } from '@/lib/utils/letterReference';
 import type { HarakaType } from '@kalam/curriculum-schemas';
+import type {
+  ReadAndMatchConfig,
+  SentenceBuilderConfig,
+  SoundSortConfig,
+} from '@kalam/curriculum-schemas/server';
+
+// Reading types (CM-B35, v2 only): the server's own write shapes
+export type { ReadAndMatchConfig, SentenceBuilderConfig, SoundSortConfig };
 
 // Base types
 export type ContentType = 'letter' | 'word' | 'image';
@@ -604,7 +612,10 @@ export type ActivityConfig =
   | DriveToSukoonConfig
   | DriveToShaddaConfig
   | MatchPairsConfig
-  | CamelNarrationConfig;
+  | CamelNarrationConfig
+  | ReadAndMatchConfig
+  | SentenceBuilderConfig
+  | SoundSortConfig;
 
 /**
  * Mapped type for activity configs by type
@@ -638,6 +649,9 @@ export type ActivityConfigMap = {
   drive_to_shadda: DriveToShaddaConfig;
   match_pairs: MatchPairsConfig;
   camel_narration: CamelNarrationConfig;
+  read_and_match: ReadAndMatchConfig;
+  sentence_builder: SentenceBuilderConfig;
+  sound_sort: SoundSortConfig;
 };
 
 /**

@@ -74,6 +74,9 @@ const IMPLEMENTED_ACTIVITIES: string[] = [
   "drive_to_shadda",
   "match_pairs",
   "camel_narration",
+  "read_and_match",
+  "sentence_builder",
+  "sound_sort",
 ];
 
 function getRecentActivities(): string[] {

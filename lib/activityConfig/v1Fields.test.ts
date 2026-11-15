@@ -2,7 +2,8 @@
  * CM-S3 x CM-B31: opening and saving an activity in Studio must not change
  * any field the v1 app reads.
  *
- * For every converted type (`CANONICAL_FORM_TYPES`), each PROD-shaped stored
+ * For every converted type v1 is sent (`CANONICAL_FORM_TYPES` but the v2-only
+ * reading types), each PROD-shaped stored
  * config (the backend's CM-B7 fixture, one PROD config per distinct shape,
  * plus the legacy rows below) is delivered to v1 twice through the backend's
  * own delivery path (`enrichActivityConfig` and `resolveActivityStorageUrls`,
@@ -48,6 +49,7 @@ import { getActivityConfigSchema } from "@kalam/curriculum-schemas/server";
 import { normalizeActivityConfig } from "../../components/builder/forms/normalizeActivityConfig";
 import {
   CANONICAL_FORM_TYPES,
+  V2_ONLY_FORM_TYPES,
   openForEdit,
   toSaveConfig,
   V1_BLOCKED_TYPES,
@@ -325,6 +327,9 @@ function sharedDifferences(types: readonly string[]): string[] {
   return out;
 }
 
+/** The converted types v1 is sent (the v2-only reading types never reach it, CM-B35). */
+const V1_TYPES = Object.keys(CANONICAL_FORM_TYPES).filter((t) => !V2_ONLY_FORM_TYPES.includes(t));
+
 describe("v1 fields after an open-and-save in Studio (CM-B31)", () => {
   it("loads the letters seed and the PROD shapes", () => {
     expect(Object.keys(LETTERS).length).toBeGreaterThanOrEqual(28);
@@ -334,13 +339,13 @@ describe("v1 fields after an open-and-save in Studio (CM-B31)", () => {
 
   it("checks real PROD shapes of every converted type", () => {
     const covered = new Set(PROD_SHAPES.map((r) => r.type));
-    for (const type of Object.keys(CANONICAL_FORM_TYPES)) {
+    for (const type of V1_TYPES) {
       expect(covered.has(type) || EXTRA_ROWS.some((r) => r.type === type), type).toBe(true);
     }
   });
 
   it("no converted type changes a field v1 reads beyond what Studio already did", () => {
-    expect(newDifferencesByType(Object.keys(CANONICAL_FORM_TYPES))).toEqual({});
+    expect(newDifferencesByType(V1_TYPES)).toEqual({});
   });
 
   it("the changes Studio already made before CM-S3 are only the shim's known mappings", () => {
@@ -348,7 +353,7 @@ describe("v1 fields after an open-and-save in Studio (CM-B31)", () => {
     // glyph correctLetter copied to targetLetter when the row has none. The
     // shim no longer infers a missing MCQ `mode` (it switched rows with text
     // and a picture to image-only in v1), so an MCQ changes nothing.
-    const shared = sharedDifferences(Object.keys(CANONICAL_FORM_TYPES));
+    const shared = sharedDifferences(V1_TYPES);
     if (process.env.V1_REPORT) console.log(shared.join("\n"));
     for (const d of shared) {
       expect(d).toMatch(/^(show_letter_or_word \S+ contentType: "\(absent\)" -> "letter"|pop_balloons_with_letter x-pop-1 targetLetter(\[\])?: )/);

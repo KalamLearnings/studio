@@ -103,6 +103,11 @@ export const ACTIVITY_TYPE_CATEGORIES: Record<ActivityTypeString, ActivityCatego
   drive_to_sukoon: 'learning',
   drive_to_shadda: 'learning',
   match_pairs: 'drag',
+
+  // Reading types (CM-B35): v2 only
+  read_and_match: 'learning',
+  sentence_builder: 'learning',
+  sound_sort: 'drag',
 };
 
 /**
@@ -176,6 +181,9 @@ export const ACTIVITY_TYPES: { value: string; label: string }[] = [
   { value: 'drive_to_shadda', label: 'Shadda Racetrack' },
   { value: 'match_pairs', label: 'Match Pairs (Draw Lines)' },
   { value: 'camel_narration', label: 'Camel Mascot Narration' },
+  { value: 'read_and_match', label: 'Read and Match (Phrase or Sentence)' },
+  { value: 'sentence_builder', label: 'Sentence Builder (Word Order)' },
+  { value: 'sound_sort', label: 'Sound Sort (Baskets)' },
 ];
 
 /**
@@ -230,6 +238,9 @@ export const ACTIVITY_ICONS: Record<string, string> = {
   drive_to_shadda: '🚦',
   match_pairs: '🔗',
   camel_narration: '🐪',
+  read_and_match: '📖',
+  sentence_builder: '🧱',
+  sound_sort: '🧺',
 };
 
 /**

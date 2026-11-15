@@ -87,6 +87,8 @@ export interface BaseActivityFormProps<T extends ActivityConfig = ActivityConfig
   topic?: TopicContext | null;
   /** The last save's refusal (code and details), for forms that show it inline. */
   saveError?: { code?: string; details?: unknown } | null;
+  /** The node the activity sits in (phrase forms show its live decodability report). */
+  nodeId?: string;
 }
 
 // Alias for backward compatibility

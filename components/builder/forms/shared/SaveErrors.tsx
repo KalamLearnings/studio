@@ -10,6 +10,7 @@
 
 import * as React from "react";
 import {
+  checkTitle,
   errorLine,
   errorsAt,
   unplacedErrors,
@@ -48,13 +49,26 @@ export function SaveErrorsProvider({
           <p className="text-xs font-medium text-destructive">The server refused this save:</p>
           <ul className={listClass}>
             {rest.map((e, i) => (
-              <li key={i}>{errorLine(e)}</li>
+              <li key={i}>
+                <ErrorText error={e} />
+              </li>
             ))}
           </ul>
         </div>
       )}
       {children}
     </SaveErrorsContext.Provider>
+  );
+}
+
+/** One error line, with its check's short name first when it has one (`Phrase review: ...`). */
+function ErrorText({ error, prefix }: { error: ConfigFieldError; prefix?: string }) {
+  const title = checkTitle(error);
+  return (
+    <>
+      {title && <span className="font-medium">{title}: </span>}
+      {errorLine(error, prefix)}
+    </>
   );
 }
 
@@ -68,7 +82,9 @@ export function FieldErrors({ path }: { path: string }) {
   return (
     <ul className={listClass}>
       {errors.map((e, i) => (
-        <li key={i}>{errorLine(e, path)}</li>
+        <li key={i}>
+          <ErrorText error={e} prefix={path} />
+        </li>
       ))}
     </ul>
   );

@@ -31,6 +31,9 @@ import { DriveToSukoonActivityForm } from './DriveToSukoonActivityForm';
 import { DriveToShaddaActivityForm } from './DriveToShaddaActivityForm';
 import { ContentWithCardsActivityForm } from "./ContentWithCardsActivityForm";
 import { MatchPairsActivityForm } from "./MatchPairsActivityForm";
+import { ReadAndMatchActivityForm } from "./ReadAndMatchActivityForm";
+import { SentenceBuilderActivityForm } from "./SentenceBuilderActivityForm";
+import { SoundSortActivityForm } from "./SoundSortActivityForm";
 
 // Re-export types and shared components
 export * from "./types";
@@ -61,6 +64,9 @@ export { SoundBlendActivityForm } from "./SoundBlendActivityForm";
 export { WordSplitBlendForm } from "./WordSplitBlendForm";
 export { ContentWithCardsActivityForm } from "./ContentWithCardsActivityForm";
 export { MatchPairsActivityForm } from "./MatchPairsActivityForm";
+export { ReadAndMatchActivityForm } from "./ReadAndMatchActivityForm";
+export { SentenceBuilderActivityForm } from "./SentenceBuilderActivityForm";
+export { SoundSortActivityForm } from "./SoundSortActivityForm";
 
 // Config for activities that use TargetLetterWithDistractorsForm
 interface TargetLetterActivityConfig {
@@ -280,6 +286,11 @@ const activityFormComponents: Partial<Record<ActivityType, FormComponent>> = {
   drive_to_sukoon: DriveToSukoonActivityForm,
   drive_to_shadda: DriveToShaddaActivityForm,
   match_pairs: MatchPairsActivityForm,
+
+  // Reading types (CM-S12, backend CM-B35): v2 only
+  read_and_match: ReadAndMatchActivityForm,
+  sentence_builder: SentenceBuilderActivityForm,
+  sound_sort: SoundSortActivityForm,
 
   // Target letter + distractor activities (using shared form)
   pop_balloons_with_letter: createTargetLetterForm("pop_balloons_with_letter"),

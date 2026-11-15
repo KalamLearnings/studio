@@ -8,8 +8,8 @@
  * is typed or stored.
  *
  * `onChange` receives the item the save would send, or null while the draft
- * is not a valid phrase (too few or too many words). No activity type takes a
- * phrase yet (CM-B35 adds them), so no form uses this control today.
+ * is not a valid phrase (too few or too many words). Used by the
+ * `read_and_match` and `sentence_builder` forms (CM-S12).
  */
 
 import * as React from "react";

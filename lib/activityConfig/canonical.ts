@@ -51,6 +51,9 @@ import {
   writePrompt,
   type EditorItem,
 } from "./contentItems";
+import { writeReadAndMatch } from "../readingTypes/readAndMatch";
+import { writeSentenceBuilder } from "../readingTypes/sentenceBuilder";
+import { writeSoundSort } from "../readingTypes/soundSort";
 
 export type Config = Record<string, unknown>;
 
@@ -508,7 +511,18 @@ export const CANONICAL_FORM_TYPES: Readonly<Record<string, CanonicalType>> = {
   content_with_cards: { write: writeCards, canonicalOk: cardsCanonicalOk, storedOk: cardsStoredOk, hints: cardsHints, view: asRead },
   multiple_choice_question: { write: writeMcq, canonicalOk: mcqCanonicalOk, storedOk: mcqStoredOk, hints: mcqHints, view: asRead },
   match_pairs: { write: writeMatchPairs, canonicalOk: pairsCanonicalOk, hints: pairsHints, view: asRead },
+  // reading types (CM-S12, backend CM-B35): v2 only, no v1 shape, references from the start
+  read_and_match: { write: writeReadAndMatch, view: asRead },
+  sentence_builder: { write: writeSentenceBuilder, view: asRead },
+  sound_sort: { write: writeSoundSort, view: asRead },
 };
+
+/**
+ * Converted types the server never sends to v1 (backend CM-B35,
+ * `visibility.ts` `V2_ONLY_ACTIVITY_TYPES`): no v1 field to keep, and no
+ * PROD row of them exists, so the CM-B31 v1-field check leaves them out.
+ */
+export const V2_ONLY_FORM_TYPES: readonly string[] = ["read_and_match", "sentence_builder", "sound_sort"];
 
 /**
  * Types taken back to the shim because opening and saving a stored row would

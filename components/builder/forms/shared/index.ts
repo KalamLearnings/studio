@@ -68,3 +68,8 @@ export { PreviewBox } from "./PreviewBox";
 export { SliderWithValue } from "./SliderWithValue";
 export { RadioButtonGroup } from "./RadioButtonGroup";
 export { AudioPickerField } from "./AudioPickerField";
+
+// Reading types (CM-S12): the v2-only note, client-side problems, library hints
+export { V2OnlyNote } from "./V2OnlyNote";
+export { FormProblems } from "./FormProblems";
+export { useReferenceHints, useCuratedWords } from "./useReferenceHints";

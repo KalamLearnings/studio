@@ -39,6 +39,8 @@ interface ActivityFormProps {
   /** Saved TTS voice for this activity's instruction (defaults to Shelby). */
   instructionVoiceId?: string | null;
   topic?: TopicContext | null;
+  /** The node the activity sits in (or will, for a new one). */
+  nodeId?: string;
   isNew?: boolean;
   /**
    * Persists the activity. Receives intent only (config, instruction text,
@@ -60,6 +62,7 @@ export function ActivityForm({
   instructionAudioUrl = null,
   instructionVoiceId = null,
   topic,
+  nodeId,
   isNew = false,
   onSave,
   onCancel,
@@ -299,6 +302,7 @@ export function ActivityForm({
                   onChange={handleConfigChange}
                   topic={topic}
                   saveError={saveError}
+                  nodeId={nodeId}
                 />
               </SaveErrorsProvider>
             </div>

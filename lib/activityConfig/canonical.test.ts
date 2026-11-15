@@ -377,7 +377,7 @@ describe("every converted type", () => {
     expect(toSaveConfig("multiple_choice_question", MCQ_LETTERS)).toEqual(
       toSaveConfig("multiple_choice_question", toSaveConfig("multiple_choice_question", MCQ_LETTERS)),
     );
-    expect(Object.keys(CANONICAL_FORM_TYPES).length).toBe(31);
+    expect(Object.keys(CANONICAL_FORM_TYPES).length).toBe(34);
   });
 });
 

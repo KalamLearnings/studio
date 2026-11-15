@@ -71,3 +71,20 @@ export function errorLine(error: ConfigFieldError, prefix = ""): string {
     .join(" ");
   return where ? `${where}: ${error.message}` : error.message;
 }
+
+/**
+ * Short names for the save checks whose message alone does not say which rule
+ * it is (backend CM-B33, CM-B34, CM-B35): shown before the message.
+ */
+const CHECK_TITLES: Readonly<Record<string, string>> = {
+  phrase_words: "Phrase words",
+  phrase_reviewed: "Phrase review",
+  decodable: "Decodability",
+  sort_item_sound: "Basket sound",
+  distractors_differ: "Same as the answer",
+};
+
+/** The short name of an error's check, or null when it has none. */
+export function checkTitle(error: ConfigFieldError): string | null {
+  return (error.check && CHECK_TITLES[error.check]) || null;
+}

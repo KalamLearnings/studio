@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteConfirmMessage } from '@/lib/utils/contentDelete';
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -259,7 +260,7 @@ export default function CurriculaPage() {
 
   const handleDelete = React.useCallback(
     (id: string) => {
-      if (confirm("Are you sure you want to delete this curriculum?")) {
+      if (confirm(deleteConfirmMessage("curriculum"))) {
         deleteMutation.mutate(id);
       }
     },

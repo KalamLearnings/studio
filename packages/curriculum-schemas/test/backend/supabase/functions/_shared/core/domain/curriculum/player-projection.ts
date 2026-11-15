@@ -76,6 +76,28 @@ export function resolveActivityStorageUrls<
     }
   }
 
+  // Resolve audio_url in conditionalAudio outcome clips (onSuccess,
+  // onPartialSuccess, onFirstWrongAttempt, ...): each is { text?, audio_url? }.
+  if (
+    resolved.config?.conditionalAudio &&
+    typeof resolved.config.conditionalAudio === 'object' &&
+    !Array.isArray(resolved.config.conditionalAudio)
+  ) {
+    const outcomes = Object.fromEntries(
+      Object.entries(resolved.config.conditionalAudio as Record<string, unknown>).map(
+        ([key, value]) => {
+          if (key === 'rules' || !value || typeof value !== 'object' || Array.isArray(value)) {
+            return [key, value];
+          }
+          const clip = value as { audio_url?: unknown };
+          if (typeof clip.audio_url !== 'string' || !clip.audio_url) return [key, value];
+          return [key, { ...clip, audio_url: resolveStoredAudioUrl(clip.audio_url, urls) }];
+        },
+      ),
+    );
+    resolved.config = { ...resolved.config, conditionalAudio: outcomes };
+  }
+
   // Resolve audio_url in conditionalAudio rules
   if (resolved.config?.conditionalAudio) {
     const conditionalAudio = resolved.config.conditionalAudio as Record<

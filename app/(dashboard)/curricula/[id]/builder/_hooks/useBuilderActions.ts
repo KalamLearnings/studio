@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteConfirmMessage } from '@/lib/utils/contentDelete';
 import * as React from "react";
 import type { TreeNode } from "@/components/builder/curriculum-tree";
 import type { Letter } from "@/lib/hooks/useLetters";
@@ -291,13 +292,13 @@ export function useBuilderActions({
   // Delete
   const handleDelete = React.useCallback(
     (targetNode: TreeNode) => {
-      const confirmMessage = `Are you sure you want to delete this ${targetNode.type}?${
+      const confirmMessage = deleteConfirmMessage(targetNode.type,
         targetNode.type === "topic"
           ? " This will also delete all nodes and activities within it."
           : targetNode.type === "node"
           ? " This will also delete all activities within it."
           : ""
-      }`;
+      );
 
       if (!confirm(confirmMessage)) return;
 

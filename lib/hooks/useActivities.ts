@@ -2,6 +2,7 @@
  * React Query hooks for activity operations including batch reorder
  */
 
+import { deleteErrorMessage } from '@/lib/utils/contentDelete';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listArticles,
@@ -192,7 +193,7 @@ export function useDeleteActivity() {
       toast.success('Activity deleted successfully');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete activity');
+      toast.error(deleteErrorMessage(error, 'activity'));
     },
   });
 }

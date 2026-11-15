@@ -19,22 +19,13 @@ interface SaveGeneratedTopicParams {
   letterId?: string;
 }
 
-/**
- * Maps AI-generated node types to the backend's accepted types.
- * The backend schema is flexible, but the dashboard types are stricter.
- */
-function mapNodeType(type: string): 'intro' | 'lesson' | 'assessment' {
-  switch (type) {
-    case 'intro':
-      return 'intro';
-    case 'practice':
-    case 'review':
-    case 'boss':
-      return 'assessment';
-    case 'lesson':
-    default:
-      return 'lesson';
-  }
+/** Node types the backend accepts (NODE_TYPES in the backend curriculum contract). */
+const NODE_TYPES = ['intro', 'lesson', 'practice', 'review', 'boss'] as const;
+export type NodeType = (typeof NODE_TYPES)[number];
+
+/** Maps an AI-generated node type to one the backend accepts; unknown types become `lesson`. */
+export function mapNodeType(type: string): NodeType {
+  return (NODE_TYPES as readonly string[]).includes(type) ? (type as NodeType) : 'lesson';
 }
 
 export function useSaveGeneratedTopic() {

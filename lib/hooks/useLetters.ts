@@ -155,9 +155,9 @@ export const letterFilters = {
     const dotCount = letter.diacritics?.count;
     return dotCount !== undefined && dotCount > 0;
   },
-  /** Hamza carrier letters (alif, waw, ya) */
+  /** Hamza carrier letters (alif, waw, yaa) */
   hamzaCarriers: (letter: Letter): boolean => {
-    return ['alif', 'waw', 'ya'].includes(letter.id);
+    return ['alif', 'waw', 'yaa'].includes(letter.id);
   },
   /** All letters (no filter) */
   all: (): boolean => true,

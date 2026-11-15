@@ -17,6 +17,7 @@ import {
   type HarakaComponent,
   type HarakaBase,
 } from './harakat';
+import { isValidMadd, MADD_NEEDS_SHORT_VOWEL } from './madd';
 
 // ============================================================================
 // LOCALIZED TEXT
@@ -579,11 +580,14 @@ export const OptionalHarakaSchema = z.enum(['none', ...HARAKA_IDS])
  * - Database independence (letters table can change)
  * - Form-specific rendering (isolated, initial, medial, final)
  * - Optional diacritics (haraka)
+ * - Optional madd (D7, CM-B4): `madd: true` only with fatha, damma or kasra;
+ *   absent means false. Rules in madd.ts, shared with the backend.
  *
  * @example
  * ```
  * { letterId: 'ba', form: 'isolated' }
  * { letterId: 'ba', form: 'initial', haraka: 'fatha' }
+ * { letterId: 'ba', form: 'isolated', haraka: 'fatha', madd: true } // بَا
  * ```
  */
 export const LetterReferenceSchema = z.object({
@@ -596,6 +600,14 @@ export const LetterReferenceSchema = z.object({
   haraka: OptionalHarakaSchema
     .optional()
     .describe('Optional diacritic mark to display on the letter'),
+
+  madd: z.boolean()
+    .optional()
+    .describe('Long vowel after fatha, damma or kasra (absent = false)'),
+}).superRefine((ref, ctx) => {
+  if (!isValidMadd(ref)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['madd'], message: MADD_NEEDS_SHORT_VOWEL });
+  }
 });
 
 export type LetterReference = z.infer<typeof LetterReferenceSchema>;

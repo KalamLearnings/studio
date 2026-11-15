@@ -4,6 +4,8 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { toast } from 'sonner';
 import {
   approveDraft,
+  declineWordRequest,
+  fulfilWordRequest,
   listNodeDrafts,
   listWordRequests,
   rejectDraft,
@@ -55,6 +57,16 @@ export function useDraftActions() {
         void qc.invalidateQueries({ queryKey: ['all-activities'] });
         toast.success(value ? 'Marked as an exemplar.' : 'No longer an exemplar.');
       },
+      onError,
+    }),
+    fulfilRequest: useMutation({
+      mutationFn: ({ id, wordId }: { id: string; wordId: string }) => fulfilWordRequest(id, wordId),
+      onSuccess: () => { refresh(); toast.success('Word request fulfilled.'); },
+      onError,
+    }),
+    declineRequest: useMutation({
+      mutationFn: ({ id, reason }: { id: string; reason?: string }) => declineWordRequest(id, reason),
+      onSuccess: () => { refresh(); toast.success('Word request declined.'); },
       onError,
     }),
     request: useMutation({

@@ -43,3 +43,15 @@ export const setExemplar = (activityId: string, isExemplar: boolean) =>
 
 export const listWordRequests = (status: WordRequest['status'] = 'open', limit = 50) =>
   fetchWithAuth<WordRequest[]>(`${BASE}/word-requests?status=${status}&limit=${limit}`);
+
+export const fulfilWordRequest = (id: string, wordId: string) =>
+  fetchWithAuth<WordRequest>(`${BASE}/word-requests/${encodeURIComponent(id)}/fulfil`, {
+    method: 'POST',
+    body: JSON.stringify({ word_id: wordId }),
+  });
+
+export const declineWordRequest = (id: string, reason?: string) =>
+  fetchWithAuth<WordRequest>(`${BASE}/word-requests/${encodeURIComponent(id)}/decline`, {
+    method: 'POST',
+    body: JSON.stringify(reason ? { reason } : {}),
+  });

@@ -14,6 +14,7 @@ import {
   describeRequestResult,
   draftStatus,
   failedChecks,
+  fulfilingWords,
   isCurriculumLead,
   sortDrafts,
   type DraftProvenance,
@@ -80,5 +81,22 @@ describe('messages', () => {
   it('describes a request result', () => {
     expect(describeRequestResult({ status: 'rejected', checks: [{ check: 'taught_only', status: 'fail' }] })).toMatch(/taught_only/);
     expect(describeRequestResult({ status: 'no_draft', reason: 'invalid', issues: [] })).toMatch(/invalid/);
+  });
+});
+
+describe('fulfilingWords', () => {
+  const w = (id: string, over: Partial<{ reviewed_at: string | null; retired_at: string | null; is_pseudo: boolean }> = {}) => ({
+    id, reviewed_at: '2026-01-01', retired_at: null, is_pseudo: false, ...over,
+  });
+  it('keeps reviewed, live, real words only', () => {
+    const words = [w('ok'), w('unreviewed', { reviewed_at: null }), w('retired', { retired_at: 'x' }), w('drill', { is_pseudo: true })];
+    expect(fulfilingWords(words).map((x) => x.id)).toEqual(['ok']);
+  });
+});
+
+describe('describeGenerationError for word requests', () => {
+  it('explains a closed request and a word that cannot fulfil', () => {
+    expect(describeGenerationError(new ApiError('x', 409, 'WORD_REQUEST_CLOSED'))).toMatch(/already/);
+    expect(describeGenerationError(new ApiError('x', 400, 'WORD_NOT_FULFILLING'))).toMatch(/reviewed/);
   });
 });

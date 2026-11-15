@@ -50,6 +50,15 @@ export interface WordRequest {
   status: 'open' | 'fulfilled' | 'declined';
   requested_by: string;
   created_at: string;
+  fulfilled_word_id?: string | null;
+  decline_reason?: string | null;
+}
+
+/** Spellings that may satisfy a word request: reviewed, not retired, not a drill (the server checks the same). */
+export function fulfilingWords<W extends { reviewed_at: string | null; retired_at: string | null; is_pseudo: boolean }>(
+  words: readonly W[],
+): W[] {
+  return words.filter((w) => w.reviewed_at !== null && w.retired_at === null && !w.is_pseudo);
 }
 
 /** The answer of `POST .../nodes/:nodeId/drafts`. */
@@ -136,6 +145,10 @@ export function describeGenerationError(e: unknown): string {
         return 'An AI draft cannot be an exemplar.';
       case 'EXEMPLAR_NOT_PUBLISHED':
         return 'Only a published activity can be an exemplar.';
+      case 'WORD_NOT_FULFILLING':
+        return 'That word cannot fulfil the request: it must exist, be reviewed, not retired and not a drill.';
+      case 'WORD_REQUEST_CLOSED':
+        return 'Someone already fulfilled or declined this request.';
       case 'DRAFT_CHECK_FAILED':
         return 'The draft failed the save checks and was not stored.';
     }

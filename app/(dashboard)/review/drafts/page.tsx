@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { WordPicker } from "@/components/families/WordPicker";
+import { listCuratedWords } from "@/lib/api/wordFamilies";
 import { useCurricula } from "@/lib/hooks/useCurriculum";
 import { useAllNodes } from "@/lib/hooks/useNodes";
 import { useCurriculumLead } from "@/lib/hooks/useCurriculumLead";
@@ -15,12 +18,79 @@ import {
   describeGenerationError,
   describeRequestResult,
   draftStatus,
+  fulfilingWords,
   failedChecks,
   GENERATION_TYPES,
   sortDrafts,
   STATUS_LABELS,
   type DraftRow,
+  type WordRequest,
 } from "@/lib/generation/drafts";
+
+function WordRequestRow({ request, nodeTitle }: { request: WordRequest; nodeTitle: string }) {
+  const { fulfilRequest, declineRequest } = useDraftActions();
+  const [mode, setMode] = React.useState<"idle" | "fulfil" | "decline">("idle");
+  const [reason, setReason] = React.useState("");
+  const words = useQuery({
+    queryKey: ["curated-words"],
+    queryFn: listCuratedWords,
+    enabled: mode === "fulfil",
+    staleTime: 60_000,
+  });
+  const busy = fulfilRequest.isPending || declineRequest.isPending;
+  const error = fulfilRequest.error ?? declineRequest.error;
+
+  return (
+    <li className="space-y-2 rounded-md border p-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{request.activity_type}</Badge>
+        <span>{request.description_en}</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {nodeTitle} · {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+        </span>
+      </div>
+      {mode === "idle" && (
+        <div className="flex gap-2">
+          <Button type="button" size="sm" disabled={busy} onClick={() => setMode("fulfil")}>Fulfil</Button>
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => setMode("decline")}>Decline</Button>
+        </div>
+      )}
+      {mode === "fulfil" && (
+        <div className="space-y-2">
+          <p className="text-muted-foreground">Pick the reviewed word that satisfies this request.</p>
+          {words.isLoading && <p className="text-muted-foreground">Loading words...</p>}
+          {words.data && (
+            <WordPicker
+              words={fulfilingWords(words.data)}
+              onPick={(w) => fulfilRequest.mutate({ id: request.id, wordId: w.id })}
+            />
+          )}
+          {fulfilRequest.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="button" size="sm" variant="ghost" onClick={() => setMode("idle")}>Cancel</Button>
+        </div>
+      )}
+      {mode === "decline" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            className="w-72"
+            placeholder="Reason (optional)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            aria-label="Decline reason"
+          />
+          <Button
+            type="button" size="sm" variant="destructive" disabled={busy}
+            onClick={() => declineRequest.mutate({ id: request.id, reason: reason.trim() || undefined })}
+          >
+            {declineRequest.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Decline request
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setMode("idle")}>Cancel</Button>
+        </div>
+      )}
+      {error != null && <p className="text-destructive">{describeGenerationError(error)}</p>}
+    </li>
+  );
+}
 
 function DraftCard({ draft, nodeTitle, isLead }: { draft: DraftRow; nodeTitle: string; isLead: boolean }) {
   const { approve, reject } = useDraftActions();
@@ -237,7 +307,7 @@ export default function DraftReviewPage() {
       <section className="space-y-2">
         <h2 className="text-lg font-semibold">Open word requests</h2>
         <p className="text-sm text-muted-foreground">
-          Words the generator needed and the reviewed library lacks. Read only.
+          Words the generator needed and the reviewed library lacks. Fulfil with a reviewed word, or decline.
         </p>
         {wordRequests.isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
         {wordRequests.error && (
@@ -246,15 +316,7 @@ export default function DraftReviewPage() {
         {wordRequests.data?.length === 0 && <p className="text-sm text-muted-foreground">No open word requests.</p>}
         <ul className="space-y-2">
           {wordRequests.data?.map((w) => (
-            <li key={w.id} className="rounded-md border p-3 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{w.activity_type}</Badge>
-                <span>{w.description_en}</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {titleOf.get(w.node_id) ?? "another node"} · {formatDistanceToNow(new Date(w.created_at), { addSuffix: true })}
-                </span>
-              </div>
-            </li>
+            <WordRequestRow key={w.id} request={w} nodeTitle={titleOf.get(w.node_id) ?? "another node"} />
           ))}
         </ul>
       </section>

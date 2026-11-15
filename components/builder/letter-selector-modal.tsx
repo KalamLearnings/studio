@@ -180,6 +180,8 @@ export function LetterSelectorModal({
                 value={selection}
                 onChange={setSelection}
                 showFormSelector={showFormSelector}
+                // Topics store letter_haraka only; there is no topic madd field.
+                showMaddToggle={false}
               />
 
               {/* Selected Letter Preview */}

@@ -18,6 +18,7 @@ import {
   resolveLetterReference,
 } from "@/lib/hooks/useLetters";
 import { LetterFormHarakaPicker } from "@/components/builder/letter-picker";
+import { hasMadd } from "@/lib/utils/letterMadd";
 import { HARAKA_META } from "@kalam/curriculum-schemas";
 import type {
   LetterForm,
@@ -39,6 +40,8 @@ interface LetterSelectorBaseProps {
   topic?: TopicContext | null;
   showFormSelector?: boolean;
   showHarakaSelector?: boolean;
+  /** Offer the madd switch (default: as `showHarakaSelector`). Off where the form cannot store `madd`. */
+  showMaddToggle?: boolean;
   disabledLetterIds?: string[];
   disabledTooltip?: string;
   /** Filter function to show only specific letters (e.g., letterFilters.withDots) */
@@ -92,6 +95,7 @@ export function LetterSelector(props: LetterSelectorProps) {
     topic,
     showFormSelector = true,
     showHarakaSelector = true,
+    showMaddToggle,
     disabledLetterIds = [],
     disabledTooltip,
     letterFilter,
@@ -200,6 +204,7 @@ export function LetterSelector(props: LetterSelectorProps) {
                   ? `${refs.map((r) => formLabels[r.form]).join(", ")} Form${refs.length > 1 ? "s" : ""}`
                   : `${formLabels[refs[0].form]} Form`}
                 {haraka && ` + ${HARAKA_META[haraka].label}`}
+                {hasMadd(refs[0]) && " + Madd"}
               </div>
             </>
           ) : (
@@ -244,6 +249,7 @@ export function LetterSelector(props: LetterSelectorProps) {
               onChange={setDraft}
               showFormSelector={showFormSelector}
               showHarakaSelector={showHarakaSelector}
+              showMaddToggle={showMaddToggle}
               disabledLetterIds={disabledLetterIds}
               disabledTooltip={disabledTooltip}
               letterFilter={letterFilter}

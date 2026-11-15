@@ -111,6 +111,8 @@ export function MemoryCardMatchActivityForm({
           multiSelect
           multiFormSelect
           showFormSelector
+          // memory_card_match keeps letterId + form only.
+          showMaddToggle={false}
         />
       </FormField>
 

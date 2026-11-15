@@ -177,6 +177,7 @@ export {
 // backend's core/domain/content-model/, synced by kalam-readers-backend
 // scripts/sync-content-model.ts and kept so by test/content-model-drift.test.ts.
 // The curriculum lead reviews them (CM-C7).)
+// =====================================================================
 // ============================================================================
 
 export {
@@ -256,6 +257,22 @@ export {
   type StageLabel,
   type TeachingSequence,
 } from './teaching_sequences';
+=======
+// MADD (content model D7, CM-B4: long vowel on a letter reference; a
+// byte-identical copy of the backend's curriculum-schemas/madd.ts, kept so by
+// test/madd-drift.test.ts)
+// ============================================================================
+
+export {
+  isMaddHaraka,
+  isValidMadd,
+  MADD_CARRIER_BY_HARAKA,
+  MADD_HARAKA_IDS,
+  MADD_NEEDS_SHORT_VOWEL,
+  MADD_RULE_BY_HARAKA,
+  MADD_VARIANT_BY_HARAKA,
+  type MaddHaraka,
+} from './madd';
 
 // ============================================================================
 // ACTIVITY SCHEMAS & TYPES

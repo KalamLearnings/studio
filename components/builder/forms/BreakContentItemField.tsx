@@ -57,6 +57,8 @@ export function BreakContentItemField({ label, item, onChange }: BreakContentIte
           }
           showFormSelector
           showHarakaSelector
+          // The break content letter schema has no madd field.
+          showMaddToggle={false}
           onChange={(value) => {
             const ref = Array.isArray(value) ? value[0] : value;
             if (!ref || Array.isArray(ref)) {

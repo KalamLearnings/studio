@@ -8,6 +8,10 @@
  * `node packages/curriculum-schemas/scripts/sync-server-schemas.mjs` and
  * rebuild the package (`npm run build:schemas`). Never edit the copies here.
  *
+ * The v1 field golden files Studio's `lib/activityConfig/v1Fields.test.ts`
+ * runs on (CM-B31: fixture, comparison, delivery, letters seed, PROD config
+ * shapes) are copied the same way under `test/backend/<backend path>`.
+ *
  * The backend is read from its `dev` branch. Like the other drift tests, the
  * comparison is skipped with a warning when the sibling backend checkout is
  * absent.
@@ -22,6 +26,16 @@ import { getActivityConfigSchema, readActivityConfig } from '../src/server/index
 
 const BACKEND = fileURLToPath(new URL('../../../../kalam-readers-backend/', import.meta.url));
 const DIR = 'supabase/functions/_shared/core/contracts/curriculum-schemas';
+/** Kept in step with GOLDEN_FILES in scripts/sync-server-schemas.mjs. */
+const GOLDEN_FILES = [
+  'tests/golden/v1-fields.json',
+  'supabase/seed_letters.sql',
+  'supabase/functions/_shared/{tests}/unit/curriculum-schemas/fixtures/prod-activity-shapes.json',
+  'supabase/functions/_shared/core/domain/content-audit/v1-fields.ts',
+  'supabase/functions/_shared/core/domain/curriculum/player-projection.ts',
+  'supabase/functions/_shared/core/domain/curriculum/letter-reference.ts',
+  'supabase/functions/_shared/core/contracts/curriculum-schemas/harakat.ts',
+];
 const COPY = fileURLToPath(new URL('../src/server/', import.meta.url));
 
 function copyFiles(dir = COPY): string[] {
@@ -43,8 +57,8 @@ function backendFiles(): string[] | null {
   }
 }
 
-function backendText(file: string): string {
-  return execFileSync('git', ['-C', BACKEND, 'show', `dev:${DIR}/${file}`], {
+function backendText(file: string, dir = DIR): string {
+  return execFileSync('git', ['-C', BACKEND, 'show', `dev:${dir ? `${dir}/` : ''}${file}`], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],
   });
@@ -80,5 +94,15 @@ describe('server activity schemas drift', () => {
       differ,
       `src/server differs from kalam-readers-backend dev:${DIR}. Run scripts/sync-server-schemas.mjs.`,
     ).toEqual([]);
-  });
+  }, 60_000);
+
+  it('the v1 golden copies match the backend byte for byte', () => {
+    if (!backendFiles()) return;
+    const golden = fileURLToPath(new URL('./backend/', import.meta.url));
+    const differ = GOLDEN_FILES.filter((f) => {
+      const copy = join(golden, f);
+      return !existsSync(copy) || readFileSync(copy, 'utf8') !== backendText(f, '');
+    });
+    expect(differ, 'test/backend differs from kalam-readers-backend dev. Run scripts/sync-server-schemas.mjs.').toEqual([]);
+  }, 60_000);
 });

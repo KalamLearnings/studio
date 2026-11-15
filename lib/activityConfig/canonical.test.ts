@@ -13,6 +13,7 @@ import { normalizeActivityConfig } from "../../components/builder/forms/normaliz
 import {
   CANONICAL_FORM_TYPES,
   isCanonicalFormType,
+  openForEdit,
   readConfigForEdit,
   toSaveConfig,
   type Config,
@@ -31,8 +32,8 @@ function expectWritable(type: string, config: Config) {
 
 /** Open a stored row, apply the form's edits, save. */
 function editAndSave(type: string, stored: Config, edits: Config = {}): Config {
-  const opened = readConfigForEdit(type, stored);
-  return toSaveConfig(type, { ...opened, ...edits });
+  const { config, canonical } = openForEdit(type, stored);
+  return toSaveConfig(type, { ...config, ...edits }, canonical);
 }
 
 const ba = { letterId: "ba", form: "isolated" } as const;
@@ -216,9 +217,18 @@ describe("trace_letter", () => {
     expect(saved).toEqual({ targetLetter: { letterId: "ba", form: "medial" }, mode: "guided", traceCount: 2 });
   });
 
-  it("takes the form from position when the glyph has none", () => {
-    const saved = editAndSave("trace_letter", { letterForm: "ب", position: "final" });
-    expect(saved.targetLetter).toEqual({ letterId: "ba", form: "final" });
+  it("a glyph whose form disagrees with position stays on the shim (v1 draws the stored glyph)", () => {
+    const stored = { letterForm: "ب", position: "final" };
+    const opened = openForEdit("trace_letter", stored);
+    expect(opened.canonical).toBe(false);
+    expect(toSaveConfig("trace_letter", opened.config, opened.canonical)).toEqual(
+      normalizeActivityConfig("trace_letter", stored),
+    );
+  });
+
+  it("a glyph whose form agrees with position is converted", () => {
+    const saved = editAndSave("trace_letter", { letterForm: "ـب", position: "final" });
+    expect(saved).toEqual({ targetLetter: { letterId: "ba", form: "final" } });
     expectWritable("trace_letter", saved);
   });
 
@@ -286,7 +296,8 @@ describe("speech_practice", () => {
   it("a legacy letter row (letter reference) is converted on edit", () => {
     const saved = editAndSave("speech_practice", { letter: { letterId: "ba", form: "isolated" }, passingScore: 60 });
     expectWritable("speech_practice", saved);
-    expect(saved).toEqual({ contentType: "letter", targetLetter: ba, passingScore: 60 });
+    // contentType stays absent, as stored (v1 reads its presence)
+    expect(saved).toEqual({ targetLetter: ba, passingScore: 60 });
   });
 
   it("letter mode drops the word and focus glyph", () => {

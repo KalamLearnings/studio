@@ -27,6 +27,7 @@
 
 import {
   readActivityConfig,
+  readLetterGlyph,
   readLetterRef,
 } from "@kalam/curriculum-schemas/server";
 import { normalizeActivityConfig } from "../../components/builder/forms/normalizeActivityConfig";
@@ -86,6 +87,10 @@ interface CanonicalType {
   write: (config: Config, type: string) => Config;
   /** False keeps the stored row in its legacy shape (a mode v1 still reads from display strings). */
   canonicalOk?: (config: Config) => boolean;
+  /** Fields left absent when the stored row has none (v1 reads their presence). */
+  keepAbsent?: readonly string[];
+  /** False opens the stored row through the shim (its canonical read would change what v1 shows). */
+  storedOk?: (stored: Config) => boolean;
 }
 
 const LEGACY_HUNT_KEYS: Readonly<Record<string, string>> = { showArabicLabels: "showArabicLabel" };
@@ -157,6 +162,17 @@ function writeHarakaToLetter(config: Config): Config {
   return next;
 }
 
+/**
+ * A legacy trace row whose glyph `letterForm` and `position` disagree (ب with
+ * `position: final`): v1 draws the glyph as stored, the server's read takes
+ * the form from `position`. Such a row stays on the shim.
+ */
+function traceGlyphKeepsItsForm(stored: Config): boolean {
+  if (stored.targetLetter != null || typeof stored.letterForm !== "string") return true;
+  if (!FORMS.includes(stored.position as string)) return true;
+  return readLetterGlyph(stored.letterForm)?.form === stored.position;
+}
+
 function writeMemoryCards(config: Config): Config {
   if (!Array.isArray(config.letters)) return config;
   return {
@@ -185,8 +201,8 @@ function writeShowLetter(config: Config): Config {
 /** speech_practice in letter mode: the reference only, no word or in-word focus glyph. */
 function writeSpeechLetter(config: Config): Config {
   if ((config.contentType ?? "letter") !== "letter") return config;
+  // contentType is optional (letter by default): a row without it stays without it
   const next = without(config, ["letter", "word", "wordRef"]);
-  next.contentType = "letter";
   const target = config.targetLetter ?? (isRecord(config.letter) ? config.letter : undefined);
   if (target !== undefined && target !== null) next.targetLetter = singleRef(target);
   else delete next.targetLetter;
@@ -268,38 +284,64 @@ export const CANONICAL_FORM_TYPES: Readonly<Record<string, CanonicalType>> = {
   tap_dot_position: { write: writeTargetWithPosition },
   drag_dots_to_letter: { write: writeTargetWithPosition },
   drag_haraka_to_letter: { write: writeHarakaToLetter },
-  trace_letter: { write: writeTrace },
+  trace_letter: { write: writeTrace, storedOk: traceGlyphKeepsItsForm },
   memory_card_match: { write: writeMemoryCards },
   // letter modes only (word and picture modes wait for server-written v1 strings)
   show_letter_or_word: { write: writeShowLetter, canonicalOk: isLetterMode },
-  speech_practice: { write: writeSpeechLetter, canonicalOk: isLetterMode },
+  speech_practice: { write: writeSpeechLetter, canonicalOk: isLetterMode, keepAbsent: ["contentType"] },
   content_with_cards: { write: writeLetterCards, canonicalOk: cardsLetterMode },
 };
 
+/**
+ * Types taken back to the shim because opening and saving a stored row would
+ * change a field the v1 app reads (CM-B31, `v1Fields.test.ts`). They open
+ * through the shim and save exactly as before, until the server writes the
+ * fields v1 reads. Empty: on the PROD shapes no converted type changes a v1
+ * field beyond what the shim already did. Rows are also kept on the shim one
+ * by one (`openForEdit`: an unreadable row, a word or picture mode, a trace
+ * glyph whose form disagrees with `position`).
+ */
+export const V1_BLOCKED_TYPES: readonly string[] = [];
+
 export function isCanonicalFormType(type: string | undefined): boolean {
-  return !!type && Object.prototype.hasOwnProperty.call(CANONICAL_FORM_TYPES, type);
+  return !!type && Object.prototype.hasOwnProperty.call(CANONICAL_FORM_TYPES, type) &&
+    !V1_BLOCKED_TYPES.includes(type);
 }
 
 /**
- * The config a form edits. A converted type's legacy row is read into the
- * canonical shape with the server's read schema; everything else goes through
- * the shim, as before.
+ * Open a stored row for editing. A converted type's row is read into the
+ * canonical shape with the server's read schema (`canonical: true`); a row the
+ * read cannot map, or one in a mode v1 still reads from display strings, opens
+ * through the shim (`canonical: false`) and saves exactly as before. A new
+ * activity (empty config) is canonical. Other types go through the shim.
  */
-export function readConfigForEdit(type: string | undefined, stored: Config): Config {
-  if (!type || !stored || !isCanonicalFormType(type)) {
-    return normalizeActivityConfig(type, stored);
-  }
+export function openForEdit(type: string | undefined, stored: Config): { config: Config; canonical: boolean } {
+  const legacy = () => ({ config: normalizeActivityConfig(type, stored), canonical: false });
+  if (!type || !stored || !isCanonicalFormType(type)) return legacy();
+  if (Object.keys(stored).length === 0) return { config: stored, canonical: true };
   const entry = CANONICAL_FORM_TYPES[type];
   const read = readActivityConfig(type, stored);
-  if (!read.success) return normalizeActivityConfig(type, stored);
-  if (entry.canonicalOk && !entry.canonicalOk(read.config)) {
-    return normalizeActivityConfig(type, stored);
-  }
-  return entry.write(read.config, type);
+  if (!read.success) return legacy();
+  if (entry.storedOk && !entry.storedOk(stored)) return legacy();
+  if (entry.canonicalOk && !entry.canonicalOk(read.config)) return legacy();
+  const config = entry.write(read.config, type);
+  for (const key of entry.keepAbsent ?? []) if (!(key in stored)) delete config[key];
+  return { config, canonical: true };
 }
 
-/** The config a save sends: for a converted type, what the write schema takes. */
-export function toSaveConfig(type: string | undefined, config: Config): Config {
-  if (!type || !isCanonicalFormType(type)) return config;
-  return asSent(CANONICAL_FORM_TYPES[type].write(asSent(config), type));
+/** The config a form edits (`openForEdit`). */
+export function readConfigForEdit(type: string | undefined, stored: Config): Config {
+  return openForEdit(type, stored).config;
+}
+
+/**
+ * The config a save sends. A row opened canonically, and still in a mode v1
+ * can show canonically, sends what the write schema takes; anything else is
+ * sent as the form built it, as before CM-S3.
+ */
+export function toSaveConfig(type: string | undefined, config: Config, canonical = true): Config {
+  if (!canonical || !type || !isCanonicalFormType(type)) return config;
+  const entry = CANONICAL_FORM_TYPES[type];
+  if (entry.canonicalOk && !entry.canonicalOk(config)) return config;
+  return asSent(entry.write(asSent(config), type));
 }

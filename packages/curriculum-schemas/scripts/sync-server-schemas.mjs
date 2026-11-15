@@ -4,6 +4,10 @@
  * (content model CM-S3). Studio runs the server's own write schema and read
  * mapping on what its forms save, so the two can never disagree.
  *
+ * Also copies, under test/backend/<backend path>, what Studio's v1 field test
+ * needs (CM-B31): the v1 field fixture and its comparison, the v1 delivery
+ * (player projection), the letters seed and the PROD config shapes fixture.
+ *
  *   node packages/curriculum-schemas/scripts/sync-server-schemas.mjs [<backend checkout>]
  *
  * The backend checkout defaults to ../kalam-readers-backend beside the Studio
@@ -38,3 +42,22 @@ for (const file of files) {
   writeFileSync(out, git('show', `dev:${DIR}/${file}`));
 }
 console.log(`copied ${files.length} files from ${backend} dev:${DIR}`);
+
+/** The v1 field golden and what it runs on, copied with their backend paths. */
+export const GOLDEN_FILES = [
+  'tests/golden/v1-fields.json',
+  'supabase/seed_letters.sql',
+  'supabase/functions/_shared/{tests}/unit/curriculum-schemas/fixtures/prod-activity-shapes.json',
+  'supabase/functions/_shared/core/domain/content-audit/v1-fields.ts',
+  'supabase/functions/_shared/core/domain/curriculum/player-projection.ts',
+  'supabase/functions/_shared/core/domain/curriculum/letter-reference.ts',
+  'supabase/functions/_shared/core/contracts/curriculum-schemas/harakat.ts',
+];
+const golden = join(pkg, 'test/backend');
+rmSync(golden, { recursive: true, force: true });
+for (const file of GOLDEN_FILES) {
+  const out = join(golden, file);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, git('show', `dev:${file}`));
+}
+console.log(`copied ${GOLDEN_FILES.length} v1 golden files to test/backend`);

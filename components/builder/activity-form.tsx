@@ -19,7 +19,7 @@ import {
   type ActivityConfig,
   type TopicContext,
 } from "./forms";
-import { readConfigForEdit, toSaveConfig } from "@/lib/activityConfig/canonical";
+import { openForEdit, toSaveConfig } from "@/lib/activityConfig/canonical";
 import { isConfigSaveError, parseConfigSaveError } from "@/lib/activityConfig/saveErrors";
 import { SaveErrorsProvider } from "./forms/shared/SaveErrors";
 import { isBlendActivityType, toBlendSaveParts } from "@/lib/blendWord/config";
@@ -69,9 +69,10 @@ export function ActivityForm({
 }: ActivityFormProps) {
   // A converted type's legacy row opens in the canonical shape (CM-S3), read
   // with the server's own read schema; other types go through the shim.
-  const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(() =>
-    readConfigForEdit(activityType, config),
-  );
+  // A row that opens through the shim saves exactly as before (`canonical`
+  // false), so v1 keeps every field it reads (CM-B31).
+  const [opened] = React.useState(() => openForEdit(activityType, config));
+  const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(opened.config);
   const [instruction, setInstruction] = React.useState(initialInstruction);
   // Initialize to the activity's saved voice, falling back to the default
   // (Shelby). Never undefined — otherwise the form would display the default
@@ -144,7 +145,7 @@ export function ActivityForm({
       // Converted types send references only, no derived or legacy fields (CM-S3).
       const { config: configToSave, wordBlendEdit } = toBlendSaveParts(
         activityType,
-        toSaveConfig(activityType, localConfig),
+        toSaveConfig(activityType, localConfig, opened.canonical),
       );
       setSaveError(null);
       const saved = await onSave?.({

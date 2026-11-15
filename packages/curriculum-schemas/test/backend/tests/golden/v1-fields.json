@@ -1,0 +1,3902 @@
+{
+  "version": 1,
+  "description": "CM-B31: the activity fields the v1 app (mobile-app) reads, per activity type. Paths are on the object v1 components receive: { id, type, nodeId, sequenceNumber, instruction, ...config } (mobile-app app/(app)/lesson/[nodeId].tsx:180-187); config keys are top level, and a literal config.x path is a nested `config` key inside config. Syntax: a.b keys, a[] every array element, length on arrays/strings. Rule and comparison: supabase/functions/_shared/core/domain/content-audit/v1-fields.ts. Run: tests/golden/README.md, section v1 field golden.",
+  "source": {
+    "repo": "mobile-app",
+    "commit": "be854e1",
+    "extracted": "2026-11-14",
+    "method": "read of src/curriculum/activities (each registered component, its shared helpers and children), src/curriculum/engine, src/curriculum/utils/levelIntro.ts, src/hooks/useLevelIntro.ts and app/(app)/lesson/[nodeId].tsx; every cited line checked to mention the field or the helper that reads it"
+  },
+  "common": {
+    "files": [
+      "src/curriculum/engine/ActivityPreloader.ts",
+      "src/curriculum/engine/ActivityWrapper.tsx",
+      "src/curriculum/engine/LessonEngine.tsx",
+      "src/curriculum/engine/renderActivity.tsx",
+      "src/curriculum/engine/useLessonState.ts",
+      "src/curriculum/engine/ActivityRegistry.tsx",
+      "src/curriculum/activities/registry.ts",
+      "app/(app)/lesson/[nodeId].tsx",
+      "app/(app)/map/[curriculumId].tsx",
+      "src/hooks/useLevelIntro.ts",
+      "src/curriculum/utils/levelIntro.ts",
+      "src/stores/activityCacheStore.ts"
+    ],
+    "paths": [
+      {
+        "path": "instruction.audio_url",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:51",
+          "src/curriculum/engine/ActivityWrapper.tsx:276",
+          "src/curriculum/engine/renderActivity.tsx:136"
+        ],
+        "note": "Played as instruction audio, preloaded, cached by URL. In raw form (map warmActivityAssets, levelIntro) it is the top-level instruction.audio_url of the response, same path."
+      },
+      {
+        "path": "instruction.audioUrl",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:51"
+        ],
+        "note": "Camel-case fallback in getInstructionAudioUrl (preload/cleanup only; the playback path in ActivityWrapper reads only audio_url)."
+      },
+      {
+        "path": "instruction",
+        "reads": [
+          "app/(app)/lesson/[nodeId].tsx:185",
+          "src/curriculum/engine/renderActivity.tsx:135"
+        ],
+        "note": "Envelope instruction is placed first, then ...config spread, so a config key named instruction overrides it. Only instruction.audio_url/audioUrl are read; text is dropped (renderActivity deletes it from Sentry context)."
+      },
+      {
+        "path": "id",
+        "reads": [
+          "app/(app)/lesson/[nodeId].tsx:181",
+          "src/curriculum/engine/ActivityWrapper.tsx:108",
+          "src/curriculum/engine/renderActivity.tsx:44",
+          "src/curriculum/engine/renderActivity.tsx:72",
+          "src/curriculum/engine/LessonEngine.tsx:166",
+          "src/curriculum/engine/useLessonState.ts:102",
+          "src/curriculum/engine/ActivityPreloader.ts:217",
+          "app/(app)/lesson/[nodeId].tsx:471"
+        ],
+        "note": "Envelope id; config spread comes after so a config.id would override it. Used as key, preload cache key, completion matching."
+      },
+      {
+        "path": "type",
+        "reads": [
+          "app/(app)/lesson/[nodeId].tsx:182",
+          "src/curriculum/engine/renderActivity.tsx:28",
+          "src/curriculum/engine/ActivityRegistry.tsx:132",
+          "src/curriculum/engine/ActivityPreloader.ts:78",
+          "src/curriculum/engine/LessonEngine.tsx:167",
+          "app/(app)/lesson/[nodeId].tsx:481",
+          "src/curriculum/utils/levelIntro.ts:18"
+        ],
+        "note": "Envelope type selects component and registry meta; config.type would override it. levelIntro reads raw response type (same path)."
+      },
+      {
+        "path": "nodeId",
+        "reads": [
+          "src/curriculum/engine/ActivityWrapper.tsx:110",
+          "src/curriculum/engine/renderActivity.tsx:129",
+          "src/curriculum/engine/renderActivity.tsx:141"
+        ],
+        "note": "Set by lesson screen from route param; only Sentry telemetry. A config.nodeId would override it."
+      },
+      {
+        "path": "sequenceNumber",
+        "reads": [
+          "app/(app)/lesson/[nodeId].tsx:184",
+          "src/curriculum/utils/levelIntro.ts:17"
+        ],
+        "note": "Written into flattened object from envelope sequence_number; no engine read found. Raw sequence_number is read at src/curriculum/utils/levelIntro.ts:17 (envelope field, not config). Envelope sequence_number, flattened as sequenceNumber. Raw response field (not config), flattened as sequenceNumber. Level intro picks the lowest sequence_number activity of the first node."
+      },
+      {
+        "path": "interactive",
+        "reads": [
+          "src/curriculum/engine/ActivityRegistry.tsx:140",
+          "src/curriculum/activities/registry.ts:77"
+        ],
+        "note": "interactive === false suppresses celebration for every type (getBehavior) and, for content_with_cards, makes it audio-gated. Also read via config.interactive (see next)."
+      },
+      {
+        "path": "config.interactive",
+        "reads": [
+          "src/curriculum/engine/ActivityRegistry.tsx:140",
+          "src/curriculum/activities/registry.ts:77"
+        ],
+        "note": "Literal nested config key fallback (registry.ts:77 checks it FIRST, ActivityRegistry:140 checks root first)."
+      },
+      {
+        "path": "hideFooterUntilComplete",
+        "reads": [
+          "src/curriculum/engine/renderActivity.tsx:67"
+        ],
+        "note": "Overrides the registry default for the footer (activity.hideFooterUntilComplete ?? behavior)."
+      },
+      {
+        "path": "skippable",
+        "reads": [
+          "src/curriculum/engine/useLessonState.ts:99"
+        ],
+        "note": "Gates skipActivity; skipActivity is not wired to UI evidence in this scope (LessonEngine:296 handler calls it)."
+      },
+      {
+        "path": "config",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:60",
+          "src/curriculum/engine/renderActivity.tsx:134",
+          "src/curriculum/activities/registry.ts:77",
+          "src/curriculum/activities/registry.ts:164",
+          "src/curriculum/engine/ActivityRegistry.tsx:140"
+        ],
+        "uncertain": true,
+        "note": "Literal nested key named config inside config. Preloader extractImageUrls does activity.config || activity, so if present all image reads move under config.*. Normally absent."
+      },
+      {
+        "path": "image",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:118"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "imageUrl",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:119"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "backgroundImage",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:120"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "questionImage",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:121"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "targetWordImage",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:122"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "wordImage",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:123"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "content.image",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:124"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "options[].image",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:125"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "options[].imageUrl",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:125"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "cards[].image",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:126"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "cards[].imageUrl",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:126"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "items[].image",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:127"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      },
+      {
+        "path": "items[].imageUrl",
+        "reads": [
+          "src/curriculum/engine/ActivityPreloader.ts:127"
+        ],
+        "note": "Default branch of extractImageUrls switch: applies to every type not listed in its own case (all types except multiple_choice_question, content_with_cards, show_letter_or_word, break_time_minigame, tap_letter_in_word, build_word_from_letters, add_pizza_toppings_with_letter). All URLs must be strings starting with 'http'. Preloader reads via config = activity.config || activity (root paths; a literal nested config key would redirect all these reads to config.*; raw ActivityData from map prefetch has real config so root paths there = config.*)."
+      }
+    ]
+  },
+  "types": {
+    "add_pizza_toppings_with_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/engine/ActivityPreloader.ts"
+      ],
+      "paths": [
+        {
+          "path": "toppings[].image",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:113"
+          ],
+          "note": "Only http URLs are prefetched (usually emoji)."
+        }
+      ],
+      "note": "No v1 component is registered for this type; the v1 preloader still reads these fields."
+    },
+    "animation_intro": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/AnimationIntroActivity.tsx",
+        "src/curriculum/engine/ActivityPreloader.ts",
+        "src/curriculum/utils/levelIntro.ts",
+        "src/hooks/useLevelIntro.ts"
+      ],
+      "paths": [
+        {
+          "path": "animationUrl",
+          "reads": [
+            "src/curriculum/activities/AnimationIntroActivity.tsx:235",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:274",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:55",
+            "src/curriculum/engine/ActivityPreloader.ts:224",
+            "src/curriculum/engine/ActivityPreloader.ts:260"
+          ],
+          "note": "passed to RiveContent url"
+        },
+        {
+          "path": "audioUrl",
+          "reads": [
+            "src/curriculum/activities/AnimationIntroActivity.tsx:108",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:112",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:216",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:55",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:93",
+            "src/curriculum/engine/ActivityPreloader.ts:261"
+          ]
+        },
+        {
+          "path": "animationDurationMs",
+          "reads": [
+            "src/curriculum/activities/AnimationIntroActivity.tsx:55",
+            "src/curriculum/activities/AnimationIntroActivity.tsx:186"
+          ],
+          "note": "only used when >0"
+        },
+        {
+          "path": "config.animationUrl",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:222",
+            "src/curriculum/engine/ActivityPreloader.ts:258"
+          ],
+          "uncertain": true,
+          "note": "If a nested config key exists, preloader reads animationUrl/audioUrl from it instead of root."
+        },
+        {
+          "path": "config.audioUrl",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:258"
+          ],
+          "uncertain": true,
+          "note": "see config.animationUrl"
+        },
+        {
+          "path": "type",
+          "reads": [
+            "src/curriculum/utils/levelIntro.ts:18"
+          ],
+          "note": "first.type === 'animation_intro'"
+        }
+      ]
+    },
+    "assisted_trace_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/AssistedTracingActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "letterForm",
+          "reads": [
+            "src/curriculum/activities/AssistedTracingActivity.tsx:15",
+            "src/curriculum/activities/AssistedTracingActivity.tsx:16",
+            "src/curriculum/activities/AssistedTracingActivity.tsx:19",
+            "src/curriculum/activities/AssistedTracingActivity.tsx:70"
+          ]
+        }
+      ]
+    },
+    "audio_letter_match": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/AudioLetterMatchGame.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:76",
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:89",
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "normalizeLetters(...)[0]"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "targetLetterAudioUrl",
+          "reads": [
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:77",
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:123"
+          ]
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:78",
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:93"
+          ]
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "playAudioOnStart",
+          "reads": [
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:79",
+            "src/curriculum/activities/AudioLetterMatchGame.tsx:140"
+          ],
+          "note": "default true"
+        }
+      ]
+    },
+    "balance_scale": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/BalanceScaleActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/BalanceScaleActivity.tsx:392",
+            "src/curriculum/activities/BalanceScaleActivity.tsx:393",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/BalanceScaleActivity.tsx:392",
+            "src/curriculum/activities/BalanceScaleActivity.tsx:393",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/BalanceScaleActivity.tsx:394"
+          ]
+        },
+        {
+          "path": "totalItems",
+          "reads": [
+            "src/curriculum/activities/BalanceScaleActivity.tsx:395"
+          ]
+        }
+      ]
+    },
+    "bear_honey": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/BearHoneyActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/BearHoneyActivity.tsx:206",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "via getActivityLetters/normalizeLetters; string or array"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/BearHoneyActivity.tsx:206",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "via getActivityLetters; empty/missing -> random distractors generated"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/BearHoneyActivity.tsx:207"
+          ],
+          "note": "default 4"
+        }
+      ]
+    },
+    "break_time_minigame": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/BreakActivity.tsx",
+        "src/curriculum/activities/registry.ts",
+        "src/curriculum/activities/minigames/TracingLinesMinigame.tsx",
+        "src/curriculum/activities/minigames/DotTappingMinigame.tsx",
+        "src/curriculum/activities/minigames/MemoryGameMinigame.tsx",
+        "src/curriculum/activities/minigames/TapShapesMinigame.tsx",
+        "src/curriculum/activities/minigames/OddOneOutMinigame.tsx",
+        "src/curriculum/activities/minigames/AttributeTapMinigame.tsx",
+        "src/curriculum/activities/minigames/MatchTwoMinigame.tsx",
+        "src/curriculum/activities/minigames/PatternCompletionMinigame.tsx",
+        "src/curriculum/activities/minigames/shared/ContentToken.tsx",
+        "src/curriculum/activities/minigames/shared/ContentCard.tsx",
+        "src/curriculum/engine/ActivityPreloader.ts"
+      ],
+      "paths": [
+        {
+          "path": "variant",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:101",
+            "src/curriculum/activities/registry.ts:164"
+          ],
+          "note": "defaults 'tracing_lines'; registry celebration predicate also reads variant ?? config.variant (registry.ts:164)"
+        },
+        {
+          "path": "config.variant",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:101",
+            "src/curriculum/activities/registry.ts:164"
+          ],
+          "note": "fallback read of nested config key; defaults 'tracing_lines'; registry celebration predicate also reads variant ?? config.variant (registry.ts:164)"
+        },
+        {
+          "path": "color",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:100",
+            "src/curriculum/activities/BreakActivity.tsx:130",
+            "src/curriculum/activities/BreakActivity.tsx:175",
+            "src/curriculum/activities/minigames/DotTappingMinigame.tsx:113",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:564"
+          ],
+          "note": "target colour name"
+        },
+        {
+          "path": "config.color",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:100",
+            "src/curriculum/activities/BreakActivity.tsx:130",
+            "src/curriculum/activities/BreakActivity.tsx:175",
+            "src/curriculum/activities/minigames/DotTappingMinigame.tsx:113",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:564"
+          ],
+          "note": "fallback read of nested config key; target colour name"
+        },
+        {
+          "path": "targetShape",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:102",
+            "src/curriculum/activities/BreakActivity.tsx:152",
+            "src/curriculum/activities/BreakActivity.tsx:174",
+            "src/curriculum/activities/minigames/TapShapesMinigame.tsx:254",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:563"
+          ]
+        },
+        {
+          "path": "config.targetShape",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:102",
+            "src/curriculum/activities/BreakActivity.tsx:152",
+            "src/curriculum/activities/BreakActivity.tsx:174",
+            "src/curriculum/activities/minigames/TapShapesMinigame.tsx:254",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:563"
+          ],
+          "note": "fallback read of nested config key"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:103",
+            "src/curriculum/activities/BreakActivity.tsx:153",
+            "src/curriculum/activities/BreakActivity.tsx:176",
+            "src/curriculum/activities/minigames/TapShapesMinigame.tsx:255",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:566"
+          ]
+        },
+        {
+          "path": "config.targetCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:103",
+            "src/curriculum/activities/BreakActivity.tsx:153",
+            "src/curriculum/activities/BreakActivity.tsx:176",
+            "src/curriculum/activities/minigames/TapShapesMinigame.tsx:255",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:566"
+          ],
+          "note": "fallback read of nested config key"
+        },
+        {
+          "path": "totalShapes",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:104",
+            "src/curriculum/activities/BreakActivity.tsx:154",
+            "src/curriculum/activities/BreakActivity.tsx:177",
+            "src/curriculum/activities/minigames/TapShapesMinigame.tsx:256",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:567"
+          ]
+        },
+        {
+          "path": "config.totalShapes",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:104",
+            "src/curriculum/activities/BreakActivity.tsx:154",
+            "src/curriculum/activities/BreakActivity.tsx:177",
+            "src/curriculum/activities/minigames/TapShapesMinigame.tsx:256",
+            "src/curriculum/activities/minigames/AttributeTapMinigame.tsx:567"
+          ],
+          "note": "fallback read of nested config key"
+        },
+        {
+          "path": "linePattern",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:105",
+            "src/curriculum/activities/BreakActivity.tsx:121",
+            "src/curriculum/activities/minigames/TracingLinesMinigame.tsx:110"
+          ]
+        },
+        {
+          "path": "config.linePattern",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:105",
+            "src/curriculum/activities/BreakActivity.tsx:121",
+            "src/curriculum/activities/minigames/TracingLinesMinigame.tsx:110"
+          ],
+          "note": "fallback read of nested config key"
+        },
+        {
+          "path": "cardCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:106",
+            "src/curriculum/activities/BreakActivity.tsx:137"
+          ],
+          "note": "pairCount = cardCount/2 for memory_game"
+        },
+        {
+          "path": "config.cardCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:106",
+            "src/curriculum/activities/BreakActivity.tsx:137"
+          ],
+          "note": "fallback read of nested config key; pairCount = cardCount/2 for memory_game"
+        },
+        {
+          "path": "pairCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:139",
+            "src/curriculum/activities/minigames/MemoryGameMinigame.tsx:91"
+          ],
+          "note": "fallback when cardCount absent (memory_game)"
+        },
+        {
+          "path": "config.pairCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:139",
+            "src/curriculum/activities/minigames/MemoryGameMinigame.tsx:91"
+          ],
+          "note": "fallback read of nested config key; fallback when cardCount absent (memory_game)"
+        },
+        {
+          "path": "groupCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:107",
+            "src/curriculum/activities/BreakActivity.tsx:165",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:524",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:546"
+          ]
+        },
+        {
+          "path": "config.groupCount",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:107",
+            "src/curriculum/activities/BreakActivity.tsx:165",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:524",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:546"
+          ],
+          "note": "fallback read of nested config key"
+        },
+        {
+          "path": "patternColors",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:108",
+            "src/curriculum/activities/BreakActivity.tsx:195",
+            "src/curriculum/activities/minigames/PatternCompletionMinigame.tsx:454"
+          ],
+          "note": "array of colour-name strings"
+        },
+        {
+          "path": "config.patternColors",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:108",
+            "src/curriculum/activities/BreakActivity.tsx:195",
+            "src/curriculum/activities/minigames/PatternCompletionMinigame.tsx:454"
+          ],
+          "note": "fallback read of nested config key; array of colour-name strings"
+        },
+        {
+          "path": "groupItem",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:109",
+            "src/curriculum/activities/BreakActivity.tsx:163",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:547"
+          ],
+          "note": "BreakContentItem passed whole to ContentToken; subkeys listed separately"
+        },
+        {
+          "path": "config.groupItem",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:109",
+            "src/curriculum/activities/BreakActivity.tsx:163",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:547"
+          ],
+          "note": "fallback read of nested config key; BreakContentItem passed whole to ContentToken; subkeys listed separately"
+        },
+        {
+          "path": "groupItem.kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:62"
+          ]
+        },
+        {
+          "path": "config.groupItem.kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:62"
+          ]
+        },
+        {
+          "path": "groupItem.letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "config.groupItem.letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "groupItem.word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "config.groupItem.word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "groupItem.image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.groupItem.image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "groupItem.image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.groupItem.image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "groupItem.audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "config.groupItem.audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "oddItem",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:110",
+            "src/curriculum/activities/BreakActivity.tsx:164",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:548"
+          ],
+          "note": "BreakContentItem passed whole to ContentToken; subkeys listed separately"
+        },
+        {
+          "path": "config.oddItem",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:110",
+            "src/curriculum/activities/BreakActivity.tsx:164",
+            "src/curriculum/activities/minigames/OddOneOutMinigame.tsx:548"
+          ],
+          "note": "fallback read of nested config key; BreakContentItem passed whole to ContentToken; subkeys listed separately"
+        },
+        {
+          "path": "oddItem.kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:62"
+          ]
+        },
+        {
+          "path": "config.oddItem.kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:62"
+          ]
+        },
+        {
+          "path": "oddItem.letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "config.oddItem.letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "oddItem.word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "config.oddItem.word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "oddItem.image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.oddItem.image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "oddItem.image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.oddItem.image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "oddItem.audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "config.oddItem.audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "matchItem",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:111",
+            "src/curriculum/activities/BreakActivity.tsx:186",
+            "src/curriculum/activities/minigames/MatchTwoMinigame.tsx:232"
+          ],
+          "note": "BreakContentItem passed whole to ContentToken; subkeys listed separately"
+        },
+        {
+          "path": "config.matchItem",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:111",
+            "src/curriculum/activities/BreakActivity.tsx:186",
+            "src/curriculum/activities/minigames/MatchTwoMinigame.tsx:232"
+          ],
+          "note": "fallback read of nested config key; BreakContentItem passed whole to ContentToken; subkeys listed separately"
+        },
+        {
+          "path": "matchItem.kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:62"
+          ]
+        },
+        {
+          "path": "config.matchItem.kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:62"
+          ]
+        },
+        {
+          "path": "matchItem.letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "config.matchItem.letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "matchItem.word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "config.matchItem.word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "matchItem.image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.matchItem.image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "matchItem.image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.matchItem.image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "matchItem.audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "config.matchItem.audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "distractors",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:112",
+            "src/curriculum/activities/BreakActivity.tsx:187",
+            "src/curriculum/activities/minigames/MatchTwoMinigame.tsx:237",
+            "src/curriculum/activities/minigames/MatchTwoMinigame.tsx:238"
+          ],
+          "note": "array of BreakContentItem; only first 6 used"
+        },
+        {
+          "path": "config.distractors",
+          "reads": [
+            "src/curriculum/activities/BreakActivity.tsx:112",
+            "src/curriculum/activities/BreakActivity.tsx:187",
+            "src/curriculum/activities/minigames/MatchTwoMinigame.tsx:237",
+            "src/curriculum/activities/minigames/MatchTwoMinigame.tsx:238"
+          ],
+          "note": "fallback read of nested config key; array of BreakContentItem; only first 6 used"
+        },
+        {
+          "path": "distractors[].kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51"
+          ]
+        },
+        {
+          "path": "config.distractors[].kind",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:21",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34",
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:51"
+          ]
+        },
+        {
+          "path": "distractors[].letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "config.distractors[].letter.display",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:23"
+          ]
+        },
+        {
+          "path": "distractors[].word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "config.distractors[].word.text",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:25"
+          ]
+        },
+        {
+          "path": "distractors[].image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.distractors[].image.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "distractors[].image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "config.distractors[].image.path",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:52"
+          ]
+        },
+        {
+          "path": "distractors[].audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "config.distractors[].audio.url",
+          "reads": [
+            "src/curriculum/activities/minigames/shared/ContentToken.tsx:34"
+          ]
+        },
+        {
+          "path": "coloringImage",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:98"
+          ]
+        }
+      ],
+      "note": "Declared in BreakConfig but never read: coloringImage, availableColors, dotCount, dotPattern, oddAttribute, commonShape, oddShape, commonColor, oddColor, matchShape, matchColor. Coloring variant reads nothing. BreakActivity.tsx:97 reads config = activity.config || {} (nested key); top-level wins via ||."
+    },
+    "build_word_from_letters": {
+      "aliases": [
+        "word_builder",
+        "name_builder"
+      ],
+      "files": [
+        "src/curriculum/activities/WordBuilderActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts",
+        "src/curriculum/engine/ActivityPreloader.ts"
+      ],
+      "paths": [
+        {
+          "path": "letterDisplayMode",
+          "reads": [
+            "src/curriculum/activities/WordBuilderActivity.tsx:523"
+          ],
+          "note": "default 'contextual'; passed as prop to the component"
+        },
+        {
+          "path": "useChildName",
+          "reads": [
+            "src/curriculum/activities/WordBuilderActivity.tsx:543"
+          ],
+          "note": "read from config and from activity root (same path in flattened object)"
+        },
+        {
+          "path": "targetWord",
+          "reads": [
+            "src/curriculum/activities/WordBuilderActivity.tsx:548",
+            "src/curriculum/activities/WordBuilderActivity.tsx:549",
+            "src/curriculum/activities/WordBuilderActivity.tsx:551",
+            "src/curriculum/activities/WordBuilderActivity.tsx:552",
+            "src/curriculum/activities/WordBuilderActivity.tsx:83"
+          ],
+          "note": "used as the word to build unless useChildName or name_builder fallback applies"
+        },
+        {
+          "path": "type",
+          "reads": [
+            "src/curriculum/activities/WordBuilderActivity.tsx:556"
+          ],
+          "note": "name_builder type falls back to the child's name when no targetWord; engine field"
+        },
+        {
+          "path": "targetWordImage",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:108"
+          ]
+        }
+      ]
+    },
+    "camel_narration": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/CamelNarrationActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "narrationSteps",
+          "reads": [
+            "src/curriculum/activities/CamelNarrationActivity.tsx:41",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:114",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:119",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:123",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:198"
+          ],
+          "note": "defaults to []"
+        },
+        {
+          "path": "narrationSteps[].audioUrl",
+          "reads": [
+            "src/curriculum/activities/CamelNarrationActivity.tsx:86"
+          ]
+        },
+        {
+          "path": "narrationSteps[].text",
+          "reads": [
+            "src/curriculum/activities/CamelNarrationActivity.tsx:71",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:72"
+          ],
+          "note": "only when showSubtitles"
+        },
+        {
+          "path": "showSubtitles",
+          "reads": [
+            "src/curriculum/activities/CamelNarrationActivity.tsx:42",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:71",
+            "src/curriculum/activities/CamelNarrationActivity.tsx:191"
+          ]
+        }
+      ]
+    },
+    "color_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/ColorLetterGame.tsx"
+      ],
+      "paths": [
+        {
+          "path": "letter",
+          "reads": [
+            "src/curriculum/activities/ColorLetterGame.tsx:218",
+            "src/curriculum/activities/ColorLetterGame.tsx:219",
+            "src/curriculum/activities/ColorLetterGame.tsx:224"
+          ],
+          "note": "only used if typeof string; key into FILLED_LETTER_PATHS (hooks/useFilledLetterPath.ts:10); non-string treated as missing"
+        }
+      ]
+    },
+    "content_with_cards": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/ContentWithCardsActivity.tsx",
+        "src/curriculum/components/ContentDisplay.tsx",
+        "src/curriculum/engine/ActivityPreloader.ts",
+        "src/curriculum/activities/registry.ts"
+      ],
+      "paths": [
+        {
+          "path": "content",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:50"
+          ],
+          "note": "config = activityData.config || activityData; root path is used when no nested config key"
+        },
+        {
+          "path": "config.content",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:50"
+          ],
+          "note": "config = activityData.config || activityData; root path is used when no nested config key"
+        },
+        {
+          "path": "content.letter",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:153",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:162",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:175"
+          ]
+        },
+        {
+          "path": "config.content.letter",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:153",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:162",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:175"
+          ]
+        },
+        {
+          "path": "content.word",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:155",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:163",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:176"
+          ]
+        },
+        {
+          "path": "config.content.word",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:155",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:163",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:176"
+          ]
+        },
+        {
+          "path": "content.image",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:157",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:164",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:177",
+            "src/curriculum/engine/ActivityPreloader.ts:87"
+          ]
+        },
+        {
+          "path": "config.content.image",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:157",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:164",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:177"
+          ]
+        },
+        {
+          "path": "contentType",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:51",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:151"
+          ]
+        },
+        {
+          "path": "config.contentType",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:51",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:151"
+          ]
+        },
+        {
+          "path": "cards",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:52",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:63",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:68"
+          ],
+          "note": "array; 1-4 items"
+        },
+        {
+          "path": "config.cards",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:52",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:63",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:68"
+          ],
+          "note": "array; 1-4 items"
+        },
+        {
+          "path": "cards[].id",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:95",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:98",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:126",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:137"
+          ]
+        },
+        {
+          "path": "config.cards[].id",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:95",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:98",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:126",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:137"
+          ]
+        },
+        {
+          "path": "cards[].text",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:138"
+          ]
+        },
+        {
+          "path": "config.cards[].text",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:138"
+          ]
+        },
+        {
+          "path": "cards[].image",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:139",
+            "src/curriculum/engine/ActivityPreloader.ts:88"
+          ]
+        },
+        {
+          "path": "config.cards[].image",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:139"
+          ]
+        },
+        {
+          "path": "cards[].isCorrect",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:100",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:127"
+          ]
+        },
+        {
+          "path": "config.cards[].isCorrect",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:100",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:127"
+          ]
+        },
+        {
+          "path": "interactive",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:53",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:75",
+            "src/curriculum/activities/registry.ts:77"
+          ],
+          "note": "defaults true"
+        },
+        {
+          "path": "config.interactive",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:53",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:75",
+            "src/curriculum/activities/registry.ts:77"
+          ],
+          "note": "defaults true"
+        },
+        {
+          "path": "randomizeCards",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:54",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:67"
+          ],
+          "note": "defaults false"
+        },
+        {
+          "path": "config.randomizeCards",
+          "reads": [
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:54",
+            "src/curriculum/activities/ContentWithCardsActivity.tsx:67"
+          ],
+          "note": "defaults false"
+        },
+        {
+          "path": "cards[].imageUrl",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:88"
+          ]
+        }
+      ]
+    },
+    "deliver_envelope": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DeliverEnvelopeActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/DeliverEnvelopeActivity.tsx:299",
+            "src/curriculum/activities/DeliverEnvelopeActivity.tsx:300",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/DeliverEnvelopeActivity.tsx:299",
+            "src/curriculum/activities/DeliverEnvelopeActivity.tsx:300",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/DeliverEnvelopeActivity.tsx:301"
+          ]
+        },
+        {
+          "path": "totalHouses",
+          "reads": [
+            "src/curriculum/activities/DeliverEnvelopeActivity.tsx:302"
+          ]
+        }
+      ]
+    },
+    "drag_dots_to_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DragDotsToLetterActivity.tsx",
+        "src/curriculum/activities/shared/useDotActivity.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragDotsToLetterActivity.tsx:267"
+          ],
+          "note": "string used directly; passed to useDotActivity (hook reads it only as string)"
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragDotsToLetterActivity.tsx:267"
+          ],
+          "note": "fallback"
+        },
+        {
+          "path": "distractorDotsCount",
+          "reads": [
+            "src/curriculum/activities/DragDotsToLetterActivity.tsx:268",
+            "src/curriculum/activities/DragDotsToLetterActivity.tsx:290"
+          ]
+        },
+        {
+          "path": "config.distractorDotsCount",
+          "reads": [
+            "src/curriculum/activities/DragDotsToLetterActivity.tsx:268"
+          ],
+          "note": "fallback"
+        }
+      ]
+    },
+    "drag_drop": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DragDropActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts",
+        "src/utils/letterScattering.ts"
+      ],
+      "paths": [
+        {
+          "path": "variant",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:32",
+            "src/curriculum/activities/DragDropActivity.tsx:130",
+            "src/curriculum/activities/DragDropActivity.tsx:133",
+            "src/curriculum/activities/DragDropActivity.tsx:136"
+          ]
+        },
+        {
+          "path": "targetAnimal",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:33",
+            "src/curriculum/activities/DragDropActivity.tsx:46"
+          ]
+        },
+        {
+          "path": "animalName",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:34",
+            "src/curriculum/activities/DragDropActivity.tsx:131"
+          ]
+        },
+        {
+          "path": "targetWord",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:35",
+            "src/curriculum/activities/DragDropActivity.tsx:134"
+          ]
+        },
+        {
+          "path": "snapToTarget",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:36"
+          ],
+          "note": "destructured with default true; not otherwise used"
+        },
+        {
+          "path": "instruction",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:37"
+          ],
+          "note": "destructured, unused"
+        },
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:44",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "config = activity.config || activity (line 41); string or array"
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:44",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "nested config key fallback"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "config.targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "itemCount",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:45"
+          ]
+        },
+        {
+          "path": "config.itemCount",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:45"
+          ],
+          "note": "nested config key fallback"
+        },
+        {
+          "path": "character",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:46"
+          ]
+        },
+        {
+          "path": "config.character",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:46"
+          ],
+          "note": "nested config key fallback"
+        },
+        {
+          "path": "draggableItems",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:51",
+            "src/curriculum/activities/DragDropActivity.tsx:52",
+            "src/curriculum/activities/DragDropActivity.tsx:143"
+          ]
+        },
+        {
+          "path": "draggableItems[].id",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:79",
+            "src/curriculum/activities/DragDropActivity.tsx:145"
+          ]
+        },
+        {
+          "path": "draggableItems[].letter",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:231"
+          ]
+        },
+        {
+          "path": "draggableItems[].isCorrect",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:82",
+            "src/curriculum/activities/DragDropActivity.tsx:205"
+          ]
+        },
+        {
+          "path": "correctCount",
+          "reads": [
+            "src/curriculum/activities/DragDropActivity.tsx:70"
+          ]
+        }
+      ]
+    },
+    "drag_hamza_to_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DragHamzaToLetterActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragHamzaToLetterActivity.tsx:249",
+            "src/curriculum/activities/DragHamzaToLetterActivity.tsx:252",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "config = {...activity, ...activity.config}; default 'ا'"
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragHamzaToLetterActivity.tsx:249",
+            "src/curriculum/activities/DragHamzaToLetterActivity.tsx:252"
+          ],
+          "note": "nested overrides root when present"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "config.targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        }
+      ]
+    },
+    "drag_haraka_to_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DragHarakaToLetterActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "harakaType",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:441"
+          ],
+          "note": "default 'fatha'"
+        },
+        {
+          "path": "config.harakaType",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:441"
+          ],
+          "note": "nested key overrides root (config = {...activity, ...activity.config}, line 438)"
+        },
+        {
+          "path": "distractorHarakat",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:446",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:447",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:450"
+          ],
+          "note": "array of haraka type strings; filtered against harakaType"
+        },
+        {
+          "path": "config.distractorHarakat",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:446",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:447",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:450"
+          ],
+          "note": "nested key overrides root (config = {...activity, ...activity.config}, line 438)"
+        },
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:454",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "default 'ب'"
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:454",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "nested key overrides root (config = {...activity, ...activity.config}, line 438)"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:460",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:461",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:464"
+          ],
+          "note": "string[] or {letter}[]"
+        },
+        {
+          "path": "config.distractorLetters",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:460",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:461",
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:464"
+          ],
+          "note": "nested key overrides root (config = {...activity, ...activity.config}, line 438)"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:462"
+          ]
+        },
+        {
+          "path": "config.distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToLetterActivity.tsx:462"
+          ]
+        }
+      ]
+    },
+    "drag_haraka_to_word": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DragHarakaToWordActivity.tsx",
+        "src/curriculum/activities/shared/harakaWordTargets.ts"
+      ],
+      "paths": [
+        {
+          "path": "word.text",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:113"
+          ],
+          "note": "config = activity.config || activity (line 112)"
+        },
+        {
+          "path": "arabicWord",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:113"
+          ],
+          "note": "fallback when word.text absent"
+        },
+        {
+          "path": "blankIndices",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:116",
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:117"
+          ],
+          "note": "array of numbers; non-array treated as []"
+        },
+        {
+          "path": "blankIndices[]",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:121"
+          ],
+          "note": "each index passed to buildWordLetterSlots"
+        },
+        {
+          "path": "distractorHarakat",
+          "reads": [
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:164",
+            "src/curriculum/activities/DragHarakaToWordActivity.tsx:169"
+          ],
+          "note": "array of haraka type strings"
+        }
+      ]
+    },
+    "drive_to_shadda": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DriveToShaddaActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "word.text",
+          "reads": [
+            "src/curriculum/activities/DriveToShaddaActivity.tsx:99"
+          ],
+          "note": "word is a {wordId,text} reference; only text is read"
+        },
+        {
+          "path": "arabicWord",
+          "reads": [
+            "src/curriculum/activities/DriveToShaddaActivity.tsx:99"
+          ],
+          "note": "fallback when word.text is absent"
+        },
+        {
+          "path": "holdMs",
+          "reads": [
+            "src/curriculum/activities/DriveToShaddaActivity.tsx:100"
+          ]
+        }
+      ]
+    },
+    "drive_to_sukoon": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/DriveToSukoonActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "word.text",
+          "reads": [
+            "src/curriculum/activities/DriveToSukoonActivity.tsx:106"
+          ],
+          "note": "word is a {wordId,text} reference; only text is read"
+        },
+        {
+          "path": "arabicWord",
+          "reads": [
+            "src/curriculum/activities/DriveToSukoonActivity.tsx:106"
+          ],
+          "note": "fallback when word.text is absent"
+        },
+        {
+          "path": "showStopSign",
+          "reads": [
+            "src/curriculum/activities/DriveToSukoonActivity.tsx:107"
+          ]
+        }
+      ]
+    },
+    "feed_baby": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/FeedBabyActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/FeedBabyActivity.tsx:184",
+            "src/curriculum/activities/FeedBabyActivity.tsx:188",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/FeedBabyActivity.tsx:184",
+            "src/curriculum/activities/FeedBabyActivity.tsx:188",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/FeedBabyActivity.tsx:195"
+          ]
+        }
+      ]
+    },
+    "feed_rabbit": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/FeedRabbitActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/FeedRabbitActivity.tsx:137",
+            "src/curriculum/activities/FeedRabbitActivity.tsx:161",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/FeedRabbitActivity.tsx:137",
+            "src/curriculum/activities/FeedRabbitActivity.tsx:161",
+            "src/curriculum/activities/FeedRabbitActivity.tsx:172",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/FeedRabbitActivity.tsx:138"
+          ]
+        },
+        {
+          "path": "distractorLetters.length",
+          "reads": [
+            "src/curriculum/activities/FeedRabbitActivity.tsx:172"
+          ]
+        }
+      ]
+    },
+    "fishing": {
+      "aliases": [
+        "catch_fish_with_letter"
+      ],
+      "files": [
+        "src/curriculum/activities/FishingActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/FishingActivity.tsx:372",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "via getActivityLetters/normalizeLetters; string or array"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/FishingActivity.tsx:372",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "via getActivityLetters; empty/missing -> random distractors generated"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "correctFishCount",
+          "reads": [
+            "src/curriculum/activities/FishingActivity.tsx:375"
+          ],
+          "note": "default 3"
+        },
+        {
+          "path": "fishSpeed",
+          "reads": [
+            "src/curriculum/activities/FishingActivity.tsx:376"
+          ],
+          "note": "default 1.0"
+        },
+        {
+          "path": "correctRatio",
+          "reads": [
+            "src/curriculum/activities/FishingActivity.tsx:377"
+          ],
+          "note": "default 0.4"
+        },
+        {
+          "path": "targetLetterForms",
+          "reads": [
+            "src/curriculum/activities/FishingActivity.tsx:382",
+            "src/curriculum/activities/FishingActivity.tsx:383",
+            "src/curriculum/activities/FishingActivity.tsx:388"
+          ],
+          "note": "if non-empty after normalization, overrides targetLetter for correctness"
+        },
+        {
+          "path": "targetLetterForms[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        }
+      ]
+    },
+    "fly_on_flowers": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/FlyOnFlowersActivity.tsx",
+        "src/curriculum/activities/shared/FlowerGarden.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/FlyOnFlowersActivity.tsx:165",
+            "src/curriculum/activities/FlyOnFlowersActivity.tsx:166"
+          ],
+          "note": "normalizeLetters; string or array"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/FlyOnFlowersActivity.tsx:171",
+            "src/curriculum/activities/FlyOnFlowersActivity.tsx:172"
+          ],
+          "note": "optional; undefined passes through to child"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/FlyOnFlowersActivity.tsx:174"
+          ],
+          "note": "default 3"
+        }
+      ]
+    },
+    "freestyle_trace_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/FreestyleTracingActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "letterForm",
+          "reads": [
+            "src/curriculum/activities/FreestyleTracingActivity.tsx:14",
+            "src/curriculum/activities/FreestyleTracingActivity.tsx:15",
+            "src/curriculum/activities/FreestyleTracingActivity.tsx:58"
+          ]
+        }
+      ]
+    },
+    "grid_tap": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/GridTapActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts",
+        "src/curriculum/activities/shared/TapTargetsGame.tsx"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/GridTapActivity.tsx:49",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "string | string[] | {letter,form}[]; normalizeLetters (helper) reads item.letter for object elements"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when targetLetter is an array of objects"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/GridTapActivity.tsx:49",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "same shapes as targetLetter; if absent/empty, random distractors are generated"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/GridTapActivity.tsx:42"
+          ]
+        },
+        {
+          "path": "columns",
+          "reads": [
+            "src/curriculum/activities/GridTapActivity.tsx:43"
+          ]
+        },
+        {
+          "path": "rows",
+          "reads": [
+            "src/curriculum/activities/GridTapActivity.tsx:44"
+          ]
+        },
+        {
+          "path": "totalItems",
+          "reads": [
+            "src/curriculum/activities/GridTapActivity.tsx:45"
+          ],
+          "note": "falls back to columns*rows"
+        }
+      ]
+    },
+    "i_spy": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/ISpyActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/ISpyActivity.tsx:105",
+            "src/curriculum/activities/ISpyActivity.tsx:107",
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "normalizeLetters; fallback ['ب'] if empty"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/ISpyActivity.tsx:111",
+            "src/curriculum/activities/ISpyActivity.tsx:113",
+            "src/curriculum/activities/ISpyActivity.tsx:118"
+          ],
+          "note": "random if absent/empty"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/ISpyActivity.tsx:99",
+            "src/curriculum/activities/ISpyActivity.tsx:100"
+          ]
+        },
+        {
+          "path": "totalLetters",
+          "reads": [
+            "src/curriculum/activities/ISpyActivity.tsx:100"
+          ]
+        },
+        {
+          "path": "letterSize",
+          "reads": [
+            "src/curriculum/activities/ISpyActivity.tsx:101"
+          ],
+          "note": "'small'|'medium'|'large'; key into LETTER_SIZES, default medium"
+        }
+      ]
+    },
+    "ice_cream_stacking": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/IceCreamStackingActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/IceCreamStackingActivity.tsx:359",
+            "src/curriculum/activities/IceCreamStackingActivity.tsx:360",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/IceCreamStackingActivity.tsx:359",
+            "src/curriculum/activities/IceCreamStackingActivity.tsx:360",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/IceCreamStackingActivity.tsx:361"
+          ]
+        },
+        {
+          "path": "totalScoops",
+          "reads": [
+            "src/curriculum/activities/IceCreamStackingActivity.tsx:362"
+          ]
+        }
+      ]
+    },
+    "intro": {
+      "aliases": [
+        "show_letter_or_word"
+      ],
+      "files": [
+        "src/curriculum/activities/IntroActivity.tsx",
+        "src/curriculum/activities/shared/AnimatedLetterDisplay.tsx",
+        "src/curriculum/engine/ActivityPreloader.ts"
+      ],
+      "paths": [
+        {
+          "path": "contentType",
+          "reads": [
+            "src/curriculum/activities/IntroActivity.tsx:25",
+            "src/curriculum/activities/IntroActivity.tsx:61"
+          ],
+          "note": "defaults to 'letter'"
+        },
+        {
+          "path": "letter",
+          "reads": [
+            "src/curriculum/activities/IntroActivity.tsx:26",
+            "src/curriculum/activities/IntroActivity.tsx:62"
+          ],
+          "note": "passed whole to AnimatedLetterDisplay (shared/AnimatedLetterDisplay.tsx:114 getLetterSizeScale(letter), :135)"
+        },
+        {
+          "path": "word",
+          "reads": [
+            "src/curriculum/activities/IntroActivity.tsx:27",
+            "src/curriculum/activities/IntroActivity.tsx:63"
+          ],
+          "note": "AnimatedLetterDisplay.tsx:109 calculateWordFontSize(word)"
+        },
+        {
+          "path": "image",
+          "reads": [
+            "src/curriculum/activities/IntroActivity.tsx:28",
+            "src/curriculum/activities/IntroActivity.tsx:64",
+            "src/curriculum/engine/ActivityPreloader.ts:93"
+          ]
+        },
+        {
+          "path": "imageWidth",
+          "reads": [
+            "src/curriculum/activities/IntroActivity.tsx:29",
+            "src/curriculum/activities/IntroActivity.tsx:65"
+          ]
+        },
+        {
+          "path": "imageHeight",
+          "reads": [
+            "src/curriculum/activities/IntroActivity.tsx:30",
+            "src/curriculum/activities/IntroActivity.tsx:66"
+          ]
+        }
+      ]
+    },
+    "letter_discrimination": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/LetterDiscriminationGame.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/LetterDiscriminationGame.tsx:26",
+            "src/curriculum/activities/LetterDiscriminationGame.tsx:33"
+          ],
+          "note": "string | string[] | {letter}[]; normalizeLetters; only first element is displayed (:42)"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "read when element is an object with 'letter' key"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/LetterDiscriminationGame.tsx:26",
+            "src/curriculum/activities/LetterDiscriminationGame.tsx:37"
+          ],
+          "note": "all normalized elements displayed"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        }
+      ]
+    },
+    "letter_rain": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/LetterRainActivity.tsx",
+        "src/curriculum/activities/LetterRainGame.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/LetterRainActivity.tsx:37",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "via getActivityLetters/normalizeLetters; string or array"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/LetterRainActivity.tsx:37",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "via getActivityLetters; empty/missing -> random distractors generated"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/LetterRainActivity.tsx:38"
+          ],
+          "note": "default 5"
+        },
+        {
+          "path": "speed",
+          "reads": [
+            "src/curriculum/activities/LetterRainActivity.tsx:39"
+          ],
+          "note": "default 1.0"
+        }
+      ]
+    },
+    "match_pairs": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/MatchPairsActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "pairs",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:211",
+            "src/curriculum/activities/MatchPairsActivity.tsx:224"
+          ]
+        },
+        {
+          "path": "pairs[].left.type",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:170",
+            "src/curriculum/activities/MatchPairsActivity.tsx:173",
+            "src/curriculum/activities/MatchPairsActivity.tsx:176",
+            "src/curriculum/activities/MatchPairsActivity.tsx:183",
+            "src/curriculum/activities/MatchPairsActivity.tsx:225"
+          ]
+        },
+        {
+          "path": "pairs[].right.type",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:170",
+            "src/curriculum/activities/MatchPairsActivity.tsx:173",
+            "src/curriculum/activities/MatchPairsActivity.tsx:176",
+            "src/curriculum/activities/MatchPairsActivity.tsx:183",
+            "src/curriculum/activities/MatchPairsActivity.tsx:228",
+            "src/curriculum/activities/MatchPairsActivity.tsx:332"
+          ]
+        },
+        {
+          "path": "pairs[].left.value",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:171",
+            "src/curriculum/activities/MatchPairsActivity.tsx:174",
+            "src/curriculum/activities/MatchPairsActivity.tsx:178"
+          ],
+          "note": "letter/word text or image URL"
+        },
+        {
+          "path": "pairs[].right.value",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:171",
+            "src/curriculum/activities/MatchPairsActivity.tsx:174",
+            "src/curriculum/activities/MatchPairsActivity.tsx:178"
+          ]
+        },
+        {
+          "path": "pairs[].left.label",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:186",
+            "src/curriculum/activities/MatchPairsActivity.tsx:187"
+          ]
+        },
+        {
+          "path": "pairs[].right.label",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:186",
+            "src/curriculum/activities/MatchPairsActivity.tsx:187"
+          ]
+        },
+        {
+          "path": "pairs[].left.audioUrl",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:225",
+            "src/curriculum/activities/MatchPairsActivity.tsx:226",
+            "src/curriculum/activities/MatchPairsActivity.tsx:308",
+            "src/curriculum/activities/MatchPairsActivity.tsx:309"
+          ]
+        },
+        {
+          "path": "pairs[].right.audioUrl",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:228",
+            "src/curriculum/activities/MatchPairsActivity.tsx:229",
+            "src/curriculum/activities/MatchPairsActivity.tsx:308",
+            "src/curriculum/activities/MatchPairsActivity.tsx:309",
+            "src/curriculum/activities/MatchPairsActivity.tsx:332"
+          ]
+        },
+        {
+          "path": "shuffleItems",
+          "reads": [
+            "src/curriculum/activities/MatchPairsActivity.tsx:212"
+          ],
+          "note": "!== false"
+        }
+      ]
+    },
+    "memory_card_match": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/MemoryCardMatchGame.tsx",
+        "src/curriculum/activities/shared/MemoryCardGame.tsx"
+      ],
+      "paths": [
+        {
+          "path": "letters",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:64",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:83",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:100",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:142"
+          ],
+          "note": "array of string | {card1,card2,audioUrl?} | {letterId,matchingForm?,audioUrl?}; letters.length used for cardCount default (line 65)"
+        },
+        {
+          "path": "letters[]",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:31",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:36",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:45"
+          ],
+          "note": "plain-string element form (typeof check)"
+        },
+        {
+          "path": "letters[].card1",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:36",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:38"
+          ]
+        },
+        {
+          "path": "letters[].card2",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:36",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:39"
+          ]
+        },
+        {
+          "path": "letters[].audioUrl",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:40",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:51",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:85",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:86"
+          ]
+        },
+        {
+          "path": "letters[].letterId",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:45",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:46",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:47"
+          ],
+          "note": "legacy format"
+        },
+        {
+          "path": "letters[].matchingForm",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:47"
+          ],
+          "note": "legacy; value does not change result (both ternary branches identical)"
+        },
+        {
+          "path": "cardCount",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:65",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:98",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:144"
+          ],
+          "note": "default letters.length*2"
+        },
+        {
+          "path": "matchType",
+          "reads": [
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:66",
+            "src/curriculum/activities/MemoryCardMatchGame.tsx:77"
+          ],
+          "note": "default 'letter_to_letter'; 'letter_to_sound' enables audio cards"
+        }
+      ]
+    },
+    "multiple_choice_question": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/MultipleChoiceActivity.tsx",
+        "src/curriculum/engine/ActivityPreloader.ts"
+      ],
+      "paths": [
+        {
+          "path": "question",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:29"
+          ],
+          "note": "config = activity.config || activity; root path when flattened (fallback chain also reads config.question)"
+        },
+        {
+          "path": "question.ar",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:97",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:110",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:111"
+          ]
+        },
+        {
+          "path": "questionImage",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:104",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:106",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:30",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:97",
+            "src/curriculum/engine/ActivityPreloader.ts:81"
+          ]
+        },
+        {
+          "path": "options",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:31",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:44",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:49",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:51"
+          ],
+          "note": "array; copied/sorted, not key-iterated"
+        },
+        {
+          "path": "options[].id",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:59",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:63",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:67",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:137"
+          ]
+        },
+        {
+          "path": "options[].isCorrect",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:55",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:65",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:121"
+          ]
+        },
+        {
+          "path": "options[].text.ar",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:138"
+          ],
+          "note": "read only when mode != 'image'"
+        },
+        {
+          "path": "options[].image",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:139",
+            "src/curriculum/engine/ActivityPreloader.ts:82"
+          ],
+          "note": "read only when mode == 'image'"
+        },
+        {
+          "path": "layout",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:32"
+          ],
+          "note": "read but unused afterwards"
+        },
+        {
+          "path": "mode",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:33",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:138",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:139"
+          ]
+        },
+        {
+          "path": "randomizeOptions",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:34",
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:48"
+          ]
+        },
+        {
+          "path": "config.question",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:29"
+          ],
+          "note": "nested-config fallback (config = mcActivity.config || mcActivity); same for questionImage/options/layout/mode/randomizeOptions"
+        },
+        {
+          "path": "config.questionImage",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:30"
+          ]
+        },
+        {
+          "path": "config.options",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:31"
+          ]
+        },
+        {
+          "path": "config.layout",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:32"
+          ]
+        },
+        {
+          "path": "config.mode",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:33"
+          ]
+        },
+        {
+          "path": "config.randomizeOptions",
+          "reads": [
+            "src/curriculum/activities/MultipleChoiceActivity.tsx:34"
+          ]
+        },
+        {
+          "path": "options[].imageUrl",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:82"
+          ]
+        }
+      ]
+    },
+    "pick_flowers": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/PickFlowersActivity.tsx",
+        "src/curriculum/activities/shared/FlowerGarden.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/PickFlowersActivity.tsx:42",
+            "src/curriculum/activities/PickFlowersActivity.tsx:43"
+          ],
+          "note": "normalizeLetters; string or array"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/PickFlowersActivity.tsx:48",
+            "src/curriculum/activities/PickFlowersActivity.tsx:49"
+          ],
+          "note": "optional; undefined passes through to child"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/PickFlowersActivity.tsx:52"
+          ],
+          "note": "default 3"
+        }
+      ]
+    },
+    "pick_from_tree": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/PickFromTreeActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/PickFromTreeActivity.tsx:186",
+            "src/curriculum/activities/PickFromTreeActivity.tsx:192",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/PickFromTreeActivity.tsx:186",
+            "src/curriculum/activities/PickFromTreeActivity.tsx:192",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/PickFromTreeActivity.tsx:195"
+          ]
+        }
+      ]
+    },
+    "piggy_bank": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/PiggyBankActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/PiggyBankActivity.tsx:133",
+            "src/curriculum/activities/PiggyBankActivity.tsx:138",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/PiggyBankActivity.tsx:133",
+            "src/curriculum/activities/PiggyBankActivity.tsx:138",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "Normalized by normalizeLetters: string, string[] or {letter,form}[]; only .letter is read from objects"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "LetterWithForm object element; form is not read"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/PiggyBankActivity.tsx:141"
+          ]
+        }
+      ]
+    },
+    "pizza": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/PizzaActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:34",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "getPrimaryTargetLetter(config) || getPrimaryTargetLetter(activity); first letter only"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:31",
+            "src/curriculum/activities/PizzaActivity.tsx:34",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "only if a nested config key exists (config = activity.config || activity)"
+        },
+        {
+          "path": "config.targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "requiredToppingsCount",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:35"
+          ],
+          "note": "default 3"
+        },
+        {
+          "path": "config.requiredToppingsCount",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:35"
+          ]
+        },
+        {
+          "path": "toppings",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:43",
+            "src/curriculum/activities/PizzaActivity.tsx:44",
+            "src/curriculum/activities/PizzaActivity.tsx:63"
+          ],
+          "note": "fallback pizzaActivity.toppings when no config.toppings array; if absent toppings are generated from targetLetter"
+        },
+        {
+          "path": "config.toppings",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:40",
+            "src/curriculum/activities/PizzaActivity.tsx:41",
+            "src/curriculum/activities/PizzaActivity.tsx:63"
+          ]
+        },
+        {
+          "path": "toppings[].id",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:74",
+            "src/curriculum/activities/PizzaActivity.tsx:77",
+            "src/curriculum/activities/PizzaActivity.tsx:127",
+            "src/curriculum/activities/PizzaActivity.tsx:146"
+          ]
+        },
+        {
+          "path": "toppings[].isCorrect",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:76"
+          ]
+        },
+        {
+          "path": "toppings[].emoji",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:259",
+            "src/curriculum/activities/PizzaActivity.tsx:290"
+          ]
+        },
+        {
+          "path": "toppings[].letter",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:260"
+          ]
+        },
+        {
+          "path": "config.toppings[].id",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:74",
+            "src/curriculum/activities/PizzaActivity.tsx:77",
+            "src/curriculum/activities/PizzaActivity.tsx:127",
+            "src/curriculum/activities/PizzaActivity.tsx:146"
+          ]
+        },
+        {
+          "path": "config.toppings[].isCorrect",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:76"
+          ]
+        },
+        {
+          "path": "config.toppings[].emoji",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:259",
+            "src/curriculum/activities/PizzaActivity.tsx:290"
+          ]
+        },
+        {
+          "path": "config.toppings[].letter",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:260"
+          ]
+        },
+        {
+          "path": "instruction",
+          "reads": [
+            "src/curriculum/activities/PizzaActivity.tsx:36"
+          ],
+          "uncertain": true,
+          "note": "assigned to a local variable; usage not confirmed"
+        }
+      ]
+    },
+    "plant_seeds": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/PlantSeedsActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/PlantSeedsActivity.tsx:154",
+            "src/curriculum/activities/PlantSeedsActivity.tsx:155"
+          ],
+          "note": "normalizeLetters"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/PlantSeedsActivity.tsx:160",
+            "src/curriculum/activities/PlantSeedsActivity.tsx:161"
+          ],
+          "note": "normalizeLetters; empty array when absent (no auto-generation)"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/PlantSeedsActivity.tsx:164"
+          ]
+        }
+      ]
+    },
+    "pop_balloons_with_letter": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/BalloonActivity.tsx",
+        "src/curriculum/activities/BalloonGame.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/BalloonActivity.tsx:32",
+            "src/curriculum/activities/shared/activityHelpers.ts:165",
+            "src/curriculum/activities/BalloonActivity.tsx:36",
+            "src/curriculum/activities/shared/activityHelpers.ts:134"
+          ],
+          "note": "getActivityLetters (targetLetters, only used for logging) and getTargetLetterForms priority 3 (passed to BalloonGame as targetLetters)"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/BalloonActivity.tsx:32",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169",
+            "src/curriculum/activities/BalloonActivity.tsx:117"
+          ],
+          "note": "passed to BalloonGame; random if absent/empty. BalloonGame also accepts comma-separated string (BalloonGame.tsx:283-285) but activity always passes normalized array"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "correctLetterForms",
+          "reads": [
+            "src/curriculum/activities/BalloonActivity.tsx:36",
+            "src/curriculum/activities/shared/activityHelpers.ts:122",
+            "src/curriculum/activities/shared/activityHelpers.ts:123"
+          ],
+          "note": "priority 1 for target balloons letters"
+        },
+        {
+          "path": "correctLetterForms[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "targetLetterForms",
+          "reads": [
+            "src/curriculum/activities/BalloonActivity.tsx:36",
+            "src/curriculum/activities/shared/activityHelpers.ts:128",
+            "src/curriculum/activities/shared/activityHelpers.ts:129"
+          ],
+          "note": "priority 2 for target balloons letters"
+        },
+        {
+          "path": "targetLetterForms[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/BalloonActivity.tsx:37"
+          ]
+        },
+        {
+          "path": "balloonSpeed",
+          "reads": [
+            "src/curriculum/activities/BalloonActivity.tsx:38",
+            "src/curriculum/activities/BalloonActivity.tsx:122"
+          ],
+          "note": "passed as speed to BalloonGame (BalloonGame.tsx:88,349)"
+        }
+      ]
+    },
+    "slingshot": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/SlingshotActivity.tsx",
+        "src/curriculum/activities/SlingshotGame.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/SlingshotActivity.tsx:29",
+            "src/curriculum/activities/SlingshotActivity.tsx:34",
+            "src/curriculum/activities/shared/activityHelpers.ts:165",
+            "src/curriculum/activities/shared/activityHelpers.ts:94"
+          ],
+          "note": "getActivityLetters and getPrimaryTargetLetter (default 'ب'); SlingshotGame receives only the derived targetLetter string (SlingshotGame.tsx:127,137)"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/SlingshotActivity.tsx:29",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "derived array passed to SlingshotGame (SlingshotGame.tsx:127)"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ]
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/SlingshotActivity.tsx:35"
+          ],
+          "note": "default 3"
+        }
+      ]
+    },
+    "snowflakes": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/SnowflakesActivity.tsx",
+        "src/curriculum/activities/SnowflakesGame.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/SnowflakesActivity.tsx:38",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "via getActivityLetters/normalizeLetters; string or array"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/SnowflakesActivity.tsx:38",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "via getActivityLetters; empty/missing -> random distractors generated"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "array-of-objects form"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/SnowflakesActivity.tsx:39"
+          ],
+          "note": "default 5"
+        },
+        {
+          "path": "speed",
+          "reads": [
+            "src/curriculum/activities/SnowflakesActivity.tsx:40"
+          ],
+          "note": "default 0.8"
+        }
+      ]
+    },
+    "sound_blend": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/SoundSliderActivity.tsx",
+        "src/curriculum/activities/shared/SoundSlider/index.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "requiredSlides",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:161"
+          ],
+          "note": "default 1"
+        },
+        {
+          "path": "contentType",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:167"
+          ],
+          "note": "default 'word'; 'letter' or 'word'"
+        },
+        {
+          "path": "speed",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:172"
+          ],
+          "note": "default 'slow'; mapped by speedToBlendMode (segmented/slow/none, blended/fast, fluent)"
+        },
+        {
+          "path": "showBothSpeeds",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:185"
+          ],
+          "note": "default false"
+        },
+        {
+          "path": "word",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:326",
+            "src/curriculum/activities/SoundSliderActivity.tsx:342",
+            "src/curriculum/activities/SoundSliderActivity.tsx:356",
+            "src/curriculum/activities/SoundSliderActivity.tsx:441"
+          ],
+          "note": "whole string passed to SoundSlider"
+        },
+        {
+          "path": "segments",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:189"
+          ],
+          "note": "data = {...activity, ...config}; ?? [] guard"
+        },
+        {
+          "path": "segments[].sound",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:190"
+          ]
+        },
+        {
+          "path": "segments[].duration",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:191",
+            "src/curriculum/activities/SoundSliderActivity.tsx:192"
+          ],
+          "note": "1|2|3; 1 maps to stop, 2/3 continuous"
+        },
+        {
+          "path": "id",
+          "reads": [
+            "src/curriculum/activities/SoundSliderActivity.tsx:213",
+            "src/curriculum/activities/SoundSliderActivity.tsx:286"
+          ],
+          "note": "engine field via data.id"
+        }
+      ]
+    },
+    "speech_practice": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/SpeechPracticeActivity.tsx",
+        "src/curriculum/activities/shared/AnimatedLetterDisplay.tsx"
+      ],
+      "paths": [
+        {
+          "path": "contentType",
+          "reads": [
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:122",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:130",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:362"
+          ],
+          "note": "default 'letter'; 'letter'|'word'|'letter_in_word'"
+        },
+        {
+          "path": "letter",
+          "reads": [
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:123",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:130",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:363"
+          ]
+        },
+        {
+          "path": "word",
+          "reads": [
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:124",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:130",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:364"
+          ]
+        },
+        {
+          "path": "locale",
+          "reads": [
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:125",
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:332"
+          ],
+          "note": "default 'ar-SA'; sent to speech API"
+        },
+        {
+          "path": "curriculumId",
+          "reads": [
+            "src/curriculum/activities/SpeechPracticeActivity.tsx:287"
+          ],
+          "uncertain": true,
+          "note": "sent as curriculum_id to speech API; may not exist in config (set elsewhere?)"
+        }
+      ]
+    },
+    "tap_crescent_moons": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/TapCrescentMoonsActivity.tsx",
+        "src/curriculum/activities/shared/activityHelpers.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/TapCrescentMoonsActivity.tsx:393",
+            "src/curriculum/activities/shared/activityHelpers.ts:165"
+          ],
+          "note": "string | string[] | {letter,form}[]; normalizeLetters (helper) reads item.letter for object elements"
+        },
+        {
+          "path": "targetLetter[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when targetLetter is an array of objects"
+        },
+        {
+          "path": "distractorLetters",
+          "reads": [
+            "src/curriculum/activities/TapCrescentMoonsActivity.tsx:393",
+            "src/curriculum/activities/shared/activityHelpers.ts:168",
+            "src/curriculum/activities/shared/activityHelpers.ts:169"
+          ],
+          "note": "same shapes as targetLetter; if absent/empty, random distractors are generated"
+        },
+        {
+          "path": "distractorLetters[].letter",
+          "reads": [
+            "src/curriculum/activities/shared/activityHelpers.ts:55",
+            "src/curriculum/activities/shared/activityHelpers.ts:56"
+          ],
+          "note": "only when array of objects"
+        },
+        {
+          "path": "targetCount",
+          "reads": [
+            "src/curriculum/activities/TapCrescentMoonsActivity.tsx:396"
+          ]
+        }
+      ]
+    },
+    "tap_dot_position": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/TapDotPositionActivity.tsx",
+        "src/curriculum/activities/shared/useDotActivity.ts"
+      ],
+      "paths": [
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/TapDotPositionActivity.tsx:36",
+            "src/curriculum/activities/shared/useDotActivity.ts:29",
+            "src/curriculum/activities/shared/useDotActivity.ts:165"
+          ],
+          "note": "must be a plain letter string (isLetterWithDots / getLetterDotInfo lookup)"
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/TapDotPositionActivity.tsx:36"
+          ],
+          "note": "fallback"
+        }
+      ]
+    },
+    "tap_letter_in_word": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/TapLetterInWordActivity.tsx",
+        "src/curriculum/audio/ConditionalAudioEngine.ts",
+        "src/curriculum/audio/AudioPreloader.ts",
+        "src/curriculum/engine/ActivityPreloader.ts"
+      ],
+      "paths": [
+        {
+          "path": "config.targetWord",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:70"
+          ]
+        },
+        {
+          "path": "targetWord",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:70"
+          ]
+        },
+        {
+          "path": "config.targetLetter",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:71"
+          ]
+        },
+        {
+          "path": "targetLetter",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:71"
+          ]
+        },
+        {
+          "path": "config.targetHaraka",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:72"
+          ],
+          "note": "read but value never used afterwards"
+        },
+        {
+          "path": "targetHaraka",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:72"
+          ],
+          "note": "read but value never used afterwards"
+        },
+        {
+          "path": "config.targetIndices",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:78"
+          ]
+        },
+        {
+          "path": "targetIndices",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:78"
+          ],
+          "note": "number[]; logical letter positions; Array.isArray + length checked line 81"
+        },
+        {
+          "path": "config.targetCount",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:103"
+          ],
+          "note": "only read when targetIndices absent; no root-level fallback"
+        },
+        {
+          "path": "conditionalAudio",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:106"
+          ],
+          "note": "whole object passed to useConditionalAudio / AudioPreloader.preloadConditionalAudio"
+        },
+        {
+          "path": "config.conditionalAudio",
+          "reads": [
+            "src/curriculum/activities/TapLetterInWordActivity.tsx:106"
+          ],
+          "note": "fallback location"
+        },
+        {
+          "path": "conditionalAudio.onSuccess.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:213",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:289",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:316",
+            "src/curriculum/audio/AudioPreloader.ts:256"
+          ]
+        },
+        {
+          "path": "conditionalAudio.onSuccess.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight (305-309), followUp.delay (306), followUp.action (348-349)"
+        },
+        {
+          "path": "conditionalAudio.onPartialSuccess.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:273",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:289",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:316",
+            "src/curriculum/audio/AudioPreloader.ts:257"
+          ]
+        },
+        {
+          "path": "conditionalAudio.onPartialSuccess.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight (305-309), followUp.delay (306), followUp.action (348-349)"
+        },
+        {
+          "path": "conditionalAudio.onFirstWrongAttempt.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:237",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:289",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:316",
+            "src/curriculum/audio/AudioPreloader.ts:258"
+          ]
+        },
+        {
+          "path": "conditionalAudio.onFirstWrongAttempt.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight (305-309), followUp.delay (306), followUp.action (348-349)"
+        },
+        {
+          "path": "conditionalAudio.onSecondWrongAttempt.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:248",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:289",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:316",
+            "src/curriculum/audio/AudioPreloader.ts:259"
+          ]
+        },
+        {
+          "path": "conditionalAudio.onSecondWrongAttempt.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight (305-309), followUp.delay (306), followUp.action (348-349)"
+        },
+        {
+          "path": "conditionalAudio.onThirdWrongAttempt.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:259",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:289",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:316",
+            "src/curriculum/audio/AudioPreloader.ts:260"
+          ]
+        },
+        {
+          "path": "conditionalAudio.onThirdWrongAttempt.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight (305-309), followUp.delay (306), followUp.action (348-349)"
+        },
+        {
+          "path": "conditionalAudio.onCompletion.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:222",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:289",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:316",
+            "src/curriculum/audio/AudioPreloader.ts:261"
+          ]
+        },
+        {
+          "path": "conditionalAudio.onCompletion.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight (305-309), followUp.delay (306), followUp.action (348-349)"
+        },
+        {
+          "path": "conditionalAudio.rules",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:98",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:428"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].id",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:101"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].enabled",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:101",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:429",
+            "src/curriculum/audio/AudioPreloader.ts:265"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].priority",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:103"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].condition.event",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:122"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].condition.attemptNumber",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:128",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:129"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].condition.isFirstAttempt",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:135",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:137"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].condition.target.property",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:167",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:173",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:175"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].condition.target.value",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:173",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:185",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:187",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:189"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].condition.target.operator",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:181"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].response.audio_url",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:429",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:430",
+            "src/curriculum/audio/AudioPreloader.ts:265",
+            "src/curriculum/audio/AudioPreloader.ts:266"
+          ]
+        },
+        {
+          "path": "conditionalAudio.rules[].response.followUp",
+          "reads": [
+            "src/curriculum/audio/ConditionalAudioEngine.ts:305",
+            "src/curriculum/audio/ConditionalAudioEngine.ts:348"
+          ],
+          "note": "followUp.highlight/delay/action as for slots"
+        },
+        {
+          "path": "wordImage",
+          "reads": [
+            "src/curriculum/engine/ActivityPreloader.ts:103"
+          ]
+        }
+      ]
+    },
+    "trace_letter": {
+      "aliases": [
+        "write"
+      ],
+      "files": [
+        "src/curriculum/activities/WriteActivity.tsx"
+      ],
+      "paths": [
+        {
+          "path": "letterForm",
+          "reads": [
+            "src/curriculum/activities/WriteActivity.tsx:23",
+            "src/curriculum/activities/WriteActivity.tsx:24",
+            "src/curriculum/activities/WriteActivity.tsx:27",
+            "src/curriculum/activities/WriteActivity.tsx:100"
+          ],
+          "note": "key into LETTER_PATHS (hooks/useLetterPath.ts:9) and LETTER_METADATA"
+        },
+        {
+          "path": "mode",
+          "reads": [
+            "src/curriculum/activities/WriteActivity.tsx:23",
+            "src/curriculum/activities/WriteActivity.tsx:31"
+          ],
+          "note": "'freehand' selects freestyle; anything else assisted"
+        }
+      ]
+    },
+    "word_split_blend": {
+      "aliases": [],
+      "files": [
+        "src/curriculum/activities/WordSplitBlendActivity.tsx",
+        "src/curriculum/activities/shared/wordSplitBlend.ts"
+      ],
+      "paths": [
+        {
+          "path": "chunks",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:94",
+            "src/curriculum/activities/shared/wordSplitBlend.ts:21"
+          ],
+          "note": "filterChunks drops entries lacking non-blank string text"
+        },
+        {
+          "path": "chunks[].text",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:95",
+            "src/curriculum/activities/shared/wordSplitBlend.ts:22"
+          ]
+        },
+        {
+          "path": "chunks[].audio_url",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:154",
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:162"
+          ]
+        },
+        {
+          "path": "wordAudioUrl",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:158",
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:159",
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:168",
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:259"
+          ]
+        },
+        {
+          "path": "word",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:189"
+          ],
+          "note": "only used as connected word when fewer than 2 chunks"
+        },
+        {
+          "path": "transliteration",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:251",
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:80"
+          ]
+        },
+        {
+          "path": "meaning",
+          "reads": [
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:251",
+            "src/curriculum/activities/WordSplitBlendActivity.tsx:81"
+          ]
+        }
+      ]
+    }
+  },
+  "excluded": [
+    {
+      "type": "*",
+      "path": "(whole activity)",
+      "reads": [
+        "src/curriculum/engine/renderActivity.tsx:134"
+      ],
+      "reason": "Serialised into Sentry context only (telemetry); no effect on rendering or scoring. Extra keys there are allowed by the rule."
+    },
+    {
+      "type": "*",
+      "path": "isCompleted (envelope)",
+      "reads": [
+        "src/curriculum/utils/levelIntro.ts:18"
+      ],
+      "reason": "Only present when the request carries a childId (progress, not content). Not part of the content rule; golden deliveries are requested without a child."
+    },
+    {
+      "type": "pop_balloons_with_letter",
+      "path": "(config keys)",
+      "reads": [
+        "src/curriculum/activities/BalloonActivity.tsx:49"
+      ],
+      "reason": "Object.keys(config) into a Sentry breadcrumb only (telemetry)."
+    }
+  ]
+}

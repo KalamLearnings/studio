@@ -158,6 +158,20 @@ export {
 } from './blend';
 
 // ============================================================================
+// WORD SPELLING (content model CM-B2: the normalised text that identifies one
+// curriculum_words row; a byte-identical copy of the backend's
+// core/domain/words/spelling.ts, kept so by test/spelling-drift.test.ts)
+// ============================================================================
+
+export {
+  normaliseSpelling,
+  spellingKey,
+  type SpellingIssueCode,
+  type SpellingIssue,
+  type SpellingResult,
+} from './spelling';
+
+// ============================================================================
 // ACTIVITY SCHEMAS & TYPES
 // ============================================================================
 

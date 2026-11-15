@@ -13,6 +13,7 @@ import { buildWordPreview, hasTanween, type WordPreview } from '@/lib/blendWord/
 import { getEndingOrderWarning } from '@/lib/blendWord/ending';
 import { parseBlendSaveError, type BlendSaveErrors } from '@/lib/blendWord/saveErrors';
 import { harakatSuggestionReason } from '@/lib/blendWord/harakat';
+import { parseWordSpellingError } from '@/lib/words/spelling';
 
 export interface BlendWordState {
   sourceText: string;
@@ -22,6 +23,8 @@ export interface BlendWordState {
   ending: BlendEnding;
   endingWarning: string | null;
   saveErrors: BlendSaveErrors | null;
+  /** The server refused the word itself (WORD_SPELLING_INVALID), as plain lines for the word field. */
+  spellingErrors: string[] | null;
   harakatReason: string | null;
   harakat: HarakatSuggestionState;
   /** The harakat panel has something to show. */
@@ -52,6 +55,7 @@ export function useBlendWord(
     [preview, ending, topic, topics],
   );
   const saveErrors = useMemo(() => parseBlendSaveError(saveError), [saveError]);
+  const spellingErrors = useMemo(() => parseWordSpellingError(saveError)?.messages ?? null, [saveError]);
 
   // Harakat suggestion (SB-S2): offered for missing marks, or a pausal-only
   // word in a full-ending activity. Nothing changes until Confirm.
@@ -59,5 +63,5 @@ export function useBlendWord(
   const harakat = useHarakatSuggestion(sourceText, ending);
   const showHarakat = !!(harakatReason || harakat.offer || harakat.error || harakat.pending);
 
-  return { sourceText, wordEdit, preview, ending, endingWarning, saveErrors, harakatReason, harakat, showHarakat };
+  return { sourceText, wordEdit, preview, ending, endingWarning, saveErrors, spellingErrors, harakatReason, harakat, showHarakat };
 }

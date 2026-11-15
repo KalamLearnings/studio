@@ -2,6 +2,7 @@
  * React Query hooks for topic operations
  */
 
+import { deleteErrorMessage } from '@/lib/utils/contentDelete';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listTopics,
@@ -120,7 +121,7 @@ export function useDeleteTopic() {
       toast.success('Topic deleted successfully');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete topic');
+      toast.error(deleteErrorMessage(error, 'topic'));
     },
   });
 }

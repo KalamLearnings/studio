@@ -2,6 +2,7 @@
  * React Query hooks for node operations including batch reorder
  */
 
+import { deleteErrorMessage } from '@/lib/utils/contentDelete';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listNodes,
@@ -124,7 +125,7 @@ export function useDeleteNode() {
       toast.success('Node deleted successfully');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete node');
+      toast.error(deleteErrorMessage(error, 'node'));
     },
   });
 }

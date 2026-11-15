@@ -36,7 +36,10 @@ interface UseAssetsReturn {
   loadAssets: () => Promise<void>;
   uploadNewAsset: (data: AssetUploadData) => Promise<Asset>;
   /** Saves the edit form: library fields, or a replace when a file is given. */
-  editAsset: (asset: Asset, data: AssetEditData) => Promise<Asset>;
+  editAsset: (
+    asset: Asset,
+    data: AssetEditData,
+  ) => Promise<{ asset: Asset; repointedActivities: number }>;
   /** Retires an image or makes it active again; the file is never deleted. */
   changeAssetStatus: (asset: Asset, status: PersonStatus) => Promise<void>;
   /** Puts a relabelled registry row's status and label on its library entry. */
@@ -118,11 +121,12 @@ export function useAssets(options: UseAssetsOptions = {}): UseAssetsReturn {
   /**
    * Save an edit. A replace supersedes the old entry and puts the new image in its place.
    */
-  const editAsset = useCallback(async (asset: Asset, data: AssetEditData): Promise<Asset> => {
+  const editAsset = useCallback(async (asset: Asset, data: AssetEditData) => {
     if (!asset.registryId) throw new Error('This image is not in the registry yet');
     setError(null);
     try {
-      const saved = await updateAsset(asset.registryId, data);
+      const result = await updateAsset(asset.registryId, data);
+      const saved = result.asset;
       const replaced = saved.registryId !== asset.registryId;
       setAssets(prev => {
         const shown =
@@ -137,7 +141,7 @@ export function useAssets(options: UseAssetsOptions = {}): UseAssetsReturn {
           .filter(entry => matchesStatusFilter(entry.status, selectedStatus));
         return shown ? [saved, ...rest] : rest;
       });
-      return saved;
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save asset';
       setError(errorMessage);

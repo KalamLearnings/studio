@@ -36,7 +36,10 @@ interface UseAudioReturn {
   uploadNewAudio: (data: AudioUploadData) => Promise<AudioAsset>;
   updateAudio: (id: string, updates: Partial<Pick<AudioAsset, 'displayName' | 'category' | 'tags' | 'metadata'>>) => Promise<AudioAsset>;
   /** Replaces a clip's file; the old clip is superseded and the new one takes its place in the list. */
-  replaceAudio: (id: string, data: AudioUploadData) => Promise<AudioAsset>;
+  replaceAudio: (
+    id: string,
+    data: AudioUploadData,
+  ) => Promise<{ audio: AudioAsset; repointedActivities: number }>;
   /** Retires a clip or makes it active again; the file is never deleted. */
   changeAudioStatus: (id: string, status: PersonStatus) => Promise<AudioAsset>;
   /** Puts a relabelled registry row's status and label on its library row. */
@@ -124,10 +127,11 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
     }
   }, []);
 
-  const replaceAudio = useCallback(async (id: string, data: AudioUploadData): Promise<AudioAsset> => {
+  const replaceAudio = useCallback(async (id: string, data: AudioUploadData) => {
     setError(null);
     try {
-      const next = await replaceAudioAsset(id, data);
+      const result = await replaceAudioAsset(id, data);
+      const next = result.audio;
       // The superseded clip leaves the default list; the new one takes its place.
       setAudioAssets(prev => {
         const shown =
@@ -139,7 +143,7 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
           .filter(audio => matchesStatusFilter(audio.status, selectedStatus));
         return shown ? [next, ...rest] : rest;
       });
-      return next;
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to replace audio';
       setError(errorMessage);

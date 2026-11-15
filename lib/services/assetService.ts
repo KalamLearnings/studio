@@ -243,11 +243,15 @@ export interface AssetEditData {
 /**
  * Saves the image edit form through the backend. Without a file: the library
  * fields (`PUT /assets/:assetId/library`). With a file: a replace (`POST
- * /assets/:assetId/replace`); the new image gets a new id, and activities that
- * already use the old one keep showing it until their references move.
- * Returns the image as it now is (the new one after a replace).
+ * /assets/:assetId/replace`); the new image gets a new id, the old one is
+ * superseded and stays stored, and every activity that used it now uses the
+ * new one. Returns the image as it now is (the new one after a replace) and
+ * how many activities were repointed (0 without a file).
  */
-export async function updateAsset(registryId: string, data: AssetEditData): Promise<Asset> {
+export async function updateAsset(
+  registryId: string,
+  data: AssetEditData,
+): Promise<{ asset: Asset; repointedActivities: number }> {
   const { displayName, category, tags, file } = data;
   if (file) {
     const compressedFile = await compressImage(file);
@@ -257,11 +261,14 @@ export async function updateAsset(registryId: string, data: AssetEditData): Prom
       category,
       tags,
     });
-    return assetFromRegistry(result.asset);
+    return {
+      asset: assetFromRegistry(result.asset),
+      repointedActivities: result.repointed.activities,
+    };
   }
   const result = await updateRegistryAssetLibrary(registryId, { displayName, category, tags });
   if (!result.asset) throw new Error('The image is not in the registry');
-  return assetFromRegistry(result.asset);
+  return { asset: assetFromRegistry(result.asset), repointedActivities: 0 };
 }
 
 /** Retires an image or makes it active again (`PUT /assets/:assetId/status`); nothing is deleted. */

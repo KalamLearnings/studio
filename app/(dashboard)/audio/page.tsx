@@ -19,6 +19,10 @@ import type { AudioAsset } from "@/lib/types/audio";
 import { toast } from "sonner";
 import { AudioHeader, AudioFilters, AudioTable } from "./_components";
 
+/** ", now used by N activities" after a replace; empty when none used it. */
+const usedBy = (n: number) =>
+  n > 0 ? `; ${n} ${n === 1 ? "activity now uses" : "activities now use"} the new audio` : "";
+
 export default function AudioPage() {
   const [playingId, setPlayingId] = React.useState<string | null>(null);
   // The audio form dialog is shared between "add new" and "edit". `editingAudio`
@@ -69,8 +73,8 @@ export default function AudioPage() {
   // - Create (no editingAudio): upload a brand-new asset through the backend.
   // - Edit without a file: the library fields, written by the backend.
   // - Edit with a new file: the backend stores it as a new clip and marks the
-  //   old one superseded (files are never overwritten, D8). Activities that
-  //   already use the old clip keep playing it until their references move.
+  //   old one superseded (files are never overwritten, D8), and repoints every
+  //   activity that used the old clip to the new one, as an overwrite did.
   const handleDialogSubmit = React.useCallback(
     async (data: AudioSubmitData) => {
       try {
@@ -89,14 +93,14 @@ export default function AudioPage() {
           });
           toast.success("Audio uploaded successfully");
         } else if (data.file) {
-          await replaceAudio(editingAudio.id, {
+          const { repointedActivities } = await replaceAudio(editingAudio.id, {
             displayName: data.displayName,
             category: data.category,
             tags: data.tags,
             file: data.file,
             metadata: data.metadata,
           });
-          toast.success("Audio regenerated and saved");
+          toast.success(`Audio regenerated and saved${usedBy(repointedActivities)}`);
         } else {
           await updateAudio(editingAudio.id, {
             displayName: data.displayName,

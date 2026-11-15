@@ -60,14 +60,18 @@ export default function AssetsPage() {
   );
 
   // Library fields, or a replace when a new file is chosen (the old image is
-  // superseded and keeps showing where it is already used).
+  // superseded, and every activity that used it now uses the new one).
   const handleSaveEdit = React.useCallback(
     async (
       asset: Asset,
       data: { displayName: string; category: AssetCategory; tags: string[]; file?: File }
     ) => {
-      await editAsset(asset, data);
-      toast.success(data.file ? "Image replaced" : "Asset updated");
+      const { repointedActivities: n } = await editAsset(asset, data);
+      toast.success(
+        data.file
+          ? `Image replaced${n > 0 ? `; ${n} ${n === 1 ? "activity now uses" : "activities now use"} the new image` : ""}`
+          : "Asset updated"
+      );
     },
     [editAsset]
   );

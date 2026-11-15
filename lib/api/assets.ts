@@ -123,13 +123,15 @@ export interface ReplaceResult {
   replaced: RegistryAsset;
   /** The new `audio_assets` id (equal to the new asset id) for library audio; null otherwise. */
   audioAssetId: string | null;
+  /** The activities that now use the new file instead of the old one. */
+  repointed: { activities: number; activityIds: string[] };
 }
 
 /**
  * `POST /assets/:assetId/replace`: a new file replaces this one. The backend
- * stores it under a new id and path and marks the old asset `superseded`.
- * Activities that already use the old file keep playing it until their
- * references are moved (a later migration).
+ * stores it under a new id and path, marks the old asset `superseded`, and in
+ * the same transaction repoints every activity that used the old file to the
+ * new one (as the old in-place overwrite did). The old file stays stored.
  */
 export async function replaceRegistryAsset(
   assetId: string,

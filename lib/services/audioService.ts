@@ -350,13 +350,14 @@ export async function updateAudioAsset(
  * Replaces the file of a library clip ("Replace with File", "Regenerate from
  * Text") through the backend (`POST /assets/:assetId/replace`). The new file
  * gets a new id and its own library row; the old clip becomes `superseded`
- * and stays stored, so activities that already use it keep playing it until
- * their references move (a later migration). Returns the new clip.
+ * and stays stored. Every activity that used the old clip now uses the new
+ * one (the backend repoints them in the same transaction). Returns the new
+ * clip and how many activities were repointed.
  */
 export async function replaceAudioAsset(
   id: string,
   data: Omit<AudioUploadData, 'file'> & { file: File },
-): Promise<AudioAsset> {
+): Promise<{ audio: AudioAsset; repointedActivities: number }> {
   validateAudioFile(data.file);
   const provenance = ttsProvenance(data.metadata);
   const result = await replaceRegistryAsset(id, {
@@ -369,7 +370,7 @@ export async function replaceAudioAsset(
   });
   const asset = await getAudioAsset(result.audioAssetId ?? result.asset.id);
   if (!asset) throw new Error('The new audio was stored but its library row could not be read');
-  return asset;
+  return { audio: asset, repointedActivities: result.repointed.activities };
 }
 
 /**

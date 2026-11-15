@@ -17,6 +17,8 @@ import {
   Settings,
   LogOut,
   ClipboardCheck,
+  Layers,
+  Shapes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,8 @@ const navItems: NavItem[] = [
   { title: "Assets", href: "/assets", icon: Image },
   { title: "Audio", href: "/audio", icon: Volume2 },
   { title: "Words", href: "/words", icon: Type },
+  { title: "Families", href: "/families", icon: Layers },
+  { title: "Concepts", href: "/concepts", icon: Shapes },
   { title: "Review", href: "/review/blend", icon: ClipboardCheck },
   { title: "Books", href: "/books", icon: BookMarked },
   { title: "Games", href: "/games", icon: Gamepad2 },

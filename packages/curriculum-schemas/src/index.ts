@@ -172,6 +172,92 @@ export {
 } from './spelling';
 
 // ============================================================================
+// CONTENT MODEL VOCABULARIES (CM-B3, CM-B19: rule ids, skill kinds, contrast
+// tags, the skill graph and teaching sequences; byte-identical copies of the
+// backend's core/domain/content-model/, synced by kalam-readers-backend
+// scripts/sync-content-model.ts and kept so by test/content-model-drift.test.ts.
+// The curriculum lead reviews them (CM-C7).)
+// =====================================================================
+// ============================================================================
+
+export {
+  RULE_IDS,
+  RULE_META,
+  isRuleId,
+  ruleKey,
+  rulesFromUnits,
+  type RuleId,
+  type RuleSource,
+  type RuleMeta,
+  type RuleUnit,
+} from './rules';
+
+export {
+  STRANDS,
+  SKILL_KINDS,
+  SKILL_KIND_META,
+  RESPONSE_TYPES,
+  ACTIVITY_SKILL_MAP,
+  DISCRIMINATE_CONTRASTS,
+  isSkillKind,
+  isResponseType,
+  skillKey,
+  parseSkillKey,
+  activitySkills,
+  type Strand,
+  type SkillKind,
+  type SkillKindMeta,
+  type ResponseType,
+  type ActivityEvidence,
+  type ActivitySkillEntry,
+} from './skills';
+
+export {
+  CONTRAST_IDS,
+  CONTRAST_META,
+  DOT_GROUPS,
+  SUN_LETTER_IDS,
+  isContrastId,
+  deriveContrast,
+  type ContrastId,
+  type ContrastRef,
+  type ContrastContext,
+} from './contrast';
+
+export {
+  UNIT_KEY_NAMESPACES,
+  SKILL_LINK_TYPES,
+  SKILL_LINKS,
+  isValidUnitKey,
+  isValidKeyPattern,
+  namespaceOf,
+  matchKeyPattern,
+  substituteKeyPattern,
+  linksInto,
+  linksFrom,
+  prerequisitesOf,
+  stagesOf,
+  expandLinks,
+  sequenceViolations,
+  findPrerequisiteCycle,
+  type UnitKeyNamespace,
+  type KeyBindings,
+  type SkillLinkType,
+  type SkillLink,
+  type ConcreteLink,
+  type SequenceViolation,
+} from './skill_graph';
+
+export {
+  STAGE_LABELS,
+  DEFAULT_SEQUENCE_ID,
+  TEACHING_SEQUENCES,
+  isStageLabel,
+  stagePosition,
+  type StageLabel,
+  type TeachingSequence,
+} from './teaching_sequences';
+=======
 // MADD (content model D7, CM-B4: long vowel on a letter reference; a
 // byte-identical copy of the backend's curriculum-schemas/madd.ts, kept so by
 // test/madd-drift.test.ts)

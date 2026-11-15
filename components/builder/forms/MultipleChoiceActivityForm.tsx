@@ -27,9 +27,12 @@ import {
 /**
  * Multiple choice (content model CM-S6). The options are content items in the
  * shared grid (letter, library word, library image, numeral). What the form
- * stores per option is v1's shape (`mcqOptionFromItem`); a letter-only
- * question with no stimulus and a prompt kind is saved canonically
- * (lib/activityConfig/canonical.ts).
+ * stores per option is v1's shape with the reference beside it
+ * (`mcqOptionFromItem`). A question with a prompt kind whose options and
+ * stimulus are all letters, library words or numerals is saved canonically,
+ * and the server writes v1's option text, mode and question from the
+ * references (lib/activityConfig/canonical.ts, R2). A library word picked as
+ * the stimulus is kept as `prompt.target`.
  */
 
 interface MultipleChoiceOption {
@@ -46,7 +49,7 @@ interface MultipleChoiceConfig {
   targetLetter?: LetterReference;
   mode?: "letter" | "word" | "image" | "text";
   options?: MultipleChoiceOption[];
-  prompt?: unknown;
+  prompt?: { kind?: string; target?: unknown };
 }
 
 const CONTENT_TYPE_OPTIONS = [
@@ -57,6 +60,14 @@ const CONTENT_TYPE_OPTIONS = [
 const ANSWER_KINDS: EditorKind[] = ["letter", "word", "image", "numeral"];
 
 const generateOptionId = (index: number) => `option_${index}_${Date.now()}`;
+
+/** The prompt with its stimulus target set or cleared; the kind stays. */
+function withStimulus(prompt: MultipleChoiceConfig["prompt"], target: unknown): MultipleChoiceConfig["prompt"] {
+  const next = { ...(prompt ?? {}) };
+  if (target) next.target = target;
+  else delete next.target;
+  return Object.keys(next).length ? next : undefined;
+}
 
 export function MultipleChoiceActivityForm({
   config,
@@ -95,7 +106,7 @@ export function MultipleChoiceActivityForm({
   const handleContentTypeChange = (type: "text" | "image") => {
     setContentType(type);
     if (type === "image") {
-      updateConfig({ question: { en: "", ar: "" }, targetLetter: undefined });
+      updateConfig({ question: { en: "", ar: "" }, targetLetter: undefined, prompt: withStimulus(config?.prompt, undefined) });
     } else {
       updateConfig({ questionImage: "" });
     }
@@ -134,7 +145,13 @@ export function MultipleChoiceActivityForm({
         {contentType === "text" ? (
           <WordSelector
             value={questionAr}
-            onChange={(value) => updateConfig({ question: { en: "", ar: value } })}
+            onChange={(value, word) =>
+              updateConfig({
+                question: { en: "", ar: value },
+                // a library word is the stimulus by reference; typed text is read on save
+                prompt: withStimulus(config?.prompt, word ? { kind: "word", word: { wordId: word.id, text: value } } : undefined),
+              })
+            }
             label="Letter or Word"
             placeholder="Type to search word library..."
           />

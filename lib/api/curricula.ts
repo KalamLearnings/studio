@@ -18,6 +18,7 @@ import type {
   UpdateArticle,
   BatchReorder,
 } from '@/lib/schemas/curriculum';
+import type { LevelRollup, TopicRollupView } from '@/lib/teachingTargets/findings';
 
 // ============================================================================
 // HELPERS
@@ -153,6 +154,25 @@ export async function updateCurriculum(
 
 export async function deleteCurriculum(id: string): Promise<void> {
   return fetchWithAuth<void>(`/curriculum/${id}`, { method: 'DELETE' });
+}
+
+// ============================================================================
+// ROLL-UP (CM-B15: declared targets against derived coverage, with findings)
+// ============================================================================
+
+/** A level's roll-up: stage, objectives, prerequisites, coverage, findings (staff). */
+export async function getCurriculumRollup(curriculumId: string): Promise<LevelRollup> {
+  return fetchWithAuth<LevelRollup>(`/curriculum/${curriculumId}/rollup`);
+}
+
+/** A topic's roll-up: focus, review, prerequisites, coverage, findings (staff). */
+export async function getTopicRollup(
+  curriculumId: string,
+  topicId: string
+): Promise<TopicRollupView> {
+  return fetchWithAuth<TopicRollupView>(
+    `/curriculum/${curriculumId}/topics/${topicId}/rollup`
+  );
 }
 
 // ============================================================================

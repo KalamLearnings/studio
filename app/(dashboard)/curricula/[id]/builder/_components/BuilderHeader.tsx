@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Gift, Search } from "lucide-react";
+import { ArrowLeft, Gift, Layers, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -13,6 +13,8 @@ interface BuilderHeaderProps {
   onActivitySearchIdChange: (value: string) => void;
   onOpenActivityById: () => void;
   onOpenRewards: () => void;
+  /** Show the level's stage, targets and findings in the form pane. */
+  onOpenLevel: () => void;
 }
 
 export function BuilderHeader({
@@ -23,6 +25,7 @@ export function BuilderHeader({
   onActivitySearchIdChange,
   onOpenActivityById,
   onOpenRewards,
+  onOpenLevel,
 }: BuilderHeaderProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b bg-background px-4">
@@ -54,10 +57,16 @@ export function BuilderHeader({
         </div>
       </div>
 
-      <Button variant="outline" size="sm" onClick={onOpenRewards}>
-        <Gift className="mr-2 h-4 w-4" />
-        Rewards
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onOpenLevel}>
+          <Layers className="mr-2 h-4 w-4" />
+          Level targets
+        </Button>
+        <Button variant="outline" size="sm" onClick={onOpenRewards}>
+          <Gift className="mr-2 h-4 w-4" />
+          Rewards
+        </Button>
+      </div>
     </header>
   );
 }

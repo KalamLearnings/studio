@@ -94,12 +94,12 @@ const FORM_SETTINGS: Record<string, Config> = {
 };
 
 describe("converted types", () => {
-  it("include every enforce candidate and the big legacy types (MCQ excluded)", () => {
+  it("include every enforce candidate, the big legacy types and MCQ; match pairs is blocked for v1", () => {
     for (const t of ENFORCE_CANDIDATES) expect(isCanonicalFormType(t), t).toBe(true);
-    for (const t of ["show_letter_or_word", "content_with_cards", "trace_letter", "speech_practice", "pop_balloons_with_letter"]) {
+    for (const t of ["show_letter_or_word", "content_with_cards", "trace_letter", "speech_practice", "pop_balloons_with_letter", "multiple_choice_question"]) {
       expect(isCanonicalFormType(t), t).toBe(true);
     }
-    expect(isCanonicalFormType("multiple_choice_question")).toBe(false);
+    expect(isCanonicalFormType("match_pairs")).toBe(false);
   });
 
   it("leave other types on the shim, unchanged on save", () => {
@@ -375,6 +375,112 @@ describe("every converted type", () => {
       const once = toSaveConfig(type, cfg);
       expect(toSaveConfig(type, once)).toEqual(once);
     }
-    expect(Object.keys(CANONICAL_FORM_TYPES).length).toBe(29);
+    expect(toSaveConfig("multiple_choice_question", MCQ_LETTERS)).toEqual(
+      toSaveConfig("multiple_choice_question", toSaveConfig("multiple_choice_question", MCQ_LETTERS)),
+    );
+    expect(Object.keys(CANONICAL_FORM_TYPES).length).toBe(31);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CM-S6: answer sets
+// ---------------------------------------------------------------------------
+
+/** A new MCQ as the form builds it: letters picked in the grid, a prompt kind. */
+const MCQ_LETTERS: Config = {
+  mode: "letter",
+  prompt: { kind: "sound_to_symbol" },
+  options: [
+    { id: "option_0", text: { en: "", ar: "" }, letter: ba, isCorrect: true },
+    { id: "option_1", text: { en: "", ar: "" }, letter: meemFatha, isCorrect: false },
+  ],
+};
+
+describe("multiple_choice_question", () => {
+  it("a new letter-only question with a prompt kind saves to the write schema", () => {
+    const saved = toSaveConfig("multiple_choice_question", { ...readConfigForEdit("multiple_choice_question", {}), ...MCQ_LETTERS });
+    expectWritable("multiple_choice_question", saved);
+    expect(saved).toEqual({
+      prompt: { kind: "sound_to_symbol" },
+      options: [
+        { id: "option_0", kind: "letter", letter: ba, isCorrect: true },
+        { id: "option_1", kind: "letter", letter: meemFatha, isCorrect: false },
+      ],
+    });
+  });
+
+  it("an empty letter option is refused on options.N.letter", () => {
+    const saved = toSaveConfig("multiple_choice_question", {
+      ...MCQ_LETTERS,
+      options: [...(MCQ_LETTERS.options as Config[]), { id: "option_2", text: { en: "", ar: "" }, isCorrect: false }],
+    });
+    expect(writeIssues("multiple_choice_question", saved)).toEqual(["options.2.letter: a letter item needs its letter"]);
+  });
+
+  it("stays in v1's shape without a prompt kind, with a stimulus, or with other kinds of option", () => {
+    const cases: Config[] = [
+      { ...MCQ_LETTERS, prompt: undefined },
+      { ...MCQ_LETTERS, question: { en: "", ar: "باب" } },
+      { ...MCQ_LETTERS, questionImage: "https://x/a.png" },
+      { ...MCQ_LETTERS, mode: "word", options: [{ id: "a", text: { en: "", ar: "باب" }, isCorrect: true }] },
+      { ...MCQ_LETTERS, mode: "text", options: [{ id: "a", text: { en: "", ar: "3" }, isCorrect: true }] },
+      { ...MCQ_LETTERS, mode: "image", options: [{ id: "a", text: { en: "", ar: "" }, image: "https://x/a.png", isCorrect: true }] },
+    ];
+    for (const c of cases) expect(toSaveConfig("multiple_choice_question", c)).toBe(c);
+  });
+
+  it("a legacy row opens on the shim; a canonical row opens canonically", () => {
+    const legacy = { prompt: { kind: "form" }, options: [{ id: "a", letter: ba, isCorrect: true }, { id: "b", letter: ta, isCorrect: false }] };
+    expect(openForEdit("multiple_choice_question", legacy).canonical).toBe(false);
+    const stored = { prompt: { kind: "form" }, options: [{ id: "a", kind: "letter", letter: ba, isCorrect: true }, { id: "b", kind: "letter", letter: ta }] };
+    const opened = openForEdit("multiple_choice_question", stored);
+    expect(opened.canonical).toBe(true);
+    expectWritable("multiple_choice_question", toSaveConfig("multiple_choice_question", opened.config));
+  });
+
+  it("a canonical row given a stimulus in the form saves in v1's shape", () => {
+    const stored = { prompt: { kind: "form" }, options: [{ id: "a", kind: "letter", letter: ba, isCorrect: true }, { id: "b", kind: "letter", letter: ta }] };
+    const saved = editAndSave("multiple_choice_question", stored, { question: { en: "", ar: "ب" } });
+    expect(saved.question).toEqual({ en: "", ar: "ب" });
+  });
+});
+
+describe("content_with_cards prompt (CM-S6)", () => {
+  it("letter cards keep a prompt kind", () => {
+    const saved = toSaveConfig("content_with_cards", {
+      interactive: true,
+      prompt: { kind: "form" },
+      cards: [{ id: "c1", text: "", letter: ba, isCorrect: true }, { id: "c2", text: "", letter: { ...ba, form: "final" }, isCorrect: false }],
+    });
+    expectWritable("content_with_cards", saved);
+    expect(saved.prompt).toEqual({ kind: "form" });
+  });
+
+  it("numeral cards stay in v1's shape (v1 reads the card text)", () => {
+    const row = { cardMode: "word", cards: [{ id: "c1", text: "3", isCorrect: false }] };
+    expect(toSaveConfig("content_with_cards", row)).toEqual(row);
+  });
+});
+
+describe("match_pairs (blocked for v1)", () => {
+  it("saves as the form built it", () => {
+    const row = { pairs: [{ left: { type: "letter", value: "ب", letterId: "ba", form: "isolated" }, right: { type: "word", value: "باب" } }] };
+    expect(toSaveConfig("match_pairs", row)).toBe(row);
+  });
+
+  it("its writer, for when the server writes v1's side fields, gives the write schema's shape", () => {
+    const written = CANONICAL_FORM_TYPES.match_pairs.write({
+      prompt: { kind: "symbol_to_sound" },
+      shuffleItems: true,
+      pairs: [
+        { left: { type: "letter", value: "بَ", letterId: "ba", form: "isolated", haraka: "fatha" }, right: { type: "audio", value: "https://x/ba.mp3", audioUrl: "https://x/ba.mp3", audioId: "f19c9c92-e369-472e-9888-fcc4cd89d2d2" } },
+        { left: { type: "letter", value: "ت", letterId: "ta", form: "isolated", label: "ta" }, right: { type: "letter", value: "ـت", letterId: "ta", form: "final" } },
+      ],
+    }, "match_pairs");
+    expectWritable("match_pairs", written);
+    expect((written.pairs as Config[])[0]).toEqual({
+      left: { kind: "letter", letter: { letterId: "ba", form: "isolated", haraka: "fatha" } },
+      right: { kind: "audio", audio: { assetId: "f19c9c92-e369-472e-9888-fcc4cd89d2d2" } },
+    });
   });
 });

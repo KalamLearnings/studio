@@ -1,21 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import {
-  TextInput,
-  LetterSelector,
-  Checkbox,
-  ImageLibraryModal,
-  AudioPickerField,
-} from "./shared";
+import { ContentItemEditor, Checkbox, PromptKindPicker } from "./shared";
 import { useLetters, getLetterDisplayChar } from "@/lib/hooks/useLetters";
-import type {
-  BaseActivityFormProps,
-  LetterReference,
-  LetterForm,
-  HarakaType,
-} from "./types";
+import type { BaseActivityFormProps, LetterForm, HarakaType } from "./types";
+import {
+  pairSideFromItem,
+  pairSideItem,
+  promptKind,
+  withPromptKind,
+  type EditorKind,
+} from "@/lib/activityConfig/contentItems";
+
+/**
+ * Match pairs (content model CM-S6). Each side is a content item in the
+ * shared editor (letter, library word, library image, audio clip, numeral).
+ * The form stores v1's side shape (`pairSideFromItem`: `type`, `value`, the
+ * flat letter fields, `audioUrl`): v1 draws every side from them and the
+ * server does not write them from references yet, so match_pairs stays on
+ * the old save path (`V1_BLOCKED_TYPES`, lib/activityConfig/canonical.ts).
+ */
 
 type MatchItemType = "letter" | "word" | "image" | "audio";
 
@@ -38,14 +42,10 @@ interface MatchPair {
 interface MatchPairsConfig {
   pairs?: MatchPair[];
   shuffleItems?: boolean;
+  prompt?: unknown;
 }
 
-const ITEM_TYPE_OPTIONS: { value: MatchItemType; label: string; icon: string }[] = [
-  { value: "letter", label: "Letter", icon: "ا" },
-  { value: "word", label: "Word", icon: "📖" },
-  { value: "image", label: "Image", icon: "🖼️" },
-  { value: "audio", label: "Audio", icon: "🔊" },
-];
+const SIDE_KINDS: EditorKind[] = ["letter", "word", "image", "audio", "numeral"];
 
 const createEmptyPair = (): MatchPair => ({
   left: { type: "letter", value: "" },
@@ -57,172 +57,23 @@ interface MatchItemEditorProps {
   onChange: (item: MatchItem) => void;
 }
 
+/** One pair side: the shared content item editor over v1's side shape. */
 function MatchItemEditor({ item, onChange }: MatchItemEditorProps) {
   const { getLetter } = useLetters();
-  const [showImageLibrary, setShowImageLibrary] = React.useState(false);
-
-  const handleTypeChange = (type: MatchItemType) => {
-    onChange({
-      type,
-      value: "",
-      letterId: undefined,
-      form: undefined,
-      haraka: undefined,
-      label: undefined,
-      audioId: undefined,
-      audioUrl: undefined,
-    });
-  };
-
-  const handleLetterChange = (ref: LetterReference | LetterReference[] | null) => {
-    if (!ref) {
-      onChange({
-        ...item,
-        value: "",
-        letterId: undefined,
-        form: undefined,
-        haraka: undefined,
-      });
-      return;
-    }
-
-    const letterRef = Array.isArray(ref) ? ref[0] : ref;
-    const haraka = letterRef.haraka as HarakaType | undefined;
-
-    onChange({
-      ...item,
-      // Mobile renders `value` verbatim, so the glyph has to carry the haraka.
-      value: getLetterDisplayChar(letterRef, getLetter),
-      letterId: letterRef.letterId,
-      form: letterRef.form,
-      haraka,
-    });
-  };
-
-  const getLetterRef = (): LetterReference | null => {
-    if (item.type === "letter" && item.letterId && item.form) {
-      return {
-        letterId: item.letterId,
-        form: item.form,
-        ...(item.haraka ? { haraka: item.haraka } : {}),
-      };
-    }
-    return null;
-  };
-
   return (
-    <div className="p-3 bg-muted/50 rounded-lg border">
-      <div className="flex gap-1 mb-3">
-        {ITEM_TYPE_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => handleTypeChange(opt.value)}
-            className={cn(
-              "flex-1 px-2 py-1.5 text-xs font-medium rounded transition-colors",
-              item.type === opt.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-background border hover:bg-muted"
-            )}
-          >
-            <span className="mr-1">{opt.icon}</span>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {item.type === "letter" && (
-        <LetterSelector
-          value={getLetterRef()}
-          onChange={handleLetterChange}
-          showFormSelector
-          // match_pairs stores a flat letter item with no madd field.
-          showMaddToggle={false}
-        />
-      )}
-
-      {item.type === "word" && (
-        <TextInput
-          value={item.value}
-          onChange={(value) => onChange({ ...item, value })}
-          placeholder="كلمة"
-          dir="rtl"
-        />
-      )}
-
-      {item.type === "image" && (
-        <>
-          {item.value ? (
-            <div className="relative inline-block">
-              <img
-                src={item.value}
-                alt="Selected"
-                className="max-w-full max-h-24 rounded-lg border"
-              />
-              <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowImageLibrary(true)}
-                  className="text-xs text-primary hover:text-primary/80"
-                >
-                  Change
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChange({ ...item, value: "" })}
-                  className="text-xs text-destructive hover:text-destructive/80"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowImageLibrary(true)}
-              className="w-full border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-muted-foreground transition-colors"
-            >
-              <div className="text-2xl mb-1">🖼️</div>
-              <p className="text-xs text-muted-foreground">Select image</p>
-            </button>
-          )}
-
-          <ImageLibraryModal
-            isOpen={showImageLibrary}
-            onClose={() => setShowImageLibrary(false)}
-            onSelectImage={(url) => {
-              onChange({ ...item, value: url });
-              setShowImageLibrary(false);
-            }}
-          />
-        </>
-      )}
-
-      {item.type === "audio" && (
-        <AudioPickerField
-          value={item.audioUrl}
-          audioId={item.audioId}
-          onChange={(url, id) =>
-            onChange({
-              ...item,
-              value: url || "",
-              audioUrl: url,
-              audioId: id,
-            })
-          }
-        />
-      )}
-
-      <div className="mt-2">
-        <input
-          type="text"
-          placeholder="Optional label (for hints)"
-          value={item.label || ""}
-          onChange={(e) => onChange({ ...item, label: e.target.value })}
-          className="w-full px-2 py-1 text-xs border rounded bg-background focus:ring-1 focus:ring-primary"
-        />
-      </div>
-    </div>
+    <ContentItemEditor
+      value={pairSideItem(item)}
+      onChange={(next) =>
+        onChange(
+          // Mobile renders `value` verbatim, so a letter's glyph carries its haraka.
+          pairSideFromItem(next, (ref) => getLetterDisplayChar(ref, getLetter)) as unknown as MatchItem
+        )
+      }
+      allowedKinds={SIDE_KINDS}
+      showLabel
+      // match_pairs stores a flat letter item with no madd field.
+      showMaddToggle={false}
+    />
   );
 }
 
@@ -401,6 +252,11 @@ export function MatchPairsActivityForm({
           />
         ))}
       </div>
+
+      <PromptKindPicker
+        value={promptKind(config)}
+        onChange={(kind) => onChange(withPromptKind({ ...config }, kind))}
+      />
 
       <div className="pt-4 border-t">
         <Checkbox

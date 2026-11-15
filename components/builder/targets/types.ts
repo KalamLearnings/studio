@@ -10,4 +10,6 @@ export interface IntentContext {
   activityLabel: (id: string) => ActivityLabel | undefined;
   onOpenActivity: (id: string) => void;
   scopeName: (scopeType: "curriculum" | "topic", scopeId: string) => string;
+  /** A node's title by id (story decodability, CM-S11). */
+  nodeTitle: (nodeId: string) => string | undefined;
 }

@@ -13,6 +13,8 @@ import {
   type FindingCode,
   type RollupFinding,
 } from "@/lib/teachingTargets/findings";
+import type { StoryDecodability } from "@/lib/teachingTargets/decodability";
+import { StoryDecodabilityList } from "./DecodabilityFindings";
 
 export interface ActivityLabel {
   title: string;
@@ -30,6 +32,9 @@ interface FindingsPanelProps {
   describe: DescribeContext;
   /** What findings without an activity are about: "This level", a topic's title. */
   scopeName: (scopeType: "curriculum" | "topic", scopeId: string) => string;
+  /** Story nodes' book decodability (CM-B34), sent only when the scope has story nodes. */
+  stories?: readonly StoryDecodability[];
+  nodeTitle?: (nodeId: string) => string | undefined;
 }
 
 function FindingLine({ finding, describe }: { finding: RollupFinding; describe: DescribeContext }) {
@@ -63,6 +68,8 @@ export function FindingsPanel({
   onOpenActivity,
   describe,
   scopeName,
+  stories = [],
+  nodeTitle = () => undefined,
 }: FindingsPanelProps) {
   const [only, setOnly] = React.useState<FindingCode | null>(null);
   const counts = React.useMemo(() => countFindings(findings), [findings]);
@@ -87,7 +94,9 @@ export function FindingsPanel({
         <p className="text-sm text-destructive">Could not load findings: {error.message}</p>
       ) : findings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No findings. The activities match the targets.</p>
-      ) : (
+      ) : null}
+
+      {isLoading || error || findings.length === 0 ? null : (
         <>
           <div className="flex flex-wrap gap-2">
             {FINDING_CODES.filter((c) => counts[c].findings > 0).map((code) => (
@@ -147,6 +156,10 @@ export function FindingsPanel({
             })}
           </ul>
         </>
+      )}
+
+      {!isLoading && !error && (
+        <StoryDecodabilityList stories={stories} nodeTitle={nodeTitle} letter={describe.letter} />
       )}
     </section>
   );

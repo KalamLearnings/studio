@@ -172,6 +172,8 @@ export function LevelTargetsPanel({ levelTitle, ctx }: LevelTargetsPanelProps) {
           onOpenActivity={ctx.onOpenActivity}
           describe={ctx.describe}
           scopeName={ctx.scopeName}
+          stories={rollup.data?.story_decodability}
+          nodeTitle={ctx.nodeTitle}
         />
       </div>
     </div>

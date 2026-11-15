@@ -6,6 +6,7 @@
  */
 
 import { describeUnitKey, stageLabelText, type LetterLookup } from './units';
+import type { StoryDecodability } from './decodability';
 
 export const FINDING_CODES = [
   'undeclared_review',
@@ -44,6 +45,8 @@ export interface TopicRollup {
   activities: number;
   coverage: UnitCoverage[];
   findings: RollupFinding[];
+  /** Each story node's book, checked at its node (CM-B34); only when the topic has story nodes. */
+  story_decodability?: StoryDecodability[];
 }
 
 export interface TopicRollupView extends TopicRollup {
@@ -63,6 +66,8 @@ export interface LevelRollup {
   findings: RollupFinding[];
   counts: Record<FindingCode, { findings: number; activities: number }>;
   topics: TopicRollup[];
+  /** Each story node's book, checked at its node (CM-B34); only when the level has story nodes. */
+  story_decodability?: StoryDecodability[];
 }
 
 /** Short names and how serious each finding is ("note" is not an error). */

@@ -215,6 +215,23 @@ export {
   WordRefWriteSchema,
 } from './references.ts';
 
+export {
+  isPhraseItem,
+  PHRASE_KIND,
+  PHRASE_MAX_WORDS,
+  PHRASE_MIN_WORDS,
+  type PhraseChoiceWrite,
+  PhraseChoiceWriteSchema,
+  PhraseItemReadSchema,
+  phraseKey,
+  type PhraseRefWrite,
+  PhraseRefWriteSchema,
+  type PhraseWrite,
+  PhraseWriteSchema,
+  readPhraseItem,
+  SENTENCE_MAX_WORDS,
+} from './phrase.ts';
+
 export { LETTER_IDS, letterIdOfGlyph } from './letter-glyphs.ts';
 
 // ============================================================================

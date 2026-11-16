@@ -123,6 +123,11 @@ export function ActivityForm({
     () => findingsToFieldErrors(findingsQuery.data),
     [findingsQuery.data],
   );
+  // Informational findings (decodability, backend CM-C11a): calm notes, not warnings.
+  const configNotes = React.useMemo(
+    () => findingsToFieldErrors(findingsQuery.data, "note"),
+    [findingsQuery.data],
+  );
 
   // Get letter data from topic if available
   const letterData = topic?.letter || (topic as any)?.letters || null;
@@ -315,7 +320,7 @@ export function ActivityForm({
           {/* Activity-specific form */}
           {FormComponent && (
             <div className="pt-4 border-t">
-              <SaveErrorsProvider errors={configErrors} warnings={configWarnings}>
+              <SaveErrorsProvider errors={configErrors} warnings={configWarnings} notes={configNotes}>
                 <FormComponent
                   config={localConfig}
                   onChange={handleConfigChange}

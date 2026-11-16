@@ -142,7 +142,10 @@ function DraftCard({ draft, nodeTitle, isLead }: { draft: DraftRow; nodeTitle: s
             <span className="text-sm text-muted-foreground">Save checks:</span>
             {p.checks.length === 0 && <span className="text-sm">none recorded</span>}
             {p.checks.map((c) => (
-              <Badge key={c.check} variant={c.status === "pass" ? "outline" : "destructive"}>
+              <Badge
+                key={c.check}
+                variant={c.status === "fail" ? "destructive" : c.status === "note" ? "secondary" : "outline"}
+              >
                 {c.check}: {c.status}
               </Badge>
             ))}

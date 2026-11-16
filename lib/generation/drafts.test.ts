@@ -60,7 +60,14 @@ describe('draftStatus and sortDrafts', () => {
 
 describe('failedChecks', () => {
   it('lists only failing checks', () => {
-    const p = prov({ checks: [{ check: 'a', status: 'pass' }, { check: 'b', status: 'fail' }] });
+    const p = prov({
+      checks: [
+        { check: 'a', status: 'pass' },
+        { check: 'b', status: 'fail' },
+        { check: 'decodable', status: 'note' },
+      ],
+    });
+    // a decodability note is never a failure (backend CM-C11a)
     expect(failedChecks(p).map((c) => c.check)).toEqual(['b']);
     expect(failedChecks(null)).toEqual([]);
   });

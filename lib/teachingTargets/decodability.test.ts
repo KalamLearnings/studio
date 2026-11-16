@@ -97,7 +97,9 @@ describe('report headline', () => {
           { code: 'free_arabic_text', text: 'x', message: 'm' },
         ]),
       ),
-    ).toBe('Not decodable here: 2 words use what is not taught yet, 1 other problem.');
+    ).toBe(
+      'For information: 2 words use what is not taught yet, 1 other problem. Fine if the words are age appropriate.',
+    );
   });
 
   it('notes a missing level stage only when the report fails because of it', () => {

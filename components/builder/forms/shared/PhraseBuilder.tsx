@@ -47,7 +47,7 @@ interface PhraseBuilderProps {
   label?: string;
   /** The config path this item sits at; the server's save errors there show below it. */
   errorPath?: string;
-  /** The node the phrase will sit in; when known, the live decodability report shows (warnings only). */
+  /** The node the phrase will sit in; when known, the live decodability report shows (an informational note, never a warning). */
   nodeId?: string;
 }
 

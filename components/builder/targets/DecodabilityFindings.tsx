@@ -3,12 +3,14 @@
 /**
  * Decodability findings (CM-S11; backend CM-B34): for each failing word, the
  * word, each unit it needs, whether a later lesson teaches it (preview) or
- * nothing does yet (untaught), and the stage that teaches it. Warnings only:
- * a person's save is never blocked by them.
+ * nothing does yet (untaught), and the stage that teaches it. Shown as a
+ * calm informational note, never a warning: a word with letters the child has
+ * not learned yet is fine if it is age appropriate (backend CM-C11a; ADR 0002
+ * question 6), and nothing here blocks a save or an AI draft.
  */
 
 import * as React from "react";
-import { AlertTriangle, BookOpen, CheckCircle2, Info } from "lucide-react";
+import { BookOpen, CheckCircle2, Info } from "lucide-react";
 import {
   decodabilitySummary,
   describeMissingUnit,
@@ -32,15 +34,13 @@ export function DecodabilityReportView({
   const grouped = React.useMemo(() => groupDecodability(report?.findings ?? []), [report]);
   const note = pointStageNote(report);
   const ok = report?.decodable === true;
-  const Icon = !report ? Info : ok ? CheckCircle2 : AlertTriangle;
+  // a word not yet decodable is a note, not a warning: calm icon and colour
+  const Icon = ok ? CheckCircle2 : Info;
   return (
     <div className="space-y-1.5 text-sm">
       <p className="flex gap-2">
         <Icon
-          className={
-            "mt-0.5 h-4 w-4 shrink-0 " +
-            (!report ? "text-muted-foreground" : ok ? "text-emerald-600" : "text-amber-600")
-          }
+          className={"mt-0.5 h-4 w-4 shrink-0 " + (ok ? "text-emerald-600" : "text-muted-foreground")}
         />
         <span>{decodabilitySummary(report)}</span>
       </p>
@@ -96,7 +96,7 @@ export function StoryDecodabilityList({
         {sorted.map((s) => (
           <li key={s.node_id} className="rounded-md border p-3">
             <p className="mb-2 flex items-center gap-1 text-sm font-medium">
-              <BookOpen className="h-3.5 w-3.5 text-amber-500" />
+              <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
               {nodeTitle(s.node_id) ?? "Story node"}
             </p>
             <DecodabilityReportView report={s.report} letter={letter} />

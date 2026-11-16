@@ -3,7 +3,10 @@
  * 0002 section 3). The backend computes them on read: a story node's book in
  * the level and topic roll-up (`story_decodability`), a phrase item at save
  * (`decodable`). Studio groups them by failing word and says each in plain
- * language. They are warnings for people: nothing here blocks a save.
+ * language. They are informational notes, never warnings: nothing here
+ * blocks a save or an AI draft (backend CM-C11a; ADR 0002 question 6, the
+ * owner: a word that uses letters the child has not learned yet is fine if it
+ * is age appropriate).
  * Pure: no React, no fetch.
  *
  * Mirrors `DecodabilityReport` of the backend's
@@ -145,12 +148,12 @@ export function decodabilitySummary(report: DecodabilityReport | null): string {
   const parts: string[] = [];
   if (words.length > 0) parts.push(`${words.length} word${words.length === 1 ? '' : 's'} use what is not taught yet`);
   if (other.length > 0) parts.push(`${other.length} other problem${other.length === 1 ? '' : 's'}`);
-  return `Not decodable here: ${parts.join(', ')}.`;
+  return `For information: ${parts.join(', ')}. Fine if the words are age appropriate.`;
 }
 
 /**
  * A note when no level is labelled with a stage: then no stage counts as
- * taught, so nearly every word warns (backend CM-B34, open item 3).
+ * taught, so nearly every word gets a note (backend CM-B34, open item 3).
  */
 export function pointStageNote(report: DecodabilityReport | null): string | null {
   if (!report || report.pointStage !== null || report.decodable) return null;

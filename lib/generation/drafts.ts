@@ -7,7 +7,8 @@ import { ApiError } from '@/lib/api/client';
 
 export interface DraftCheckResult {
   check: string;
-  status: 'pass' | 'fail';
+  /** `note`: an informational check (decodability) found something; never a failure (backend CM-C11a). */
+  status: 'pass' | 'fail' | 'note';
 }
 
 export interface DraftProvenance {

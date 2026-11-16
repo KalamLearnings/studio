@@ -25,7 +25,8 @@
  *   as the delivery draws letters) with the flat `letterId` / `form` /
  *   `haraka` the v1-era editor stored, a word's spelling, a numeral's digits
  *   (a `word` side, as v1 shows text), an image URL, an audio URL with its
- *   `audioId`.
+ *   `audioId`. A clip with no asset id (`audio: { url }`, CM-D3g) keeps the
+ *   stored side's v1 fields exactly when its URL is the stored `audioUrl`.
  *
  * A stored glyph that reads as the same letter (form and haraka) is kept as
  * stored on an update: older editors wrote the same letter more than one way
@@ -432,6 +433,8 @@ function deriveSide(
       return { ...base, type: 'image', value: shown.url };
     }
     case 'audio': {
+      const clip = storedClip(side, stored);
+      if (clip) return { ...base, ...clip };
       const shown = assetUrl(side, 'audio', sources.audio);
       if ('why' in shown) {
         unresolved.push({ path, message: shown.why });
@@ -442,6 +445,21 @@ function deriveSide(
     default:
       return base;
   }
+}
+
+/**
+ * A clip side with no asset id, kept by its URL (CM-D3g): the stored side's v1
+ * fields exactly as stored (`type`, `value`, `audioUrl`, `audioId`) when the
+ * side's URL is the stored `audioUrl`. v1 plays that URL; the asset (and the
+ * letter take) is linked by a later step. Null for any other side.
+ */
+function storedClip(side: Rec, stored: unknown): Rec | null {
+  if (idOf(side.audio, 'assetId')) return null;
+  const url = idOf(side.audio, 'url');
+  if (!url || !isRec(stored) || stored.type !== 'audio' || stored.audioUrl !== url) return null;
+  const out: Rec = {};
+  for (const k of PAIR_SIDE_KEYS) if (stored[k] !== undefined) out[k] = stored[k];
+  return out;
 }
 
 function derivePairs(

@@ -214,10 +214,18 @@ export function waitingSummary(counts: InboxCounts): string {
 // Search
 // ---------------------------------------------------------------------------
 
-/** Lowercase with harakat and tatweel removed, so `كتاب` finds `كِتَاب` and the other way round. */
+/** Letters a search treats as one: the hamza seats and wasla as bare alif, ta marbuta as ha, alif maqsura as ya. */
+const SEARCH_FOLDS: Record<string, string> = { "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي" };
+
+/**
+ * Lowercase with harakat and tatweel removed and the look-alike letters folded
+ * (hamza seats, ة/ه, ى/ي), so `كتاب` finds `كِتَاب`, `اسد` finds `أَسَد` and the
+ * other way round. Review's search and the Words page (`lib/connections/search.ts`) share it.
+ */
 export function foldForSearch(s: string): string {
   return Array.from(s.normalize("NFC").toLowerCase())
     .filter((ch) => !isAuditMark(ch) && ch !== TATWEEL)
+    .map((ch) => SEARCH_FOLDS[ch] ?? ch)
     .join("");
 }
 

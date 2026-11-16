@@ -26,7 +26,8 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   // The Review workspace fills the area edge to edge and scrolls its own columns.
-  const fullBleed = pathname === "/review";
+  // Review and Words lay out and scroll their own panes.
+  const fullBleed = pathname === "/review" || pathname === "/words";
   const queryClient = useQueryClient();
   const { environment, setEnvironment } = useEnvironmentStore();
 

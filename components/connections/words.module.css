@@ -1,0 +1,303 @@
+/* The Words page (design/concepts/content-graph, approved 2026-11-16), on Studio's tokens.
+   One hue per kind of item: the dot, the icon, the box edge and the wire. */
+
+.tokens {
+  --k-word: hsl(211 65% 46%);
+  --k-family: hsl(178 60% 32%);
+  --k-concept: hsl(262 45% 52%);
+  --k-picture: hsl(32 85% 42%);
+  --k-letter: hsl(150 50% 34%);
+  --k-activity: hsl(330 50% 48%);
+  --gap-ring: hsl(37 91% 50% / 0.55);
+  --gap-text: hsl(32 90% 34%);
+  --ok-text: hsl(140 45% 30%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.07);
+  --card-2: hsl(var(--muted) / 0.6);
+}
+
+/* The page, inside the kind tokens (dialogs portal out, so they add .tokens themselves). */
+.root {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  background: hsl(var(--background));
+}
+
+:global(.dark) .tokens {
+  --k-word: hsl(211 70% 62%);
+  --k-family: hsl(178 55% 48%);
+  --k-concept: hsl(262 55% 70%);
+  --k-picture: hsl(37 85% 58%);
+  --k-letter: hsl(150 50% 52%);
+  --k-activity: hsl(330 55% 66%);
+  --gap-text: hsl(37 91% 62%);
+  --ok-text: hsl(140 45% 58%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.25);
+}
+
+/* ---- top bar ---------------------------------------------------------------------- */
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  position: relative;
+  z-index: 20;
+}
+
+.search {
+  position: relative;
+  flex: 1 1 360px;
+  max-width: 560px;
+}
+
+.results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  max-height: 70vh;
+  overflow: auto;
+  z-index: 40;
+  padding: 6px;
+}
+
+/* ---- body: the gaps rail and the canvas ---------------------------------------------- */
+
+.body {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rail {
+  border-right: 1px solid hsl(var(--border));
+  padding: 14px 12px;
+  overflow: auto;
+  min-height: 0;
+}
+
+.canvas {
+  padding: 14px 20px 40px;
+  min-width: 0;
+  overflow: auto;
+}
+
+/* Under 1180 px the gaps sit above the canvas, as a grid of cards. */
+@media (max-width: 1179px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: auto;
+  }
+  .rail {
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border));
+    overflow: visible;
+  }
+  .railList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+    align-items: start;
+  }
+  .canvas {
+    overflow: visible;
+  }
+}
+
+/* ---- the stage: a fixed frame around one item ------------------------------------------ */
+
+.stage {
+  position: relative;
+  display: grid;
+  gap: 28px 44px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px) minmax(0, 1fr);
+  grid-template-areas:
+    ". top ."
+    "left focus right"
+    "bl bottom br";
+  align-items: start;
+}
+
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.slot[data-area="top"] { grid-area: top; }
+.slot[data-area="left"] { grid-area: left; }
+.slot[data-area="right"] { grid-area: right; }
+.slot[data-area="bottom"] { grid-area: bottom; }
+.slot[data-area="bl"] { grid-area: bl; }
+.slot[data-area="br"] { grid-area: br; }
+
+.focus {
+  grid-area: focus;
+  position: relative;
+  z-index: 2;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-top: 4px solid var(--kc);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 16px 18px 14px;
+  text-align: center;
+}
+
+.focus:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+/* Under 900 px: one column, the item first, no wires. */
+@media (max-width: 899px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "focus" "top" "left" "right" "bl" "bottom" "br";
+  }
+  .wires {
+    display: none;
+  }
+  .focus {
+    max-width: 420px;
+    width: 100%;
+    justify-self: center;
+  }
+  .canvas {
+    padding: 12px 12px 32px;
+  }
+}
+
+/* ---- boxes ------------------------------------------------------------------------- */
+
+.box {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-left: 3px solid var(--kc);
+  border-radius: 10px;
+  min-width: 0;
+}
+.box[data-locked="true"] {
+  border-left-style: dashed;
+}
+.box[data-empty="true"] {
+  border-style: dashed;
+  border-left-style: solid;
+  background: transparent;
+}
+.box[data-missing="true"] {
+  box-shadow: 0 0 0 2px var(--gap-ring);
+}
+
+/* ---- chips ------------------------------------------------------------------------- */
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  border: 1px solid hsl(var(--border));
+  background: var(--card-2);
+  border-radius: 8px;
+  padding: 2px 10px 2px 8px;
+  text-align: left;
+  color: inherit;
+}
+.chip:hover {
+  border-color: var(--kc);
+}
+.chip:focus-visible,
+.focusRing:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kc);
+  flex-shrink: 0;
+}
+
+/* ---- badges ------------------------------------------------------------------------ */
+
+.badge {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+.badge[data-tone="warn"] {
+  border-color: hsl(37 91% 50% / 0.55);
+  color: var(--gap-text);
+}
+.badge[data-tone="ok"] {
+  border-color: hsl(140 42% 42% / 0.6);
+  color: var(--ok-text);
+}
+
+/* ---- "All words" cards --------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.fcard {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-top: 3px solid var(--k-family);
+  border-radius: 12px;
+  padding: 10px 12px 12px;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 4px 10px;
+  text-align: left;
+  color: inherit;
+}
+.fcard:hover {
+  border-color: hsl(var(--muted-foreground) / 0.5);
+  border-top-color: var(--k-family);
+}
+.fcard:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.thumbNone {
+  border: 1px dashed hsl(37 91% 50% / 0.6);
+  color: var(--gap-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chip,
+  .fcard,
+  .box {
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+}

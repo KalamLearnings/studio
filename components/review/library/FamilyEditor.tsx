@@ -310,7 +310,7 @@ export function FamilyConceptLinks({
                   {c.name.en}
                 </button>
               ) : (
-                <Link href={`/concepts?concept=${encodeURIComponent(c.slug)}`} className="text-sm font-medium underline">
+                <Link href={`/words?focus=${encodeURIComponent(`concept:${c.slug}`)}`} className="text-sm font-medium underline">
                   {c.name.en}
                 </Link>
               )}

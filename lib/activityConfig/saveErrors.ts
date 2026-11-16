@@ -3,7 +3,10 @@
  * CM-S3): a 400 with code `CONFIG_INVALID` (the write schema), `CONFIG_EMPTY`
  * or `CONFIG_CHECK_FAILED` (the domain checks), or `V1_DISPLAY_UNRESOLVED`
  * (R2, CM-D3d, CM-D3e: a reference the server cannot write v1's text from,
- * such as a `wordRef` naming no library word; shown in plain words), and details
+ * such as a `wordRef` naming no library word; shown in plain words), or one of
+ * the save blocks (CM-P1: `CONFIG_INCOMPLETE`, `NO_CORRECT_OPTION`,
+ * `EVERY_OPTION_CORRECT`, `DUPLICATE_OPTIONS`, `HARMFUL_WORD`; the server's
+ * message is already plain English), and details
  * `[{ field, message, check }]`. `field` is the stored config path, dotted and
  * prefixed with `config.` (`config.distractorLetters.2.letterId`), or
  * `config` for the whole config. Parsed here so every form shows each error
@@ -15,6 +18,12 @@ export const CONFIG_SAVE_ERROR_CODES = [
   "CONFIG_EMPTY",
   "CONFIG_CHECK_FAILED",
   "V1_DISPLAY_UNRESOLVED",
+  // save blocks (backend CM-P1): clear-cut mistakes no save may store
+  "CONFIG_INCOMPLETE",
+  "NO_CORRECT_OPTION",
+  "EVERY_OPTION_CORRECT",
+  "DUPLICATE_OPTIONS",
+  "HARMFUL_WORD",
 ] as const;
 
 /** The plain message for a `wordRef` the server found no library word for. */
@@ -117,6 +126,11 @@ const CHECK_TITLES: Readonly<Record<string, string>> = {
   sort_item_sound: "Basket sound",
   sort_item_label: "Item label",
   distractors_differ: "Same as the answer",
+  config_incomplete: "Missing content",
+  no_correct_option: "No right answer",
+  every_option_correct: "Every answer right",
+  duplicate_options: "Repeated option",
+  harmful_word: "Blocked word",
 };
 
 /** The short name of an error's check, or null when it has none. */

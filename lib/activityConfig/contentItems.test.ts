@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { ContentItemWriteSchema, ContentRefWriteSchema } from "@kalam/curriculum-schemas/server";
 import {
+  answerSetProblems,
   cardFromItem,
   cardItem,
   emptied,
@@ -174,5 +175,42 @@ describe("match pair sides in v1's shape", () => {
     for (const side of sides) expect(pairSideFromItem(pairSideItem(side), keepGlyph)).toEqual(side);
     // a legacy glyph-only letter side reads as a reference
     expect(pairSideItem({ type: "letter", value: "ب" })).toEqual({ kind: "letter", letter: ba });
+  });
+});
+
+describe("answerSetProblems (a mirror of the backend's save blocks, CM-P1)", () => {
+  const word = (text: string, isCorrect = false): EditorItem => ({ kind: "word", word: { wordId: `w_${text}`, text }, isCorrect });
+  const empty: EditorItem = { kind: "word", isCorrect: false };
+
+  it("says nothing about an empty answer set", () => {
+    expect(answerSetProblems([empty, empty, empty, empty], "options")).toEqual([]);
+  });
+
+  it("names an MCQ with no correct option", () => {
+    expect(answerSetProblems([word("بَاب"), word("دُب")], "options")).toEqual([
+      "No option is marked correct, so the child can never finish this question. Mark the right answer.",
+    ]);
+  });
+
+  it("names an MCQ where every option is correct", () => {
+    expect(answerSetProblems([word("بَاب", true), word("دُب", true)], "options")).toEqual([
+      "Every option is marked correct, so any tap wins and nothing is tested. Leave at least one wrong option.",
+    ]);
+  });
+
+  it("names a repeated option, by text, letter or picture, and never an empty one", () => {
+    expect(answerSetProblems([word("ذِكْر", true), word("ذِكْر"), empty, empty], "options")).toEqual([
+      "Option 2 shows the same thing as option 1. Each option must be different.",
+    ]);
+    const sad = { kind: "letter" as const, letter: { letterId: "sad", form: "initial" as const, haraka: "fatha" } };
+    expect(answerSetProblems([{ ...sad, isCorrect: true }, { ...sad, letter: { ...sad.letter, form: "isolated" } }], "options")).toEqual([]);
+    expect(answerSetProblems([{ ...sad, isCorrect: true }, sad, sad], "options")).toHaveLength(2);
+    const pic = (url: string, isCorrect = false): EditorItem => ({ kind: "image", image: { url }, isCorrect });
+    expect(answerSetProblems([pic("a.png?v=1", true), pic("a.png?v=2")], "options")).toHaveLength(1);
+  });
+
+  it("asks interactive cards for a correct card only", () => {
+    expect(answerSetProblems([word("بَاب"), word("بَاب")], "cards")).toHaveLength(1);
+    expect(answerSetProblems([word("بَاب", true), word("دُب", true)], "cards")).toEqual([]);
   });
 });

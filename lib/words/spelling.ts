@@ -20,6 +20,10 @@ export const WORD_SPELLING_INVALID = "WORD_SPELLING_INVALID";
 /** The backend refuses a new word that is one letter (CM-B10c, 400). */
 export const WORD_IS_A_LETTER = "WORD_IS_A_LETTER";
 export const WORD_IS_A_LETTER_MESSAGE = "This is a single letter. Letters live in the alphabet, not the word bank.";
+/** The backend refuses a new word or spelling on its reviewed harmful-word list (CM-P1, 400). */
+export const HARMFUL_WORD = "HARMFUL_WORD";
+export const HARMFUL_WORD_MESSAGE =
+  "This word is on the blocked word list: it reads as a vulgar word in Arabic. Use a different word.";
 
 /** The fields of a library row the preview reads. */
 export interface SpellingWord {
@@ -99,11 +103,19 @@ export interface WordSpellingError {
 
 /**
  * The parts of a `WORD_SPELLING_INVALID` refusal (400, details
- * `{ arabic, spelling, issues }`) or a `WORD_IS_A_LETTER` refusal; null when the error is something else.
+ * `{ arabic, spelling, issues }`), a `WORD_IS_A_LETTER` refusal or a `HARMFUL_WORD` refusal (its
+ * message names the word); null when the error is something else.
  */
 export function parseWordSpellingError(
-  error: { code?: string; details?: unknown } | null | undefined,
+  error: { code?: string; details?: unknown; message?: string } | null | undefined,
 ): WordSpellingError | null {
+  if (error?.code === HARMFUL_WORD) {
+    const d = (error.details && typeof error.details === "object" ? error.details : {}) as { arabic?: unknown };
+    const message = typeof error.message === "string" && error.message.includes("blocked word list")
+      ? error.message
+      : HARMFUL_WORD_MESSAGE;
+    return { arabic: typeof d.arabic === "string" ? d.arabic : null, spelling: null, messages: [message] };
+  }
   if (error?.code === WORD_IS_A_LETTER) {
     const d = (error.details && typeof error.details === "object" ? error.details : {}) as { arabic?: unknown };
     return { arabic: typeof d.arabic === "string" ? d.arabic : null, spelling: null, messages: [WORD_IS_A_LETTER_MESSAGE] };

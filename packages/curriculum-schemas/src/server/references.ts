@@ -212,18 +212,25 @@ const FORMS = LetterFormSchema.options;
 /**
  * A single-letter glyph string as a reference: harakat become `haraka`, a
  * tatweel before and/or after the letter gives the positional form (`ـبـ`
- * medial, `بـ` initial, `ـب` final). Null when the string is not exactly one
- * letter of `letters` (a word, a digit, Latin text, an empty string).
+ * medial, `بـ` initial, `ـب` final). The form is read with the marks set
+ * aside, so a haraka written after the tatweel (`جـَ`, older editors) or on a
+ * leading tatweel (`ـَب`) reads the same as one on the letter (CM-D3f). Null
+ * when the string is not exactly one letter of `letters` (a word, a digit,
+ * Latin text, an empty string).
+ *
+ * `letterId`, when given, is the letter a person decided the glyph is (S3
+ * review decisions); the glyph must still be one letter, but need not be a
+ * known one.
  */
-export function readLetterGlyph(raw: string): CanonicalLetterRef | null {
+export function readLetterGlyph(raw: string, letterId?: string): CanonicalLetterRef | null {
   const text = raw.normalize('NFC').trim();
-  if (!text) return null;
-  const leading = text.startsWith(TATWEEL);
-  const trailing = text.endsWith(TATWEEL) && text.length > 1;
-  const bare = stripHarakat(text).split(TATWEEL).join('');
+  const shape = stripHarakat(text);
+  const bare = shape.split(TATWEEL).join('');
   if ([...bare].length !== 1) return null;
-  const letterId = letterIdOfGlyph(bare);
-  if (!letterId) return null;
+  const id = letterId ?? letterIdOfGlyph(bare);
+  if (!id) return null;
+  const leading = shape.startsWith(TATWEEL);
+  const trailing = shape.endsWith(TATWEEL) && shape.length > 1;
   const form = leading && trailing
     ? 'medial'
     : trailing
@@ -232,7 +239,7 @@ export function readLetterGlyph(raw: string): CanonicalLetterRef | null {
     ? 'final'
     : 'isolated';
   const haraka = harakaFromMarks(text);
-  return haraka ? { letterId, form, haraka } : { letterId, form };
+  return haraka ? { letterId: id, form, haraka } : { letterId: id, form };
 }
 
 /**

@@ -39,7 +39,15 @@ import { isEmptyLocalizedText, makeReadSchema, withoutKeys } from '../references
  */
 export const BuildWordFromLettersConfigSchema = z.object({
   targetWord: ArabicTextSchema
-    .describe('The Arabic word to build (can be a name, word, or phrase)'),
+    .describe(
+      'The Arabic word to build (can be a name, word, or phrase); written from `wordRef` by the server when it is sent',
+    ),
+
+  // CM-D3e (design 3.1 rule 4): the library word; the server writes `targetWord` and
+  // `wordRef.text` from it on every save, as for tap_letter_in_word.
+  wordRef: z.object({ wordId: z.string().min(1), text: z.string().optional() })
+    .optional()
+    .describe('The library word built; the server writes its text'),
 
   letterDisplayMode: z.enum(['contextual', 'isolated'])
     .default('contextual')

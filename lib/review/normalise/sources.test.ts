@@ -44,6 +44,14 @@ describe("draftItems", () => {
     expect(items[0]).toMatchObject({ title: "Grid tap (themed hunts)", titleScript: "latin", context: "Letter ta, practice" });
     expect(items[2].context).toBe("Letter ta, practice · Too close");
   });
+  it("reads BE-1's stored titles ({ en, ar? }) for the node, topic and curriculum", () => {
+    const [d] = draftItems([
+      { ...row("x"), node_title: { en: "Letter ta, practice" }, topic_title: { en: "Ta", ar: "ت" }, curriculum_title: { ar: "قراءة" } },
+    ]);
+    expect(d.context).toBe("Letter ta, practice");
+    expect(d.searchText).toBe("grid_tap Letter ta, practice n1 Ta قراءة");
+    expect(draftItems([{ ...row("y"), node_title: null }])[0].context).toBe("n1");
+  });
 });
 
 describe("requestItems", () => {
@@ -66,6 +74,14 @@ describe("phraseItems", () => {
     });
     expect(items.map((i) => [i.state, i.todoLabel])).toEqual([["todo", "Confirm again"], ["approved", undefined], ["rejected", undefined]]);
     expect(items[2]).toMatchObject({ context: "Phrase · 0 uses · Order is off", decidedBy: "u" });
+  });
+  it("reads the backend's reviewed_by and reviewed_at on a rejection", () => {
+    const [r] = phraseItems({
+      pending: [],
+      approved: [],
+      rejected: [p("e f", { reason: null, rejection: { reason: "unnatural", note: null, reviewed_by: "u9", reviewed_at: "2026-11-16T00:00:00Z" } })],
+    });
+    expect(r).toMatchObject({ decidedBy: "u9", decidedAt: "2026-11-16T00:00:00Z", context: "Phrase · 0 uses · Does not sound natural" });
   });
   it("reads the old answer with no rejected list", () => {
     expect(phraseItems({ pending: [p("a b")], approved: [] })).toHaveLength(1);

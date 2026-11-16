@@ -52,10 +52,10 @@ A kind shows in Review (rail, counts, number key, sheet rows, and its source is 
 | Ticket | Kind | Source (shape) | Normaliser |
 |---|---|---|---|
 | CW-6 | `blend` | `GET /words/blend/review` | `blendItems` |
-| CW-7 | `draft` | BE-1 `GET /curriculum/generation/drafts?status=pending&limit=&cursor=`, `{ items, next_cursor }`; each item is the per-node draft plus `node_title`, `topic_*`, `curriculum_*` | `draftItems` (reads `node_title`) |
-| CW-7 | `request` | `GET /curriculum/generation/word-requests` | `requestItems` |
-| CW-8 | `phrase` | BE-2 `GET /curriculum/reading/phrases`, `{ pending, approved, rejected, generation_enabled }`, `rejection` on every entry | `phraseItems` |
-| CW-8 | `recording` | the same list: `audio.state` on approved entries; the full take read when the item opens | `recordingItems`, `recordingTakeToHear` |
+| CW-7 (done) | `draft` | BE-1 `GET /curriculum/generation/drafts?status=pending&limit=&cursor=`, `{ items, next_cursor }`; titles are stored `{ en, ar? }` (`titleText`) | `draftItems`; preview `lib/review/draftPreview.ts`; lens tools narrow by curriculum and node (`useDraftScope`) |
+| CW-7 (done) | `request` | `GET /curriculum/generation/word-requests` | `requestItems` |
+| CW-8 (done) | `phrase` | BE-2 `GET /curriculum/reading/phrases`, `{ pending, approved, rejected, generation_enabled }`, `rejection` (`reviewed_by`, `reviewed_at`) on every entry | `phraseItems`; cache moves in `actions/phraseList.ts` |
+| CW-8 (done) | `recording` | the same list: `audio.state` on approved entries; the full take read when the item opens (`usePhraseAudio`) | `recordingItems`, `recordingTakeToHear`; audio parts in `components/phrases/audio/` |
 | CW-11 | `letter` | audio library `letter_sounds`, BE-3 `GET /assets/letter-sounds/review-flags` `{ items }` | to write; flag and unflag are `inverse` |
 
 Other extension points:

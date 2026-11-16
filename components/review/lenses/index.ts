@@ -6,6 +6,7 @@
  */
 
 import { INBOX_KINDS, type InboxKind } from "@/lib/review/inbox";
+import { DRAFT_PHRASE_LENSES } from "./draftPhraseLenses";
 import { ReadingPane } from "./reading/ReadingPane";
 import { SpellingPane } from "./spelling/SpellingPane";
 import type { LensDefinition } from "./types";
@@ -38,6 +39,7 @@ const LENS_LIST: LensDefinition[] = [
     Pane: ReadingPane,
     shortcuts: [{ title: "Decide", rows: [{ label: "Pick a reading", keys: ["1", "to", "9"] }] }, CONTEXT_KEYS],
   },
+  ...DRAFT_PHRASE_LENSES,
 ];
 
 export const LENSES: ReadonlyMap<InboxKind, LensDefinition> = new Map(LENS_LIST.map((l) => [l.kind, l]));

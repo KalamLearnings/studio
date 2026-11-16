@@ -24,6 +24,7 @@ import { FLAG_LABELS, validateNote } from "@/lib/words/review/queue";
 import { usePaneCommands } from "../../commands";
 import { ConceptCard, useFamilyConcept } from "../../context/ConceptCard";
 import { FamilyCard } from "../../context/FamilyCard";
+import { UsageCard } from "../../context/UsageCard";
 import { DecisionBar, Hero, NextHint, PaneFrame } from "../../PaneFrame";
 import { Ar, Chip, ContextCard, KBD_ON_BUTTON, Kbd, PaneCard, Say } from "../../parts";
 import type { PaneProps } from "../types";
@@ -198,11 +199,7 @@ export function SpellingPane(props: PaneProps) {
     <>
       <FamilyCard familyId={item.familyId} currentWordId={word.id} bank={bank} onOpen={openFamily} />
       <ConceptCard familyId={item.familyId} onOpen={openConcept} />
-      <ContextCard title="Where it is used">
-        <p className="text-[12.5px]">
-          {word.usage_count} {word.usage_count === 1 ? "activity" : "activities"}
-        </p>
-      </ContextCard>
+      <UsageCard wordId={word.id} countLine={`${word.usage_count} ${word.usage_count === 1 ? "activity" : "activities"}`} />
       {item.state === "approved" && item.decidedAt && (
         <ContextCard title="History">
           <p className="text-xs">

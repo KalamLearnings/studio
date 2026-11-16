@@ -14,8 +14,9 @@ import type { ReadingItem } from "@/lib/review/normalise/words";
 import { usePaneCommands } from "../../commands";
 import { ConceptCard, useFamilyConcept } from "../../context/ConceptCard";
 import { FamilyCard } from "../../context/FamilyCard";
+import { UsageCard } from "../../context/UsageCard";
 import { DecisionBar, Hero, NextHint, PaneFrame } from "../../PaneFrame";
-import { Ar, ContextCard, KBD_ON_BUTTON, Kbd, PaneCard, Say, StatusPill } from "../../parts";
+import { Ar, KBD_ON_BUTTON, Kbd, PaneCard, Say, StatusPill } from "../../parts";
 import type { PaneProps } from "../types";
 
 export function ReadingPane(props: PaneProps) {
@@ -106,11 +107,7 @@ export function ReadingPane(props: PaneProps) {
     <>
       <FamilyCard familyId={item.familyId} currentWordId={word.id} bank={bank} onOpen={openFamily} />
       <ConceptCard familyId={item.familyId} onOpen={openConcept} />
-      <ContextCard title="Where it is used">
-        <p className="text-[12.5px]">
-          {word.usage_count} {word.usage_count === 1 ? "activity" : "activities"}
-        </p>
-      </ContextCard>
+      <UsageCard wordId={word.id} countLine={`${word.usage_count} ${word.usage_count === 1 ? "activity" : "activities"}`} />
     </>
   );
 

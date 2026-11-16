@@ -172,11 +172,16 @@
   }
 }
 
-/* Arabic font support */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+/* Arabic font support. Noto Naskh Arabic is the vowelled face of Review (owner answer 9);
+   it falls back to Noto Sans Arabic, then the system serif. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
 
 .font-arabic {
   font-family: "Noto Sans Arabic", "Arial", sans-serif;
+}
+
+.font-naskh {
+  font-family: "Noto Naskh Arabic", "Noto Sans Arabic", "Arial", serif;
 }
 
 /* RTL support */

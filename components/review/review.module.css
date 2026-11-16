@@ -1,0 +1,54 @@
+/* The decision pane follows its own width, not the window's (a container query):
+   at 760 px and up the context column sits beside the evidence; below it the
+   context cards stack under it as a grid. */
+
+.pane {
+  container-type: inline-size;
+  container-name: review-pane;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 24px 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.single {
+  max-width: 860px;
+}
+
+.context {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+@container review-pane (min-width: 760px) {
+  .inner:not(.single) {
+    grid-template-columns: minmax(0, 1fr) 264px;
+    gap: 20px;
+  }
+  .inner:not(.single) .context {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 859px) {
+  .inner {
+    padding: 14px 16px 24px;
+  }
+}
+
+/* List rows: the ellipsis of an RTL title falls on its visual left, the end of the line. */
+.rowTitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+}

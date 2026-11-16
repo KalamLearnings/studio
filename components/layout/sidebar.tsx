@@ -17,11 +17,10 @@ import {
   Settings,
   LogOut,
   ClipboardCheck,
-  Layers,
-  Shapes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useReviewCountStore } from "@/lib/stores/reviewCountStore";
 
 interface NavItem {
   title: string;
@@ -34,12 +33,9 @@ const navItems: NavItem[] = [
   { title: "Assets", href: "/assets", icon: Image },
   { title: "Audio", href: "/audio", icon: Volume2 },
   { title: "Words", href: "/words", icon: Type },
-  { title: "Families", href: "/families", icon: Layers },
-  { title: "Concepts", href: "/concepts", icon: Shapes },
-  { title: "Review", href: "/review/blend", icon: ClipboardCheck },
-  { title: "Word review", href: "/review/words", icon: ClipboardCheck },
-  { title: "Draft review", href: "/review/drafts", icon: ClipboardCheck },
-  { title: "Phrase review", href: "/review/phrases", icon: ClipboardCheck },
+  // Families, Concepts and the four review pages live inside Review now. Their
+  // old routes keep working until CW-12 removes them.
+  { title: "Review", href: "/review", icon: ClipboardCheck },
   { title: "Books", href: "/books", icon: BookMarked },
   { title: "Games", href: "/games", icon: Gamepad2 },
   { title: "Promos", href: "/promo-codes", icon: Ticket },
@@ -57,6 +53,7 @@ interface SidebarProps {
 
 export function Sidebar({ onSignOut }: SidebarProps) {
   const pathname = usePathname();
+  const reviewCount = useReviewCountStore((s) => s.count);
 
   return (
     <aside className="flex h-full w-20 flex-col border-r bg-sidebar text-sidebar-foreground">
@@ -78,13 +75,16 @@ export function Sidebar({ onSignOut }: SidebarProps) {
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             const Icon = item.icon;
+            const count = item.href === "/review" && reviewCount ? reviewCount : null;
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                aria-label={count ? `${item.title}, ${count} waiting` : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors w-full",
+                  "relative flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors w-full",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -94,6 +94,14 @@ export function Sidebar({ onSignOut }: SidebarProps) {
                 <span className="text-[10px] font-medium leading-tight">
                   {item.title}
                 </span>
+                {count !== null && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-2 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9.5px] font-bold tabular-nums text-primary-foreground"
+                  >
+                    {count > 999 ? "999+" : count}
+                  </span>
+                )}
               </Link>
             );
           })}

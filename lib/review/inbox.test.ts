@@ -140,6 +140,16 @@ describe("lenses and status", () => {
     const c = { userId: "me", decidedHere: new Set([here.key]) };
     expect([here, server, other].filter((it) => inLens(it, "v-mine", "all", c)).map((it) => it.id)).toEqual(["a", "b"]);
   });
+  it("Flagged by check shows the spellings an automatic check flags (CM-AIPRE)", () => {
+    expect(isLens("v-check")).toBe(true);
+    const flagged = item("f", { checkFlagged: true });
+    const decided = item("d", { checkFlagged: true, state: "approved" });
+    const plain = item("p");
+    const items = [plain, flagged, decided];
+    const q = { lens: "v-check" as const, status: "todo" as const, sort: "usage" as const, q: "" };
+    expect(visibleItems(items, q, ctx).map((i) => i.id)).toEqual(["f"]);
+    expect(visibleItems(items, { ...q, status: "all" }, ctx).map((i) => i.id).sort()).toEqual(["d", "f"]);
+  });
   it("cycles the status", () => {
     expect(nextStatus("todo")).toBe("done");
     expect(nextStatus("done")).toBe("all");
@@ -169,6 +179,11 @@ describe("sortItems", () => {
   it("sorts by waiting time either way, unknown times last", () => {
     expect(sortItems([a, c, b], "oldest").map((i) => i.id)).toEqual(["b", "a", "c"]);
     expect(sortItems([c, b, a], "newest").map((i) => i.id)).toEqual(["a", "b", "c"]);
+  });
+  it("can put the spellings an automatic check flags first, then the most used", () => {
+    const f = item("f", { usage: 1, checkFlagged: true });
+    const g = item("g", { usage: 3, checkFlagged: true });
+    expect(sortItems([a, c, f, b, g], "check").map((i) => i.id)).toEqual(["g", "f", "c", "b", "a"]);
   });
   it("groups by kind in rail order", () => {
     expect(sortItems([c, a, b], "kind").map((i) => i.kind)).toEqual(["spelling", "spelling", "reading"]);

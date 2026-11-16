@@ -3,7 +3,7 @@
 /** The rail (CW-1): Everything, the registered kinds with counts, Views. Hidden under 1100 px. */
 
 import * as React from "react";
-import { AlertTriangle, History, Inbox, Layers, Shapes, Sparkles } from "lucide-react";
+import { AlertTriangle, History, Inbox, Layers, Shapes, Sparkles, SpellCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   GATE_TAG,
@@ -19,7 +19,12 @@ import {
 } from "@/lib/review/inbox";
 import { KindDot } from "./parts";
 
-const VIEW_ICONS: Record<InboxView, React.ElementType> = { "v-ai": Sparkles, "v-failed": AlertTriangle, "v-mine": History };
+const VIEW_ICONS: Record<InboxView, React.ElementType> = {
+  "v-ai": Sparkles,
+  "v-failed": AlertTriangle,
+  "v-check": SpellCheck,
+  "v-mine": History,
+};
 
 function RailButton({
   on,

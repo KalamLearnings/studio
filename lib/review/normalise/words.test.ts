@@ -49,6 +49,38 @@ describe("spellingItems", () => {
   });
 });
 
+describe("spellingItems with automatic checks (CM-AIPRE)", () => {
+  const checks = [
+    {
+      word_id: "bab",
+      flagged: true,
+      checks: [
+        { source: "catt_camel", verdict: "flag_vowels" as const, suggested_text: "بَابٌ", note: null, run_id: "r1", created_at: "2026-11-16T00:00:00Z" },
+      ],
+    },
+    {
+      word_id: "kitab",
+      flagged: false,
+      checks: [{ source: "catt_camel", verdict: "ok" as const, suggested_text: null, note: null, run_id: "r1", created_at: "2026-11-16T00:00:00Z" }],
+    },
+  ];
+  const byId = new Map(spellingItems(bank, [], checks).map((i) => [i.id, i]));
+  it("carries the word's checks and the backend's flag", () => {
+    expect(byId.get("bab")?.checkFlagged).toBe(true);
+    expect(byId.get("bab")?.data.check?.checks[0].suggested_text).toBe("بَابٌ");
+    expect(byId.get("kitab")?.checkFlagged).toBe(false);
+    expect(byId.get("kitab")?.data.check?.flagged).toBe(false);
+    expect(byId.get("man")?.data.check).toBeNull();
+  });
+  it("a flagged spelling says so and is never bulk safe", () => {
+    expect(byId.get("bab")?.context).toBe("Fully vowelled · used by 7 · flagged by check");
+    expect(byId.get("bab")?.bulkSafe).toBe(false);
+  });
+  it("never changes the word itself", () => {
+    expect(byId.get("bab")?.title).toBe("بَاب");
+  });
+});
+
 describe("readingItems", () => {
   const items = readingItems(bank, new Set(["partial"]));
   const byId = new Map(items.map((i) => [i.id, i]));

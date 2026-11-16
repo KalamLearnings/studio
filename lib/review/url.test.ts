@@ -18,6 +18,11 @@ describe("Review URL state", () => {
     };
     expect(parseReviewUrl(new URLSearchParams(reviewUrlSearch(state)))).toEqual(state);
   });
+  it("keeps the Flagged by check view and sort", () => {
+    const s = parseReviewUrl(new URLSearchParams("lens=v-check&sort=check"));
+    expect([s.lens, s.sort]).toEqual(["v-check", "check"]);
+    expect(reviewUrlSearch(s)).toBe("?lens=v-check&sort=check");
+  });
   it("ignores values it does not know", () => {
     const s = parseReviewUrl(new URLSearchParams("lens=nope&status=maybe&sort=random&item="));
     expect(s).toEqual(DEFAULT_URL_STATE);

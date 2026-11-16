@@ -81,6 +81,14 @@ Other extension points:
 - **Letter sounds (CW-11).** A file with no flag is `listen` and never waits; a flagged one is `todo` ("To decide"),
   counts as waiting, and the kind's gate is `phrase` (other staff listen only). `order` keeps the files in alphabet order.
 - **Views.** `VIEW_META` lists the kinds each view covers; a view shows in the rail once one of its kinds is registered.
+- **Automatic word checks (CM-AIPRE).** `GET /words/check-suggestions` `{ items: [{ word_id, flagged, checks }] }`
+  (`lib/api/wordChecks.ts`) is read with the spellings (`WORD_CHECKS_KEY`; a failure only hides the card). `spellingItems`
+  puts the word's summary in `data.check` and the backend's `flagged` in `item.checkFlagged`; a flagged spelling is never
+  bulk-safe. The view `v-check` (Flagged by check) and the sort `check` (Flagged by check first) read `checkFlagged`.
+  The pane's `AutomaticCheckCard` (`lenses/spelling/`) shows each source's verdict and its harakat as a letter diff
+  (`lib/review/wordChecks.ts`), labelled automatic; "Use this" only fills the Wrong harakat field, which the reviewer
+  saves as before (a note, or a respelling held 5 s). Suggestions are imported on the backend
+  (`scripts/import-word-checks.ts`); Studio never writes them.
 
 ## Conventions
 

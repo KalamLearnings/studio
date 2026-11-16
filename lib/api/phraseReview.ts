@@ -3,7 +3,13 @@
 import { fetchWithAuth } from './client';
 import { phraseAudioKeyPath, type GeneratePhraseAudioResult, type PhraseAudioStatus, type PhraseRejectReason } from '@/lib/phrases/phraseAudio';
 import type { TakeRequest } from '@/lib/blendWord/takes';
-import { approvalBody, type DraftPhraseDecodability, type PhraseEntry, type PhraseList } from '@/lib/phrases/phraseReview';
+import {
+  approvalBody,
+  type DraftPhraseDecodability,
+  type PhraseEntry,
+  type PhraseList,
+  type PhraseRejectionBody,
+} from '@/lib/phrases/phraseReview';
 
 const BASE = '/curriculum/reading/phrases';
 
@@ -15,6 +21,14 @@ export const approvePhrase = (entry: Pick<PhraseEntry, 'word_ids' | 'is_sentence
 /** The key is the ids joined by one space; the space is URL-encoded. */
 export const revokePhrase = (phraseKey: string) =>
   fetchWithAuth<unknown>(`${BASE}/approvals/${encodeURIComponent(phraseKey)}`, { method: 'DELETE' });
+
+/** BE-5: a reviewer rejects the phrase with a reason (`other` needs a note). Answers the rejected entry. */
+export const rejectPhrase = (phraseKey: string, body: PhraseRejectionBody) =>
+  fetchWithAuth<PhraseEntry>(`${BASE}/${encodeURIComponent(phraseKey)}/reject`, { method: 'POST', body: JSON.stringify(body) });
+
+/** BE-5: withdraws the rejection; the phrase is pending again. */
+export const clearPhraseRejection = (phraseKey: string) =>
+  fetchWithAuth<{ phrase_key: string }>(`${BASE}/${encodeURIComponent(phraseKey)}/rejection`, { method: 'DELETE' });
 
 export const checkDraftPhrase = (body: { node_id: string; word_ids: string[]; is_sentence: boolean }) =>
   fetchWithAuth<DraftPhraseDecodability>(`${BASE}/decodability`, { method: 'POST', body: JSON.stringify(body) });

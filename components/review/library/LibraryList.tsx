@@ -25,6 +25,7 @@ import type { ConceptDetail } from "@/lib/types/wordFamilies";
 import { cn } from "@/lib/utils";
 import { Ar, Kbd, SkeletonBar, StatusPill } from "../parts";
 import styles from "../review.module.css";
+import { useCanConnect } from "./access";
 
 export const libRowId = (ref: LibraryRef) => `review-lib-${ref.type}-${(ref.type === "family" ? ref.id : ref.slug).replace(/[^A-Za-z0-9_-]/g, "_")}`;
 
@@ -175,6 +176,8 @@ function ConceptRowView({ concept, selected, onOpen }: { concept: ConceptDetail;
 
 export function LibraryList(p: LibraryListProps) {
   const fam = p.lens === "lib-families";
+  // New family is a connection write (`POST /words/families`); New concept is not.
+  const canConnect = useCanConnect();
   const shown = fam ? p.families.length : p.concepts.length;
   const loading = p.status === "loading";
   const familyCounts = React.useMemo(() => familyGapCounts(p.allFamilies), [p.allFamilies]);
@@ -248,9 +251,11 @@ export function LibraryList(p: LibraryListProps) {
             <option value="lib-families">Families</option>
             <option value="lib-concepts">Concepts</option>
           </select>
-          <Button variant="outline" size="sm" className="ms-auto h-[30px] px-2.5 text-xs" onClick={p.onCreate}>
-            <Plus className="me-1 h-3.5 w-3.5" aria-hidden="true" /> New {fam ? "family" : "concept"}
-          </Button>
+          {(!fam || canConnect) && (
+            <Button variant="outline" size="sm" className="ms-auto h-[30px] px-2.5 text-xs" onClick={p.onCreate}>
+              <Plus className="me-1 h-3.5 w-3.5" aria-hidden="true" /> New {fam ? "family" : "concept"}
+            </Button>
+          )}
         </div>
         {fam ? (
           <GapChips

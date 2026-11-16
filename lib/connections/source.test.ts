@@ -7,7 +7,7 @@ const api = (o: Partial<RoutesApi> = {}): RoutesApi => ({
   listFamilies: async () => SAMPLE.families as never,
   listConceptDetails: async () => SAMPLE.concepts as never,
   listLetters: async () => SAMPLE.letters as never,
-  wordUsage: vi.fn(async () => []),
+  contentUsage: vi.fn(async (unit: string) => ({ unit, activities: [], book_units: [] })),
   ...o,
 });
 
@@ -28,12 +28,22 @@ describe("routesSource", () => {
   it("fails when the words fail", async () => {
     await expect(routesSource(api({ listWords: async () => Promise.reject(new Error("down")) })).library()).rejects.toThrow("down");
   });
-  it("answers usage for a spelling only, until the usage read lands", async () => {
-    const a = api();
+  it("answers usage for spellings, letters and meanings from the content usage read", async () => {
+    const a = api({
+      contentUsage: vi.fn(async (unit: string) => ({
+        unit,
+        activities: [],
+        book_units: [{ unit_id: "u1", book_id: "b1", book_title: "Bear", book_title_ar: null, item_id: null, role: "exposure" }],
+      })),
+    });
     const s = routesSource(a);
-    await s.usage("word:w-kitab");
-    expect(a.wordUsage).toHaveBeenCalledWith("w-kitab");
-    expect(s.usage("letter:kaf")).toBeNull();
+    expect(await s.usage("word:w-kitab")).toEqual({ activities: [], books: [expect.objectContaining({ book_id: "b1" })] });
+    await s.usage("letter:kaf");
+    await s.usage("concept:camel");
+    expect(a.contentUsage).toHaveBeenCalledWith("word:w-kitab");
+    expect(a.contentUsage).toHaveBeenCalledWith("letter:kaf");
+    expect(a.contentUsage).toHaveBeenCalledWith("concept:camel");
     expect(s.usage("family:book")).toBeNull();
+    expect(s.usage("picture:p1")).toBeNull();
   });
 });

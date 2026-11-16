@@ -161,6 +161,18 @@ const MESSAGES: Record<string, string> = {
   READS_AS_FAMILY_MISMATCH: 'The reading must be in the same family.',
   WORD_NOT_FOUND: 'That spelling no longer exists.',
   WORD_FAMILY_NOT_FOUND: 'That family no longer exists.',
+  // The Words page's connections (CG-5) and Review's Suggested links.
+  PHRASE_REVIEWER_REQUIRED: 'Only a curriculum lead or a phrase reviewer can make connections.',
+  WORD_IS_HEADWORD: "This spelling is the word's dictionary form, so it cannot leave. Make another form the dictionary form first.",
+  WORD_IN_OTHER_FAMILY: 'This spelling is a form of another word. Take it out of that word first.',
+  WORD_IN_FAMILY: 'A practice word has no family. Take the spelling out of its word first.',
+  WORD_HAS_READING: 'A practice word has no reading. Clear its readings first.',
+  WORD_FAMILY_EXISTS: 'A word with this id already exists. Pick another id.',
+  CONCEPT_EXISTS: 'A meaning with this id already exists. Pick another id.',
+  CONCEPT_NOT_FOUND: 'That meaning no longer exists.',
+  ASSET_MEDIA_MISMATCH: 'That file is not a picture.',
+  ASSET_NOT_LINKABLE: 'That picture cannot be used (retired or replaced).',
+  ASSET_NOT_FOUND: 'That picture no longer exists.',
 };
 
 /** A sentence for a backend refusal code; falls back to the server's own message. */

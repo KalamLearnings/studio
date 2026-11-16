@@ -1,7 +1,8 @@
 # Review workspace
 
 `/review`: one inbox for every content decision. Design: `design/concepts/content-workspace/` (approved 2026-11-16).
-The old pages keep their routes until CW-12; only their sidebar items are gone.
+The old Families and Concepts pages are gone (CG-8); `/families` and `/concepts` redirect to the Words page
+(`next.config.mjs`).
 
 ## Layout
 
@@ -20,7 +21,7 @@ The old pages keep their routes until CW-12; only their sidebar items are gone.
 | `components/review/ReviewWorkspace.tsx` | Rail, list, pane, URL sync, keyboard, focus. |
 | `components/review/lenses/` | The lens registry and one folder per lens pane. |
 | `components/review/PaneFrame.tsx`, `parts.tsx`, `context/` | What every pane composes: hero, cards, decision bar, gate bar, Family and Concept cards. |
-| `components/review/library/` | CW-9: the Family and Concept editors (moved from the old pages, which import them from here), the create dialogs, the Families and Concepts list, the in-pane sub-views, `useReviewLibrary`, and `LibraryApiContext` (the routes, swappable in a preview or test). |
+| `components/review/library/` | CW-9: the Family and Concept editor sections, the create dialogs, the Families and Concepts list, the in-pane sub-views, `useReviewLibrary`, and `LibraryApiContext` (the routes, swappable in a preview or test). |
 | `components/review/bulk/` | CW-10: `useBulkApprove` and the selection, progress and report strip. |
 
 ## Adding a lens
@@ -60,16 +61,36 @@ A kind shows in Review (rail, counts, number key, sheet rows, and its source is 
 | CW-7 (done) | `request` | `GET /curriculum/generation/word-requests` | `requestItems` |
 | CW-8 (done) | `phrase` | BE-2 `GET /curriculum/reading/phrases`, `{ pending, approved, rejected, generation_enabled }`, `rejection` (`reviewed_by`, `reviewed_at`) on every entry | `phraseItems`; cache moves in `actions/phraseList.ts` |
 | CW-8 (done) | `recording` | the same list: `audio.state` on approved entries; the full take read when the item opens (`usePhraseAudio`) | `recordingItems`, `recordingTakeToHear`; audio parts in `components/phrases/audio/` |
+| Words (done) | `link` | `GET /words/proposals`, `{ version, families, pictures, unregistered_pictures }`; skipped ids per staff member in localStorage (`lib/review/skippedLinks.ts`), approved ones marked until the next read (`lib/hooks/useLinkProposals.ts`) | `linkItems` (`normalise/links.ts`); the ops to send in `lib/review/linkPlans.ts`; approve, Undo, skip and "Show it again" are `inverse` (`actions/links.ts`) |
 | CW-11 (done) | `letter` | audio library `letter_sounds` (`getAudioAssets`), BE-3 `GET /assets/letter-sounds/review-flags` `{ items }`, `GET /letters/list` | `letterItems` (`normalise/letters.ts`); flag and clear are `inverse` (`actions/letters.ts`) |
 
 Other extension points:
 
-- **Library (CW-9).** `lib-families` and `lib-concepts` swap the list column for `LibraryList`; a row, `f` / `c`, or a
+- **Connections are role-gated** (owner decision 3, backend 403 `PHRASE_REVIEWER_REQUIRED`): a spelling's family and
+  reading, creating or editing a family (headword, gloss, notes), family to concept links and pictures, the drill
+  flag. Only a curriculum lead or a phrase reviewer. The Reading kind's gate is `phrase`, so its pane shows a GateBar
+  to other staff. In the library, `ConnectAccessContext` (`library/access.tsx`, provided by the workspace from
+  `inbox.roles`) hides those controls and shows `ConnectLocked` with the plain reason; concept details, New concept
+  and Mark reviewed stay with every staff member.
+- **Suggested links** (`link`, key `9`). Item key `link:<proposal id>` (`link:family:<headword id>`,
+  `link:picture:<asset id>`); the Words page deep-links to them. A family proposal reads "These look like forms of one
+  word", a picture proposal "This picture looks like this meaning". Approving sends the plan's ops (create the family
+  or meaning when missing, move the spellings, confirm the readings, attach the picture) through `runOps`, which undoes
+  the sent ones if a later one is refused. Undo sends the inverse; a family or meaning created on the way stays. The
+  backend has no dismiss, so Skip is Studio's: a skipped proposal shows as Skipped under Decided, where "Show it
+  again" brings it back. Only family proposals made of a headword and its case endings, with a known unique id, are
+  bulk-safe; pictures are always one at a time.
+- **Show connections (CG-7).** `context/ShowConnections.tsx` links to `/words?focus=<key>`: the Family card (the
+  spelling, and the family), the Concept card, the library sub-views' hero, and the link pane.
+
+- **Library (CW-9).** Kept after CG-8: the Words page makes connections but does not edit a family's gloss and notes,
+  a concept's names and kind, or mark spellings reviewed. `lib-families` and `lib-concepts` swap the list column for `LibraryList`; a row, `f` / `c`, or a
   context card's Edit opens the editor in the pane (`LibraryPane`) with "Back to <item>" (`esc`). `openFamily(null)`
   ("Add to a family") opens the Families lens and the family you pick offers the word you came from;
   `openConcept(null)` opens the word's family, where concepts are linked. Panes only call `openFamily` / `openConcept`.
-- **Bulk (CW-10).** Only items with `isBulkSafe` (today: unflagged, fully vowelled spellings that wait; never audio,
-  drafts or phrases) get a row checkbox; `x` toggles, `shift+A` approves the checked rows. Each is its own
+- **Bulk (CW-10).** Only items with `isBulkSafe` (today: unflagged, fully vowelled spellings that wait, and suggested
+  families of case endings; never audio, drafts, phrases or pictures) that the reviewer's role may decide
+  (`canBulk(item, roles)`) get a row checkbox; `x` toggles, `shift+A` approves the checked rows. Each is its own
   `approveSpelling` decision with `quiet: true` (no toast), sent one at a time: the run watches the session's busy and
   error per item rather than wrapping the request, so it works with any `decide`. Undo all withdraws each one through
   its inverse route. To make another kind bulk-safe, set `bulkSafe` in its normaliser and give `useBulkApprove` its spec.

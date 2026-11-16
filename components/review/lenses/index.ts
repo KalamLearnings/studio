@@ -2,13 +2,14 @@
  * The registered lenses. A kind appears in Review (rail, counts, number key,
  * shortcut sheet, and its source is read) only once its lens is listed here.
  * Later tickets add theirs: blend (CW-6), draft and request (CW-7), phrase and
- * recording (CW-8), letter (CW-11). See components/review/README.md.
+ * recording (CW-8), letter (CW-11), link (Suggested links). See components/review/README.md.
  */
 
 import { INBOX_KINDS, type InboxKind } from "@/lib/review/inbox";
 import { BlendListTools } from "./blend/BlendAiCheck";
 import { BlendPane } from "./blend/BlendPane";
 import { LetterPane } from "./letter/LetterPane";
+import { LinkPane } from "./link/LinkPane";
 import { DRAFT_PHRASE_LENSES } from "./draftPhraseLenses";
 import { ReadingPane } from "./reading/ReadingPane";
 import { SpellingPane } from "./spelling/SpellingPane";
@@ -72,6 +73,19 @@ const LENS_LIST: LensDefinition[] = [
         ],
       },
       { title: "Listen", rows: [{ label: "Play or stop the file", keys: ["space"] }] },
+    ],
+  },
+  {
+    kind: "link",
+    Pane: LinkPane,
+    shortcuts: [
+      {
+        title: "Decide",
+        rows: [
+          { label: "Connect a suggested link", keys: ["a"] },
+          { label: "Skip a suggested link (remembered in this browser)", keys: ["r"] },
+        ],
+      },
     ],
   },
 ];

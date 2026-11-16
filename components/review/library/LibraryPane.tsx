@@ -25,6 +25,9 @@ import { Ar, ContextCard, KBD_ON_BUTTON, Kbd, PaneCard, Say, SkeletonBar, Status
 import { BackToListContext } from "../PaneFrame";
 import styles from "../review.module.css";
 import { useLibraryApi } from "./api";
+import { ConnectLocked, useCanConnect } from "./access";
+import { ShowConnections } from "../context/ShowConnections";
+import type { NodeKey } from "@/lib/connections/keys";
 import { ConceptDetailsFields, ConceptFamilies, ConceptPictures, describeConceptError, useConceptForm } from "./ConceptEditor";
 import { describeFamilyError, FamilyConceptLinks, FamilyDetailsFields, FamilySpellings, useEditorRun, useFamilyForm } from "./FamilyEditor";
 import { conceptKey, familyKey, type ReviewLibrary } from "./useReviewLibrary";
@@ -123,7 +126,10 @@ function SubviewHero({
   latin,
   latinSub,
   arabic,
+  connections,
 }: {
+  /** CG-7: the item on the Words page. */
+  connections?: NodeKey;
   icon: React.ReactNode;
   kind: string;
   id: string;
@@ -141,6 +147,7 @@ function SubviewHero({
         </span>
         <span className="font-mono">{id}</span>
         <span>{idNote}</span>
+        {connections && <ShowConnections focus={connections} className="ms-auto text-xs" />}
       </div>
       <div className="mt-1.5 flex min-w-0 flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
@@ -272,6 +279,7 @@ function FamilyLoaded({
   origin,
 }: Omit<LibraryPaneProps, "target"> & { family: WordFamilyDetail }) {
   const api = useLibraryApi();
+  const canConnect = useCanConnect();
   const onChanged = React.useCallback(() => library.familyChanged(family.id), [library, family.id]);
   const { busy, run } = useEditorRun(onChanged, describeFamilyError);
   const form = useFamilyForm(family, run);
@@ -279,7 +287,7 @@ function FamilyLoaded({
   const linked = (library.concepts ?? []).filter((c) => c.families.some((f) => f.id === family.id));
   const headword = family.members.find((m) => m.id === family.headword_id)?.arabic ?? null;
   const save = () => {
-    if (form.dirty && !busy) void form.save();
+    if (canConnect && form.dirty && !busy) void form.save();
   };
   const patchWord = (w: CuratedWord) => wordCache.patchWord(w.id, curationPatch(w));
   // "Add to a family" from a word: offer that word here, unless it is already a member or cannot join.
@@ -302,6 +310,7 @@ function FamilyLoaded({
       <SubviewHero
         icon={<Layers className="h-3.5 w-3.5" aria-hidden="true" />}
         kind="Family"
+        connections={`family:${family.id}`}
         id={family.id}
         idNote="The id never changes."
         latin={family.gloss_en ?? family.id}
@@ -314,7 +323,7 @@ function FamilyLoaded({
             You came from <Ar className="text-lg leading-none">{offer.arabic}</Ar>
             {offer.family_id ? `, which is in the family ${offer.family_id}. Adding it moves it here.` : ", which is in no family yet."}
           </span>
-          <Button
+          {canConnect ? <Button
             size="sm"
             variant="outline"
             disabled={busy}
@@ -326,7 +335,7 @@ function FamilyLoaded({
             }
           >
             Add it to this family
-          </Button>
+          </Button> : <ConnectLocked className="basis-full" />}
         </Say>
       )}
       <PaneCard title="Details">
@@ -378,13 +387,23 @@ function FamilyLoaded({
 
   const bar = (
     <DecisionBar
-      status={busy ? "Saving..." : form.dirty ? "Unsaved changes to the details." : "Spelling changes save at once; the details save with Save."}
+      status={
+        !canConnect
+          ? "Read only. Only a curriculum lead or a phrase reviewer can change a family."
+          : busy
+            ? "Saving..."
+            : form.dirty
+              ? "Unsaved changes to the details."
+              : "Spelling changes save at once; the details save with Save."
+      }
       actions={
         <>
           {back && <CloseButton back={back} />}
-          <Button size="sm" disabled={!form.dirty || busy} onClick={save}>
-            Save family {form.dirty && <Kbd className={cn("ms-2", KBD_ON_BUTTON)}>enter</Kbd>}
-          </Button>
+          {canConnect && (
+            <Button size="sm" disabled={!form.dirty || busy} onClick={save}>
+              Save family {form.dirty && <Kbd className={cn("ms-2", KBD_ON_BUTTON)}>enter</Kbd>}
+            </Button>
+          )}
         </>
       }
     />
@@ -463,6 +482,7 @@ function ConceptLoaded({
   const { busy, run } = useEditorRun(onChanged, describeConceptError);
   const form = useConceptForm(concept, run);
   const [picking, setPicking] = React.useState(false);
+  const canConnect = useCanConnect();
   const save = () => {
     if (form.dirty && form.valid && !busy) void form.save();
   };
@@ -483,6 +503,7 @@ function ConceptLoaded({
       <SubviewHero
         icon={<Shapes className="h-3.5 w-3.5" aria-hidden="true" />}
         kind="Concept"
+        connections={`concept:${concept.slug}`}
         id={concept.slug}
         idNote="The slug never changes."
         latin={concept.name.en}
@@ -500,9 +521,11 @@ function ConceptLoaded({
           </>
         }
         aside={
-          <Button size="sm" variant="outline" onClick={() => setPicking(true)}>
-            <Plus className="me-1 h-3.5 w-3.5" aria-hidden="true" /> Add picture
-          </Button>
+          canConnect ? (
+            <Button size="sm" variant="outline" onClick={() => setPicking(true)}>
+              <Plus className="me-1 h-3.5 w-3.5" aria-hidden="true" /> Add picture
+            </Button>
+          ) : undefined
         }
       >
         <ConceptPictures concept={concept} busy={busy} run={run} picking={picking} setPicking={setPicking} />
@@ -547,6 +570,8 @@ function ConceptLoaded({
 /** The pane when a library lens is open and nothing is picked. */
 export function LibraryEmpty({ lens, onCreate }: { lens: "lib-families" | "lib-concepts"; onCreate: () => void }) {
   const one = lens === "lib-families" ? "family" : "concept";
+  // Creating a family is a connection write (`POST /words/families`); a concept is not.
+  const canCreate = useCanConnect() || lens === "lib-concepts";
   return (
     <div className="grid min-h-0 flex-1 place-items-center content-center gap-2 p-12 text-center text-muted-foreground">
       <div className="grid h-14 w-14 place-items-center rounded-full border">
@@ -554,11 +579,15 @@ export function LibraryEmpty({ lens, onCreate }: { lens: "lib-families" | "lib-c
       </div>
       <h2 className="mt-1.5 text-[15px] font-semibold text-foreground">Pick a {one}</h2>
       <p className="max-w-[380px]">
-        Or create one. Families and concepts also open from any word you review (<Kbd>f</Kbd> <Kbd>c</Kbd>).
+        {canCreate ? "Or create one. " : ""}Families and concepts also open from any word you review (<Kbd>f</Kbd> <Kbd>c</Kbd>).
       </p>
-      <Button variant="outline" size="sm" onClick={onCreate}>
-        <Plus className="me-1 h-3.5 w-3.5" aria-hidden="true" /> New {one}
-      </Button>
+      {canCreate ? (
+        <Button variant="outline" size="sm" onClick={onCreate}>
+          <Plus className="me-1 h-3.5 w-3.5" aria-hidden="true" /> New {one}
+        </Button>
+      ) : (
+        <ConnectLocked className="max-w-[380px] text-left">New families are read only.</ConnectLocked>
+      )}
     </div>
   );
 }

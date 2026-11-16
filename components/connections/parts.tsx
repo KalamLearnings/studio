@@ -35,7 +35,8 @@ export const CONNECTION_COLOR: Record<ConnectionKind, string> = {
   pictures: "var(--k-picture)",
   ownPicture: "var(--k-picture)",
   letters: "var(--k-letter)",
-  usedIn: "var(--k-activity)",
+  activities: "var(--k-activity)",
+  books: "var(--k-activity)",
 };
 
 const ICON_PATHS: Record<NodeType, React.ReactNode> = {

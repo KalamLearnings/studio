@@ -14,6 +14,7 @@ import { AREAS, type Box, type Neighbourhood } from "@/lib/connections/neighbour
 import type { SeveralMeanings } from "@/lib/connections/meanings";
 import { familyLabel } from "@/lib/connections/graph";
 import { relativeRect, wire } from "@/lib/connections/wires";
+import { useEditing } from "./extension";
 import { FocusCard } from "./FocusCard";
 import { GroupBox } from "./GroupBox";
 import { Ar, CONNECTION_COLOR } from "./parts";
@@ -49,7 +50,7 @@ function useWires(stageRef: React.RefObject<HTMLDivElement>, cardRef: React.RefO
       const el = stage.querySelector<HTMLElement>(`[data-box="${b.id}"]`);
       if (!el) continue;
       const w = wire(fr, relativeRect(el.getBoundingClientRect(), sr));
-      const empty = b.state === "ready" && (b.rows ? !(b.activities?.length) : b.items.length === 0);
+      const empty = b.state === "ready" && (b.rows ? !(b.activities?.length || b.books?.length) : b.items.length === 0);
       out.push({ id: b.id, ...w, color: CONNECTION_COLOR[b.kind], dashed: !b.editable || empty, faint: empty });
     }
     // Every render re-measures; only a real change re-renders (no loop).
@@ -84,8 +85,9 @@ function useWires(stageRef: React.RefObject<HTMLDivElement>, cardRef: React.RefO
   return wires;
 }
 
-/** Owner decision 5: one spelling, several words. Only the suggestion; splitting comes with CG-5. */
-function MeaningsNote({ graph, meanings, onOpen }: { graph: Graph; meanings: SeveralMeanings[]; onOpen: (k: NodeKey) => void }) {
+/** Owner decision 5: one spelling, several words. CG-5 adds the split on each meaning (`splitExtra`). */
+function MeaningsNote({ graph, meanings, onOpen, focus }: { graph: Graph; meanings: SeveralMeanings[]; onOpen: (k: NodeKey) => void; focus: NodeKey }) {
+  const editing = useEditing();
   return (
     <>
       {meanings.map((m) => (
@@ -121,10 +123,13 @@ function MeaningsNote({ graph, meanings, onOpen }: { graph: Graph; meanings: Sev
                     ? g.familyIds.map((f) => `in "${familyLabel(graph.families.get(f), f)}"`).join(", ")
                     : "no family"}
                 </span>
+                {editing?.splitExtra?.(m, g, focus)}
               </li>
             ))}
           </ul>
-          {m.needsSplit && <p className="mt-1.5 pl-6 text-xs text-muted-foreground">Splitting arrives with connecting; for now, this shows where it is needed.</p>}
+          {m.needsSplit && !editing && (
+            <p className="mt-1.5 pl-6 text-xs text-muted-foreground">A curriculum lead or a phrase reviewer can split them here.</p>
+          )}
         </aside>
       ))}
     </>
@@ -148,7 +153,7 @@ export function FocusFrame({
 
   return (
     <>
-      <MeaningsNote graph={graph} meanings={hood.meanings} onOpen={onOpen} />
+      <MeaningsNote graph={graph} meanings={hood.meanings} onOpen={onOpen} focus={hood.focus} />
       <div ref={stageRef} className={s.stage}>
         <svg className={s.wires} aria-hidden="true">
           {wires.map((w) => (

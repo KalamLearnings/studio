@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { legacyRedirect, nextTrail, parseNodeKey, parseWordsUrl, previousOnTrail, TRAIL_MAX, wordsUrlSearch, type NodeKey } from "./keys";
+import { nextTrail, parseNodeKey, parseWordsUrl, previousOnTrail, TRAIL_MAX, wordsUrlSearch, type NodeKey } from "./keys";
 
 const params = (s: string) => new URLSearchParams(s);
 
@@ -27,12 +27,6 @@ describe("URL state", () => {
     for (const s of ["?focus=family%3Abook", "?focus=concept%3Acat&view=all", ""]) {
       expect(wordsUrlSearch(parseWordsUrl(params(s.slice(1))))).toBe(s);
     }
-  });
-  it("sends the old Families and Concepts routes to Words", () => {
-    expect(legacyRedirect("families", {})).toBe("/words");
-    expect(legacyRedirect("families", { family: "book" })).toBe("/words?focus=family%3Abook");
-    expect(legacyRedirect("concepts", { concept: ["cat", "dog"] })).toBe("/words?focus=concept%3Acat");
-    expect(legacyRedirect("concepts", { concept: "  " })).toBe("/words");
   });
 });
 

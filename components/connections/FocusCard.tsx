@@ -14,7 +14,9 @@ import { familyLabel, type Graph } from "@/lib/connections/graph";
 import { NODE_KINDS } from "@/lib/connections/kinds";
 import { idOfKey, typeOfKey, type NodeKey } from "@/lib/connections/keys";
 import { DEFAULT_URL_STATE, reviewUrlSearch } from "@/lib/review/url";
-import { vowelStatus } from "@/lib/words/family";
+import { awaitsReadsAs, vowelStatus } from "@/lib/words/family";
+import { asReadsRow } from "@/lib/connections/graph";
+import { useEditing } from "./extension";
 import { Ar, Badge, KIND_COLOR, KindIcon, LockIcon, Thumb } from "./parts";
 import s from "./words.module.css";
 
@@ -48,6 +50,7 @@ const HARAKAT = { full: "full harakat", partial: "some harakat", unvowelised: "n
 
 export const FocusCard = React.forwardRef<HTMLElement, { graph: Graph; focus: NodeKey }>(
   function FocusCard({ graph, focus }, ref) {
+    const editing = useEditing();
     const type = typeOfKey(focus);
     const id = idOfKey(focus);
     const kind = NODE_KINDS[type];
@@ -80,10 +83,24 @@ export const FocusCard = React.forwardRef<HTMLElement, { graph: Graph; focus: No
       if (w.category) badges.push(<Badge key="c">{w.category}</Badge>);
       if (w.audioUrl) links.push(<PlayButton key="play" url={w.audioUrl} />);
       links.push(
-        <LinkOut key="rv" href={reviewHref({ item: `spelling:${id}` })}>
+        <LinkOut key="rv" href={reviewHref({ lens: "spelling", item: `spelling:${id}` })}>
           {w.reviewed ? "Open in Review" : "Review this spelling"}
         </LinkOut>,
       );
+      if (awaitsReadsAs(asReadsRow(w))) {
+        links.push(
+          <LinkOut key="rd" href={reviewHref({ lens: "reading", item: `reading:${id}` })}>
+            Confirm its reading in Review
+          </LinkOut>,
+        );
+      }
+      if (!w.familyId && !w.isPseudo && !w.retired) {
+        links.push(
+          <LinkOut key="sg" href={reviewHref({ lens: "link", item: `link:family:${id}` })}>
+            Suggested family
+          </LinkOut>,
+        );
+      }
     } else if (type === "family") {
       const f = graph.families.get(id)!;
       const head = f.headwordId ? graph.words.get(f.headwordId) : undefined;
@@ -137,6 +154,13 @@ export const FocusCard = React.forwardRef<HTMLElement, { graph: Graph; focus: No
         </>
       );
       badges.push(<Badge key="s" tone={p.status === "active" ? undefined : "warn"}>{p.status}</Badge>);
+      if (!c) {
+        links.push(
+          <LinkOut key="sg" href={reviewHref({ lens: "link", item: `link:picture:${id}` })}>
+            Suggested meaning
+          </LinkOut>,
+        );
+      }
     } else if (type === "letter") {
       const l = graph.letters.get(id)!;
       heading = l.name;
@@ -148,6 +172,11 @@ export const FocusCard = React.forwardRef<HTMLElement, { graph: Graph; focus: No
             letter <code>{l.id}</code>
           </div>
         </>
+      );
+      links.push(
+        <LinkOut key="rv" href={reviewHref({ lens: "letter", q: l.name })}>
+          Its sounds in Review
+        </LinkOut>,
       );
     }
 
@@ -162,6 +191,7 @@ export const FocusCard = React.forwardRef<HTMLElement, { graph: Graph; focus: No
         </h2>
         {body}
         {badges.length > 0 && <div className="mt-2 flex flex-wrap justify-center gap-1.5">{badges}</div>}
+        {editing?.focusExtra?.(focus)}
         {links.length > 0 && (
           <div className="mt-3 flex flex-wrap justify-center gap-1.5 border-t pt-3">
             {links}

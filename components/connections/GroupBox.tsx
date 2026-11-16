@@ -13,7 +13,7 @@ import { getActivityLabel } from "@/lib/constants/curriculum";
 import type { Graph } from "@/lib/connections/graph";
 import { CONNECTION_KINDS } from "@/lib/connections/kinds";
 import type { NodeKey } from "@/lib/connections/keys";
-import type { ActivityRow, Box } from "@/lib/connections/neighbourhood";
+import type { ActivityRow, BookRow, Box } from "@/lib/connections/neighbourhood";
 import { builderHref } from "@/lib/words/usage";
 import { Badge, CONNECTION_COLOR, LockIcon, NodeChip } from "./parts";
 import { useEditing } from "./extension";
@@ -63,6 +63,42 @@ function ActivityRowView({ row, graph, showForms }: { row: ActivityRow; graph: G
   );
 }
 
+const BOOK_ROLE: Record<string, string> = { exposure: "shown", target: "taught", distractor: "distractor" };
+
+function BookRowView({ row, graph, showForms }: { row: BookRow; graph: Graph; showForms: boolean }) {
+  return (
+    <a
+      href={`/books/${encodeURIComponent(row.bookId)}`}
+      className={`${s.chip} flex w-full items-start px-2.5 py-1.5`}
+      style={{ ["--kc" as string]: "var(--k-activity)" }}
+      aria-label={`Book ${row.title}, ${row.units} ${row.units === 1 ? "page" : "pages"}. Open in the book editor`}
+    >
+      <span className={s.dot} aria-hidden="true" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px]">{row.title}</span>
+        {row.titleAr && row.titleAr !== row.title && (
+          <span lang="ar" dir="rtl" className="block truncate font-naskh text-[15px] leading-[1.5] text-muted-foreground [unicode-bidi:isolate]">
+            {row.titleAr}
+          </span>
+        )}
+        <span className="mt-0.5 flex flex-wrap gap-1">
+          <Badge>{`${row.units} ${row.units === 1 ? "page" : "pages"}`}</Badge>
+          {row.roles.map((r) => (
+            <Badge key={r}>{BOOK_ROLE[r] ?? r}</Badge>
+          ))}
+          {showForms &&
+            row.wordIds.map((id) => (
+              <span key={id} lang="ar" dir="rtl" className="font-naskh text-[15px] leading-[1.4] text-muted-foreground [unicode-bidi:isolate]">
+                {graph.words.get(id)?.arabic ?? ""}
+              </span>
+            ))}
+        </span>
+      </span>
+      <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+    </a>
+  );
+}
+
 export interface GroupBoxProps {
   box: Box;
   graph: Graph;
@@ -81,11 +117,13 @@ export const GroupBox = React.forwardRef<HTMLElement, GroupBoxProps>(function Gr
   const color = CONNECTION_COLOR[box.kind];
   const titleId = React.useId();
   const activities = box.activities ?? [];
-  const count = box.rows ? activities.length : box.items.length;
+  const books = box.books ?? [];
+  const count = box.rows ? activities.length + books.length : box.items.length;
   const max = box.rows ? MAX_ROWS : MAX_CHIPS;
   const empty = box.state === "ready" && count === 0;
   const items = all ? box.items : box.items.slice(0, max);
   const rows = all ? activities : activities.slice(0, max);
+  const bookList = all ? books : books.slice(0, max);
   return (
     <section
       ref={ref}
@@ -139,8 +177,11 @@ export const GroupBox = React.forwardRef<HTMLElement, GroupBoxProps>(function Gr
           {rows.map((r) => (
             <ActivityRowView key={r.activityId} row={r} graph={graph} showForms={focus.startsWith("family:")} />
           ))}
-          {activities.length > rows.length && (
-            <ShowAll n={activities.length} onClick={() => setAll(true)} />
+          {bookList.map((r) => (
+            <BookRowView key={r.bookId} row={r} graph={graph} showForms={focus.startsWith("family:")} />
+          ))}
+          {activities.length + books.length > rows.length + bookList.length && (
+            <ShowAll n={activities.length + books.length} onClick={() => setAll(true)} />
           )}
         </div>
       ) : (

@@ -5,7 +5,8 @@
  * Not a real word and Wrong harakat (`PUT/DELETE /words/:id/review-decision`),
  * and, for a spelling no activity uses, the respelling itself
  * (`PUT /words/:id/spelling`, owner answer 5). Readings: confirm and clear
- * (`PUT /words/:id/reads-as`). Every one but the respelling has an inverse
+ * (`PUT /words/:id/reads-as`), a connection only a curriculum lead or a
+ * phrase reviewer makes (the Reading kind's gate is `phrase`). Every one but the respelling has an inverse
  * route, so Undo sends it; the respelling is held for 5 s instead.
  */
 
@@ -32,7 +33,8 @@ const message = (e: unknown, fallback = "The request failed.") =>
 export function describeWordError(e: unknown): string {
   if (e instanceof ApiError) {
     if (e.code === "WORD_RETIRED") return "This word is retired, so it cannot be approved.";
-    if (e.status === 403) return "Only staff can review words.";
+    // A reading is a connection: 403 PHRASE_REVIEWER_REQUIRED reads as its own sentence.
+    if (e.status === 403 && !e.code) return "Only staff can review words.";
     return familyErrorText(e.code, e.message);
   }
   return message(e);

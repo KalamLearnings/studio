@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * The concept editor (CM-S5), moved here from `app/(dashboard)/concepts` (CW-9).
- * Its sections (details, pictures, family links) are composed twice: by
- * `ConceptEditor` for the old `/concepts` page, and by the Concept sub-view in
- * Review's pane (`LibraryPane`), which puts Save in the decision bar.
+ * The concept editor's sections (CM-S5; details, pictures, family links),
+ * composed by the Concept sub-view in Review's pane (`LibraryPane`), which
+ * puts Save in the decision bar. The old `/concepts` page is gone (CG-8).
  *
- * Pictures and links save at once; the details save with Save.
+ * Pictures and links save at once; the details save with Save. Details stay
+ * with every staff member; pictures and family links need a curriculum lead
+ * or phrase reviewer (`useCanConnect`).
  */
 
 import * as React from "react";
@@ -14,13 +15,13 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { AssetStatusBadge } from "@/components/assets";
 import { PicturePicker } from "@/components/families/PicturePicker";
 import { ApiError } from "@/lib/api/client";
 import { CONCEPT_KINDS, type ConceptDetail, type ConceptKind, type WordFamily } from "@/lib/types/wordFamilies";
 import { useLibraryApi } from "./api";
-import { useEditorRun } from "./FamilyEditor";
+import { ConnectLocked, useCanConnect } from "./access";
+import type { useEditorRun } from "./FamilyEditor";
 
 const code = (e: unknown) => (e instanceof ApiError ? e.code : undefined);
 
@@ -124,15 +125,17 @@ export function ConceptPictures({
   setPicking: (open: boolean) => void;
 }) {
   const api = useLibraryApi();
+  const canConnect = useCanConnect();
   return (
     <>
+      {!canConnect && <ConnectLocked className="mb-2">Pictures are read only.</ConnectLocked>}
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         {concept.pictures.map((p) => (
           <div key={p.assetId} className="relative rounded-md border p-2">
             {/* eslint-disable-next-line @next/next/no-img-element -- asset URLs come from storage */}
             <img src={p.url} alt={p.label.text ?? ""} className="aspect-square w-full object-contain" />
             <AssetStatusBadge status={p.status} className="mt-1" />
-            <button
+            {canConnect && <button
               type="button"
               aria-label="Remove picture"
               disabled={busy}
@@ -140,13 +143,13 @@ export function ConceptPictures({
               onClick={() => run(() => api.detachConceptPicture(concept.slug, p.assetId), "Picture removed")}
             >
               <X className="h-3 w-3" />
-            </button>
+            </button>}
           </div>
         ))}
         {concept.pictures.length === 0 && <p className="col-span-full text-sm text-muted-foreground">No picture yet.</p>}
       </div>
       <PicturePicker
-        open={picking}
+        open={picking && canConnect}
         onOpenChange={setPicking}
         excludeIds={concept.pictures.map((p) => p.assetId)}
         onPick={(asset) => {
@@ -175,6 +178,7 @@ export function ConceptFamilies({
   onOpenFamily?: (id: string) => void;
 }) {
   const api = useLibraryApi();
+  const canConnect = useCanConnect();
   const linkedIds = new Set(concept.families.map((f) => f.id));
   return (
     <div className="space-y-3">
@@ -191,14 +195,17 @@ export function ConceptFamilies({
               )}{" "}
               <span className="text-muted-foreground">({f.id})</span>
             </span>
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => api.unlinkFamilyFromConcept(f.id, concept.slug), "Family unlinked")}>
-              Unlink
-            </Button>
+            {canConnect && (
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => api.unlinkFamilyFromConcept(f.id, concept.slug), "Family unlinked")}>
+                Unlink
+              </Button>
+            )}
           </li>
         ))}
         {concept.families.length === 0 && <li className="p-3 text-sm text-muted-foreground">No family names this concept yet.</li>}
       </ul>
-      <select
+      {!canConnect && <ConnectLocked />}
+      {canConnect && <select
         aria-label="Link a word family"
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
         value=""
@@ -216,59 +223,7 @@ export function ConceptFamilies({
               {f.gloss_en ?? f.id} ({f.id})
             </option>
           ))}
-      </select>
-    </div>
-  );
-}
-
-// ---- the old page's editor --------------------------------------------------------------
-
-/** The whole editor as the `/concepts` page shows it (Save under the details). */
-export function ConceptEditor({
-  concept,
-  families,
-  onChanged,
-}: {
-  concept: ConceptDetail;
-  families: WordFamily[];
-  onChanged: () => Promise<void>;
-}) {
-  const { busy, run } = useEditorRun(onChanged, describeConceptError);
-  const form = useConceptForm(concept, run);
-  const [picking, setPicking] = React.useState(false);
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold">{concept.slug}</h2>
-            <span className="text-xs text-muted-foreground">The slug never changes.</span>
-          </div>
-          <ConceptDetailsFields form={form} />
-          <Button disabled={!form.dirty || !form.valid || busy} onClick={() => void form.save()}>
-            Save
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Pictures ({concept.pictures.length})</h3>
-            <Button size="sm" variant="outline" onClick={() => setPicking(true)}>
-              Add picture
-            </Button>
-          </div>
-          <ConceptPictures concept={concept} busy={busy} run={run} picking={picking} setPicking={setPicking} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-3 p-4">
-          <h3 className="font-semibold">Word families ({concept.families.length})</h3>
-          <ConceptFamilies concept={concept} families={families} busy={busy} run={run} />
-        </CardContent>
-      </Card>
+      </select>}
     </div>
   );
 }

@@ -3,6 +3,8 @@
 /**
  * The Reading pane (CW-5): an unvowelled live spelling with no reads-as.
  * `1`-`9` pick the fully vowelled spelling it is read as, `a` confirms.
+ * Confirming is a connection: only a curriculum lead or a phrase reviewer
+ * decides; everyone else sees the candidates and a GateBar.
  */
 
 import * as React from "react";
@@ -15,7 +17,8 @@ import { usePaneCommands } from "../../commands";
 import { ConceptCard, useFamilyConcept } from "../../context/ConceptCard";
 import { FamilyCard } from "../../context/FamilyCard";
 import { UsageCard } from "../../context/UsageCard";
-import { DecisionBar, Hero, NextHint, PaneFrame } from "../../PaneFrame";
+import { DecisionBar, GateBar, Hero, NextHint, PaneFrame } from "../../PaneFrame";
+import { canDecide } from "@/lib/review/inbox";
 import { Ar, KBD_ON_BUTTON, Kbd, PaneCard, Say, StatusPill } from "../../parts";
 import type { PaneProps } from "../types";
 
@@ -27,20 +30,21 @@ export function ReadingPane(props: PaneProps) {
   const todo = item.state === "todo";
   const { concept } = useFamilyConcept(item.familyId);
   const choice = candidates[picked] ?? null;
+  const can = canDecide("phrase", roles);
 
   const confirm = () => {
-    if (todo && choice) decide(confirmReading(item, choice, wordCache));
+    if (can && todo && choice) decide(confirmReading(item, choice, wordCache));
   };
 
   usePaneCommands((cmd) => {
     if (busy) return false;
     switch (cmd.type) {
       case "digit":
-        if (!todo || cmd.n < 1 || !candidates[cmd.n - 1]) return false;
+        if (!can || !todo || cmd.n < 1 || !candidates[cmd.n - 1]) return false;
         setPicked(cmd.n - 1);
         return true;
       case "approve":
-        if (!todo || !choice) return false;
+        if (!can || !todo || !choice) return false;
         confirm();
         return true;
       case "openFamily":
@@ -111,7 +115,9 @@ export function ReadingPane(props: PaneProps) {
     </>
   );
 
-  const bar = todo ? (
+  const bar = !can ? (
+    <GateBar item={item} roles={roles} status={todo ? "Not confirmed." : "Confirmed."} />
+  ) : todo ? (
     <DecisionBar
       busy={busy}
       error={error}

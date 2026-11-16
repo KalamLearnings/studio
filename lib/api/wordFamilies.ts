@@ -56,3 +56,19 @@ export const listCuratedWords = () => fetchWithAuth<CuratedWord[]>('/words');
  */
 export const changeWordSpelling = (wordId: string, arabic: string) =>
   fetchWithAuth<CuratedWord>(`/words/${enc(wordId)}/spelling`, { method: 'PUT', ...json({ arabic }) });
+
+/**
+ * `PUT /words/:wordId/pseudo` (B-7): marks a spelling as a practice (drill)
+ * word, or not. Curriculum lead or phrase reviewer. Marking is refused with
+ * 409 `WORD_IN_FAMILY` and `WORD_HAS_READING`; clearing always works.
+ */
+export const setWordPseudo = (wordId: string, isPseudo: boolean) =>
+  fetchWithAuth<CuratedWord>(`/words/${enc(wordId)}/pseudo`, { method: 'PUT', ...json({ isPseudo }) });
+
+/** `PUT /words/families/:familyId/pictures/:assetId`: a picture kept on the family itself. */
+export const attachFamilyPicture = (familyId: string, assetId: string) =>
+  fetchWithAuth<unknown>(`/words/families/${enc(familyId)}/pictures/${enc(assetId)}`, { method: 'PUT', ...json({}) });
+
+/** `DELETE /words/families/:familyId/pictures/:assetId`. */
+export const detachFamilyPicture = (familyId: string, assetId: string) =>
+  fetchWithAuth<{ removed: boolean }>(`/words/families/${enc(familyId)}/pictures/${enc(assetId)}`, { method: 'DELETE' });

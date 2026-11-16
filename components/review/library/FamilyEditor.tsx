@@ -1,23 +1,22 @@
 "use client";
 
 /**
- * The family editor (CM-S5), moved here from `app/(dashboard)/families` (CW-9).
- * Its sections (details, spellings, concept links) are composed twice: by
- * `FamilyEditor` for the old `/families` page, and by the Family sub-view in
- * Review's pane (`LibraryPane`), which puts Save in the decision bar.
+ * The family editor's sections (CM-S5; details, spellings, concept links),
+ * composed by the Family sub-view in Review's pane (`LibraryPane`), which
+ * puts Save in the decision bar. The old `/families` page is gone (CG-8).
  *
- * Every spelling action saves at once; the details save with Save.
+ * Every spelling action saves at once; the details save with Save. Changing
+ * a family, a spelling's family or reading, or a concept link needs a
+ * curriculum lead or phrase reviewer (`useCanConnect`); Mark reviewed does not.
  */
 
 import * as React from "react";
-import Link from "next/link";
 import { Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { NotReviewedBadge } from "@/components/families/NotReviewedBadge";
 import { WordPicker } from "@/components/families/WordPicker";
 import { ApiError } from "@/lib/api/client";
@@ -25,6 +24,8 @@ import type { ConceptDetail, CuratedWord, WordFamilyDetail } from "@/lib/types/w
 import { awaitsReadsAs, familyErrorText, joinableWords, readsAsCandidates } from "@/lib/words/family";
 import { cn } from "@/lib/utils";
 import { useLibraryApi } from "./api";
+import { ConnectLocked, useCanConnect } from "./access";
+import { connectionsHref } from "../context/ShowConnections";
 
 export const familyErrText = (e: unknown, fallback: string) =>
   e instanceof ApiError ? familyErrorText(e.code, e.message) : e instanceof Error ? e.message : fallback;
@@ -88,11 +89,14 @@ export function useFamilyForm(family: WordFamilyDetail, run: ReturnType<typeof u
 export function FamilyDetailsFields({ family, form }: { family: WordFamilyDetail; form: FamilyForm }) {
   const live = family.members.filter((m) => m.retired_at === null);
   const id = React.useId();
+  // The details save through `PATCH /words/families/:id`, a connection route.
+  const readOnly = !useCanConnect();
   return (
     <div className="space-y-4">
+      {readOnly && <ConnectLocked>The details are read only.</ConnectLocked>}
       <div className="space-y-1">
         <Label htmlFor={`${id}-gloss`}>English gloss</Label>
-        <Input id={`${id}-gloss`} value={form.gloss} onChange={(e) => form.setGloss(e.target.value)} maxLength={200} />
+        <Input id={`${id}-gloss`} readOnly={readOnly} value={form.gloss} onChange={(e) => form.setGloss(e.target.value)} maxLength={200} />
         <p className="text-xs text-muted-foreground">The source text for translations into other languages. Arabic is never translated.</p>
       </div>
       <div className="space-y-1">
@@ -101,6 +105,7 @@ export function FamilyDetailsFields({ family, form }: { family: WordFamilyDetail
           id={`${id}-head`}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
           value={form.headword}
+          disabled={readOnly}
           onChange={(e) => form.setHeadword(e.target.value)}
         >
           <option value="">None</option>
@@ -114,7 +119,7 @@ export function FamilyDetailsFields({ family, form }: { family: WordFamilyDetail
       </div>
       <div className="space-y-1">
         <Label htmlFor={`${id}-notes`}>Notes</Label>
-        <Textarea id={`${id}-notes`} value={form.notes} onChange={(e) => form.setNotes(e.target.value)} maxLength={2000} placeholder="Plural, root, gender..." />
+        <Textarea id={`${id}-notes`} readOnly={readOnly} value={form.notes} onChange={(e) => form.setNotes(e.target.value)} maxLength={2000} placeholder="Plural, root, gender..." />
       </div>
     </div>
   );
@@ -140,6 +145,7 @@ export function FamilySpellings({
   currentWordId?: string | null;
 }) {
   const api = useLibraryApi();
+  const canConnect = useCanConnect();
   const patch = (w: CuratedWord) => onWordChanged?.(w);
   return (
     <div className="space-y-3">
@@ -150,6 +156,7 @@ export function FamilySpellings({
             word={m}
             pool={pool}
             busy={busy}
+            canConnect={canConnect}
             current={m.id === currentWordId}
             isHeadword={family.headword_id === m.id}
             onReviewed={(reviewed) => run(() => api.setWordReviewed(m.id, reviewed).then(patch), reviewed ? "Marked reviewed" : "Review withdrawn")}
@@ -159,14 +166,20 @@ export function FamilySpellings({
         ))}
         {family.members.length === 0 && <li className="p-3 text-sm text-muted-foreground">No spellings yet.</li>}
       </ul>
-      <Label>Add a spelling</Label>
-      <WordPicker
-        words={joinableWords(pool, family.id)}
-        onPick={(w) =>
-          run(() => api.setWordFamily(w.id, family.id).then(patch), w.family_id ? `Moved ${w.arabic} here from ${w.family_id}` : "Spelling added")
-        }
-      />
-      <p className="text-xs text-muted-foreground">Adding a spelling that is in another family moves it here, and says so.</p>
+      {canConnect ? (
+        <>
+          <Label>Add a spelling</Label>
+          <WordPicker
+            words={joinableWords(pool, family.id)}
+            onPick={(w) =>
+              run(() => api.setWordFamily(w.id, family.id).then(patch), w.family_id ? `Moved ${w.arabic} here from ${w.family_id}` : "Spelling added")
+            }
+          />
+          <p className="text-xs text-muted-foreground">Adding a spelling that is in another family moves it here, and says so.</p>
+        </>
+      ) : (
+        <ConnectLocked>Adding, moving or removing spellings and confirming readings is read only.</ConnectLocked>
+      )}
     </div>
   );
 }
@@ -175,6 +188,7 @@ function SpellingRow({
   word,
   pool,
   busy,
+  canConnect,
   current,
   isHeadword,
   onReviewed,
@@ -184,6 +198,7 @@ function SpellingRow({
   word: CuratedWord;
   pool: readonly CuratedWord[];
   busy: boolean;
+  canConnect: boolean;
   current: boolean;
   isHeadword: boolean;
   onReviewed: (reviewed: boolean) => void;
@@ -220,9 +235,11 @@ function SpellingRow({
                 Withdraw review
               </Button>
             )}
-            <Button size="sm" variant="ghost" disabled={busy} onClick={onRemove}>
-              Remove
-            </Button>
+            {canConnect && (
+              <Button size="sm" variant="ghost" disabled={busy} onClick={onRemove}>
+                Remove
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -236,10 +253,14 @@ function SpellingRow({
               <span className="font-arabic text-xl" dir="rtl" lang="ar">
                 {readsAsWord?.arabic ?? word.reads_as_id}
               </span>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => onReadsAs(null)}>
-                Clear
-              </Button>
+              {canConnect && (
+                <Button size="sm" variant="ghost" disabled={busy} onClick={() => onReadsAs(null)}>
+                  Clear
+                </Button>
+              )}
             </>
+          ) : !canConnect ? (
+            <span className="text-muted-foreground">Reading not confirmed yet.</span>
           ) : candidates.length > 0 ? (
             <>
               <span>Read as</span>
@@ -291,6 +312,7 @@ export function FamilyConceptLinks({
   onOpenConcept?: (slug: string) => void;
 }) {
   const api = useLibraryApi();
+  const canConnect = useCanConnect();
   const list = concepts ?? [];
   const linked = list.filter((c) => c.families.some((f) => f.id === family.id));
   const unlinked = list.filter((c) => !linked.includes(c));
@@ -310,28 +332,31 @@ export function FamilyConceptLinks({
                   {c.name.en}
                 </button>
               ) : (
-                <Link href={`/words?focus=${encodeURIComponent(`concept:${c.slug}`)}`} className="text-sm font-medium underline">
+                <a href={connectionsHref(`concept:${c.slug}`)} className="text-sm font-medium underline">
                   {c.name.en}
-                </Link>
+                </a>
               )}
               <span className="text-xs text-muted-foreground">
                 {c.pictures.length === 0 ? "no picture yet" : `${c.pictures.length} picture${c.pictures.length === 1 ? "" : "s"}`}
               </span>
             </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => run(() => api.unlinkFamilyFromConcept(family.id, c.slug).then(onConceptsChanged), "Concept unlinked")}
-            >
-              Unlink
-            </Button>
+            {canConnect && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => run(() => api.unlinkFamilyFromConcept(family.id, c.slug).then(onConceptsChanged), "Concept unlinked")}
+              >
+                Unlink
+              </Button>
+            )}
           </li>
         ))}
         {concepts === null && <li className="p-3 text-sm text-muted-foreground">Loading concepts...</li>}
         {concepts !== null && linked.length === 0 && <li className="p-3 text-sm text-muted-foreground">No concept linked.</li>}
       </ul>
-      <select
+      {!canConnect && <ConnectLocked />}
+      {canConnect && <select
         aria-label="Link a concept"
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
         value=""
@@ -347,58 +372,7 @@ export function FamilyConceptLinks({
             {c.name.en} ({c.slug})
           </option>
         ))}
-      </select>
+      </select>}
     </div>
   );
 }
-
-// ---- the old page's editor --------------------------------------------------------------
-
-/** The whole editor as the `/families` page shows it (Save under the details). */
-export function FamilyEditor({
-  family,
-  pool,
-  concepts,
-  onChanged,
-  onConceptsChanged,
-}: {
-  family: WordFamilyDetail;
-  pool: CuratedWord[];
-  concepts: ConceptDetail[];
-  onChanged: () => Promise<void>;
-  onConceptsChanged: () => void;
-}) {
-  const { busy, run } = useEditorRun(onChanged, describeFamilyError);
-  const form = useFamilyForm(family, run);
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold">{family.id}</h2>
-            <span className="text-xs text-muted-foreground">The id never changes.</span>
-          </div>
-          <FamilyDetailsFields family={family} form={form} />
-          <Button disabled={!form.dirty || busy} onClick={() => void form.save()}>
-            Save
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-3 p-4">
-          <h3 className="font-semibold">Spellings ({family.members.length})</h3>
-          <FamilySpellings family={family} pool={pool} busy={busy} run={run} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-3 p-4">
-          <h3 className="font-semibold">Concept and picture</h3>
-          <FamilyConceptLinks family={family} concepts={concepts} busy={busy} run={run} onConceptsChanged={onConceptsChanged} />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-

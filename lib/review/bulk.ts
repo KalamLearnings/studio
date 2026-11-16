@@ -12,14 +12,22 @@
  * the session's error and the item's state. So it works with any `decide`.
  */
 
-import { isBulkSafe as isSafeItem, type InboxItem, type InboxKind, type ItemState } from "./inbox";
+import { canDecide, isBulkSafe as isSafeItem, KIND_META, type InboxItem, type InboxKind, type ItemState, type ReviewRoles } from "./inbox";
 
-/** The kinds bulk approve covers. Audio, drafts and phrases never join, whatever their normaliser says. */
-export const BULK_KINDS: readonly InboxKind[] = ["spelling"];
+/**
+ * The kinds bulk approve covers: spellings, and Suggested links that only
+ * group a headword with its case endings (`familyProposalBulkSafe`). Audio,
+ * drafts, phrases and picture links never join, whatever their normaliser says.
+ */
+export const BULK_KINDS: readonly InboxKind[] = ["spelling", "link"];
 
-/** Bulk-safe (`isBulkSafe`) and of a bulk kind. */
-export const canBulk = (item: InboxItem): boolean => BULK_KINDS.includes(item.kind) && isSafeItem(item);
-const isBulkSafe = canBulk;
+/** Bulk-safe (`isBulkSafe`) and of a bulk kind; with `roles`, also one this reviewer may decide. */
+export const canBulk = (item: InboxItem, roles?: ReviewRoles): boolean =>
+  BULK_KINDS.includes(item.kind) && isSafeItem(item) && (!roles || canDecide(KIND_META[item.kind].gate, roles));
+const isBulkSafe = (item: InboxItem): boolean => canBulk(item);
+
+/** The hint when `x` lands on an item that cannot go in bulk. */
+export const BULK_HINT = "Only unflagged, fully vowelled spellings, and suggested words made of case endings only, can be approved together.";
 
 // ---------------------------------------------------------------------------
 // Selection

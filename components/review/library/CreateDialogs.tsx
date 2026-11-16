@@ -3,7 +3,8 @@
 /**
  * New family and New concept (CM-S5), moved here from the old pages (CW-9).
  * Both create through the API and hand the new id or slug to `onCreated`,
- * which opens it.
+ * which opens it. A new family is a connection write (`POST /words/families`,
+ * curriculum lead or phrase reviewer); a new concept is for every staff member.
  */
 
 import * as React from "react";
@@ -18,6 +19,7 @@ import { isSlug, slugFromText } from "@/lib/words/family";
 import { useLibraryApi } from "./api";
 import { KindSelect } from "./ConceptEditor";
 import { familyErrText } from "./FamilyEditor";
+import { ConnectLocked, useCanConnect } from "./access";
 
 const SLUG_HINT = "Use lowercase letters and digits joined by single - or _.";
 
@@ -34,6 +36,7 @@ export function CreateFamilyDialog({
   initialGloss?: string;
 }) {
   const api = useLibraryApi();
+  const canConnect = useCanConnect();
   const [gloss, setGloss] = React.useState(initialGloss);
   const [id, setId] = React.useState("");
   const [idTouched, setIdTouched] = React.useState(false);
@@ -47,7 +50,7 @@ export function CreateFamilyDialog({
   }, [open, initialGloss]);
 
   const save = async () => {
-    if (!valid || busy) return;
+    if (!valid || busy || !canConnect) return;
     setBusy(true);
     try {
       await api.createWordFamily({ id: effectiveId, glossEn: gloss.trim() || null });
@@ -70,6 +73,9 @@ export function CreateFamilyDialog({
           <DialogTitle>New word family</DialogTitle>
           <DialogDescription>A family groups the spellings of one word under a headword and an English gloss.</DialogDescription>
         </DialogHeader>
+        {!canConnect ? (
+          <ConnectLocked />
+        ) : (
         <form
           className="space-y-3"
           onSubmit={(e) => {
@@ -103,6 +109,7 @@ export function CreateFamilyDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

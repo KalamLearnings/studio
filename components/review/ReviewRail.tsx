@@ -3,7 +3,7 @@
 /** The rail (CW-1): Everything, the registered kinds with counts, Views. Hidden under 1100 px. */
 
 import * as React from "react";
-import { AlertTriangle, History, Inbox, Sparkles } from "lucide-react";
+import { AlertTriangle, History, Inbox, Layers, Shapes, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   GATE_TAG,
@@ -86,6 +86,7 @@ export function ReviewRail({
   counts,
   viewCounts,
   roles,
+  library,
 }: {
   lens: Lens;
   onLens: (lens: Lens) => void;
@@ -93,6 +94,8 @@ export function ReviewRail({
   counts: InboxCounts;
   viewCounts: Partial<Record<InboxView, number>>;
   roles: ReviewRoles;
+  /** CW-9: the Library lenses with their sizes (null until known). Absent, the group is not shown. */
+  library?: { families: number | null; concepts: number | null };
 }) {
   const decisionKinds = kinds.filter((k) => k !== "letter");
   const views = (Object.keys(VIEW_META) as InboxView[]).filter((v) => {
@@ -125,6 +128,13 @@ export function ReviewRail({
         <>
           <Heading>Listen</Heading>
           <RailButton on={lens === "letter"} onClick={() => onLens("letter")} icon={<KindDot kind="letter" />} label={KIND_META.letter.label} count={counts.byKind.letter} hot={false} />
+        </>
+      )}
+      {library && (
+        <>
+          <Heading>Library</Heading>
+          <RailButton on={lens === "lib-families"} onClick={() => onLens("lib-families")} icon={<Layers className={iconCls} aria-hidden="true" />} label="Families" count={library.families} hot={false} />
+          <RailButton on={lens === "lib-concepts"} onClick={() => onLens("lib-concepts")} icon={<Shapes className={iconCls} aria-hidden="true" />} label="Concepts" count={library.concepts} hot={false} />
         </>
       )}
       <Heading>Views</Heading>

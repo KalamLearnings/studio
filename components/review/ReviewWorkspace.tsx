@@ -9,14 +9,15 @@
  */
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { Inbox } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useReviewInbox } from "@/lib/hooks/useReviewInbox";
 import type { DecisionSpec } from "@/lib/review/actions/types";
 import {
   INBOX_KINDS,
   decidedCount,
+  isBulkSafe,
   inLens,
   isKindLens,
   moveSelection,
@@ -31,6 +32,7 @@ import {
   type StatusFilter,
 } from "@/lib/review/inbox";
 import { BASE_SHORTCUTS, commandForKey, isTypingTarget, mergeShortcuts } from "@/lib/review/keyboard";
+import { moveRef, visibleConcepts, visibleFamilies, type ConceptGap, type FamilyGap, type LibraryRef } from "@/lib/review/library";
 import { reviewUrlSearch, type ReviewUrlState } from "@/lib/review/url";
 import { useReviewCountStore } from "@/lib/stores/reviewCountStore";
 import { PaneCommandContext } from "./commands";
@@ -38,22 +40,54 @@ import { HeaderSlot } from "./HeaderSlot";
 import { LENSES, REGISTERED_KINDS } from "./lenses";
 import type { CommandHandler } from "./lenses/types";
 import { BackToListContext } from "./PaneFrame";
-import { Kbd, SkeletonBar } from "./parts";
+import { BulkBar } from "./bulk/BulkBar";
+import { useBulkApprove } from "./bulk/useBulkApprove";
+import { CreateConceptDialog, CreateFamilyDialog } from "./library/CreateDialogs";
+import { LibraryEmpty, LibraryPane, type SubviewBack } from "./library/LibraryPane";
+import { LibraryList, libRowId } from "./library/LibraryList";
+import { useReviewLibrary } from "./library/useReviewLibrary";
+import { Ar, Kbd, SkeletonBar } from "./parts";
 import { ReviewList } from "./ReviewList";
 import { ReviewRail } from "./ReviewRail";
 import { ShortcutSheet } from "./ShortcutSheet";
 import styles from "./review.module.css";
 
-/** A lens from the URL that this build cannot show (a kind with no pane yet, a library list) opens Everything. */
+/** A lens from the URL that this build cannot show (a kind with no pane yet) opens Everything. */
 function usableLens(lens: Lens): Lens {
   if (isKindLens(lens)) return REGISTERED_KINDS.includes(lens) ? lens : "all";
-  if (lens === "lib-families" || lens === "lib-concepts") return "all";
   return lens;
 }
 
+type LibLens = "lib-families" | "lib-concepts";
+const isLibLens = (lens: Lens): lens is LibLens => lens === "lib-families" || lens === "lib-concepts";
+
+/** Where a family or concept opened from an inbox item returns to ("Back to <item>"). */
+interface SubOrigin {
+  itemKey: string;
+  lens: Lens;
+}
+
+const LIBRARY_SHORTCUTS = [
+  {
+    title: "Decide",
+    rows: [
+      { label: "Select for bulk approve (unflagged, fully vowelled spellings)", keys: ["x"] },
+      { label: "Approve every selected spelling", keys: ["shift", "A"] },
+    ],
+  },
+  {
+    title: "Library",
+    rows: [
+      { label: "Families, concepts: next, previous", keys: ["j", "k"] },
+      { label: "Save the details (in a field)", keys: ["enter"] },
+      { label: "Back to the item", keys: ["esc"] },
+    ],
+  },
+];
+
 const SHORTCUTS = mergeShortcuts(
   BASE_SHORTCUTS,
-  REGISTERED_KINDS.flatMap((k) => LENSES.get(k)?.shortcuts ?? []),
+  [...REGISTERED_KINDS.flatMap((k) => LENSES.get(k)?.shortcuts ?? []), ...LIBRARY_SHORTCUTS],
 );
 
 export function ReviewWorkspace({
@@ -64,7 +98,6 @@ export function ReviewWorkspace({
   /** The inbox source; a preview or a test passes a stand-in with the same shape. */
   useInbox?: typeof useReviewInbox;
 }) {
-  const router = useRouter();
   const inbox = useInbox(REGISTERED_KINDS);
   const setBadge = useReviewCountStore((s) => s.setCount);
 
@@ -77,6 +110,21 @@ export function ReviewWorkspace({
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [now, setNow] = React.useState(() => Date.now());
 
+  // ---- library (CW-9): a family or concept open in the pane ---------------------------
+  const [sub, setSub] = React.useState<LibraryRef | null>(() =>
+    initial.family ? { type: "family", id: initial.family } : initial.concept ? { type: "concept", slug: initial.concept } : null,
+  );
+  /** The families and concepts opened before this one inside the pane (Back pops one). */
+  const [trail, setTrail] = React.useState<LibraryRef[]>([]);
+  const [origin, setOrigin] = React.useState<SubOrigin | null>(() =>
+    initial.item && (initial.family || initial.concept) ? { itemKey: initial.item, lens: usableLens(initial.lens) } : null,
+  );
+  const [familyGap, setFamilyGap] = React.useState<FamilyGap>("all");
+  const [conceptGap, setConceptGap] = React.useState<ConceptGap>("all");
+  const [creating, setCreating] = React.useState<"family" | "concept" | null>(null);
+  const library = useReviewLibrary(inbox.bank, { conceptsWanted: isLibLens(lens) || sub !== null });
+  const bulk = useBulkApprove(inbox);
+
   const searchRef = React.useRef<HTMLInputElement>(null);
   const listboxRef = React.useRef<HTMLDivElement>(null);
   const paneHandler = React.useRef<CommandHandler | null>(null);
@@ -88,9 +136,17 @@ export function ReviewWorkspace({
 
   // ---- URL state ------------------------------------------------------------------
   React.useEffect(() => {
-    const search = reviewUrlSearch({ lens, status, sort, q, item: selected, family: null, concept: null });
-    if (window.location.search !== search) window.history.replaceState(null, "", `/review${search}`);
-  }, [lens, status, sort, q, selected]);
+    const search = reviewUrlSearch({
+      lens,
+      status,
+      sort,
+      q,
+      item: isLibLens(lens) ? (origin?.itemKey ?? null) : selected,
+      family: sub?.type === "family" ? sub.id : null,
+      concept: sub?.type === "concept" ? sub.slug : null,
+    });
+    if (window.location.search !== search) window.history.replaceState(null, "", `${window.location.pathname}${search}`);
+  }, [lens, status, sort, q, selected, sub, origin]);
 
   // ---- the list ---------------------------------------------------------------------
   const lensCtx = React.useMemo<LensContext>(
@@ -131,13 +187,20 @@ export function ReviewWorkspace({
     requestAnimationFrame(() => listboxRef.current?.focus({ preventScroll: true }));
   }, []);
 
+  const closeLibrary = React.useCallback(() => {
+    setSub(null);
+    setTrail([]);
+    setOrigin(null);
+  }, []);
+
   const select = React.useCallback(
     (key: string | null, opts: { focus?: boolean } = {}) => {
       setSelected(key);
+      closeLibrary();
       if (key) setShowDetail(true);
       if (opts.focus) focusList();
     },
-    [focusList],
+    [focusList, closeLibrary],
   );
 
   React.useEffect(() => {
@@ -149,11 +212,16 @@ export function ReviewWorkspace({
   const setLens = React.useCallback(
     (next: Lens) => {
       const l = usableLens(next);
+      // Inbox search and library search look at different things: crossing between them starts clean.
+      if (isLibLens(l) !== isLibLens(lens)) setQ("");
       setLensState(l);
+      closeLibrary();
+      bulk.clear();
+      if (isLibLens(l)) return;
       const list = visibleItems(inbox.items, { lens: l, status, sort, q }, lensCtx);
       if (!list.some((i) => i.key === selected)) setSelected(list[0]?.key ?? null);
     },
-    [inbox.items, status, sort, q, lensCtx, selected],
+    [inbox.items, status, sort, q, lensCtx, selected, closeLibrary, bulk, lens],
   );
 
   // ---- decisions ------------------------------------------------------------------
@@ -166,11 +234,142 @@ export function ReviewWorkspace({
     [inbox, select],
   );
 
-  const openFamily = React.useCallback((_familyId: string | null) => router.push("/families"), [router]);
-  const openConcept = React.useCallback(
-    (slug: string | null) => router.push(slug ? `/concepts?concept=${encodeURIComponent(slug)}` : "/concepts"),
-    [router],
+  // ---- the library in the pane (CW-9) --------------------------------------------------
+  const shownFamilies = React.useMemo(() => visibleFamilies(library.familyRows, familyGap, q), [library.familyRows, familyGap, q]);
+  const shownConcepts = React.useMemo(() => visibleConcepts(library.concepts ?? [], conceptGap, q), [library.concepts, conceptGap, q]);
+  const libRefs = React.useMemo<LibraryRef[]>(
+    () =>
+      lens === "lib-families"
+        ? shownFamilies.map((r) => ({ type: "family", id: r.family.id }))
+        : lens === "lib-concepts"
+          ? shownConcepts.map((c) => ({ type: "concept", slug: c.slug }))
+          : [],
+    [lens, shownFamilies, shownConcepts],
   );
+
+  /** From an inbox item (f, c, a context card's Edit): Back returns to the item. */
+  const openFromItem = React.useCallback(
+    (ref: LibraryRef) => {
+      setOrigin(selected ? { itemKey: selected, lens } : null);
+      setTrail([]);
+      setSub(ref);
+      setShowDetail(true);
+    },
+    [selected, lens],
+  );
+  /** From a library row: no trail; an origin set by "Add to a family" stays. */
+  const openFromList = React.useCallback((ref: LibraryRef, opts: { focus?: boolean } = {}) => {
+    setTrail([]);
+    setSub(ref);
+    setShowDetail(true);
+    if (opts.focus) requestAnimationFrame(() => listboxRef.current?.focus({ preventScroll: true }));
+  }, []);
+  /** From inside the pane (a family's concept, a concept's family): Back returns to this one. */
+  const openFromSub = React.useCallback(
+    (ref: LibraryRef) => {
+      if (sub) setTrail((t) => [...t, sub]);
+      setSub(ref);
+    },
+    [sub],
+  );
+  /** No family or concept to open: the library lens, remembering the item to come back to. */
+  const browseLibrary = React.useCallback(
+    (l: LibLens) => {
+      const from = selected ? { itemKey: selected, lens } : null;
+      setLens(l);
+      setOrigin(from);
+    },
+    [selected, lens, setLens],
+  );
+
+  const openFamily = React.useCallback(
+    (familyId: string | null) => (familyId ? openFromItem({ type: "family", id: familyId }) : browseLibrary("lib-families")),
+    [openFromItem, browseLibrary],
+  );
+  const openConcept = React.useCallback(
+    (slug: string | null) => {
+      if (slug) return openFromItem({ type: "concept", slug });
+      // No concept yet: concepts are linked on the family, so open the family when there is one.
+      const familyId = inbox.items.find((i) => i.key === selected)?.familyId ?? null;
+      if (familyId) openFromItem({ type: "family", id: familyId });
+      else browseLibrary("lib-concepts");
+    },
+    [openFromItem, browseLibrary, inbox.items, selected],
+  );
+
+  const originItem = React.useMemo(
+    () => (origin ? (inbox.items.find((i) => i.key === origin.itemKey) ?? null) : null),
+    [origin, inbox.items],
+  );
+  const backToOrigin = React.useCallback(() => {
+    if (!origin) return;
+    if (isLibLens(lens)) setQ("");
+    setLensState(origin.lens);
+    setSelected(origin.itemKey);
+    closeLibrary();
+    focusList();
+  }, [origin, closeLibrary, focusList, lens]);
+
+  const refLabel = React.useCallback(
+    (r: LibraryRef): React.ReactNode =>
+      r.type === "family"
+        ? (library.families.find((f) => f.id === r.id)?.gloss_en ?? r.id)
+        : (library.concepts?.find((c) => c.slug === r.slug)?.name.en ?? r.slug),
+    [library.families, library.concepts],
+  );
+  const subBack = React.useMemo<SubviewBack | null>(() => {
+    if (trail.length > 0) {
+      const prev = trail[trail.length - 1];
+      return {
+        label: refLabel(prev),
+        onBack: () => {
+          setTrail((t) => t.slice(0, -1));
+          setSub(prev);
+        },
+      };
+    }
+    if (origin) {
+      return {
+        label: originItem ? (
+          originItem.titleScript === "ar" ? (
+            <Ar className="text-[15px] leading-none">{originItem.title}</Ar>
+          ) : (
+            originItem.title
+          )
+        ) : (
+          "the item"
+        ),
+        onBack: backToOrigin,
+      };
+    }
+    return null;
+  }, [trail, origin, originItem, refLabel, backToOrigin]);
+
+  const onCreated = React.useCallback(
+    async (ref: LibraryRef) => {
+      setCreating(null);
+      if (ref.type === "family") await library.familyChanged(ref.id);
+      else await library.conceptsChanged(ref.slug);
+      if (sub && !isLibLens(lens)) openFromSub(ref);
+      else openFromList(ref);
+    },
+    [library, sub, lens, openFromSub, openFromList],
+  );
+
+  React.useEffect(() => {
+    if (sub) document.getElementById(libRowId(sub))?.scrollIntoView({ block: "nearest" });
+  }, [sub]);
+
+  // ---- bulk approve (CW-10) ---------------------------------------------------------------
+  const bulkApprove = React.useCallback(() => {
+    const keys = bulk.approve(visibleRef.current);
+    if (keys.length === 0) return;
+    // The selection leaves the rows being approved: the next one that still waits.
+    if (selected && keys.includes(selected)) {
+      const rest = visibleRef.current.filter((i) => !keys.includes(i.key) || i.key === selected);
+      select(nextAfterDecision(rest, selected), { focus: true });
+    }
+  }, [bulk, selected, select]);
 
   // ---- keyboard -----------------------------------------------------------------------
   React.useEffect(() => {
@@ -190,7 +389,25 @@ export function ReviewWorkspace({
         case "next":
         case "prev":
           e.preventDefault();
+          if (isLibLens(lens)) {
+            const ref = moveRef(libRefs, sub, cmd.type === "next" ? 1 : -1);
+            if (ref) openFromList(ref, { focus: true });
+            return;
+          }
           select(moveSelection(visibleRef.current, selected, cmd.type === "next" ? 1 : -1), { focus: true });
+          return;
+        case "toggleSelect": {
+          if (isLibLens(lens) || sub) return;
+          const it = visibleRef.current.find((i) => i.key === selected) ?? null;
+          if (it && !isBulkSafe(it) && !bulk.checked.has(it.key)) {
+            toast("Only unflagged, fully vowelled spellings that wait can be approved together.", { id: "bulk-hint" });
+            return;
+          }
+          bulk.toggle(it);
+          return;
+        }
+        case "bulkApprove":
+          if (!isLibLens(lens) && !sub) bulkApprove();
           return;
         case "search":
           e.preventDefault();
@@ -222,7 +439,7 @@ export function ReviewWorkspace({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sheetOpen, selected, select, setLens, inbox, showDetail]);
+  }, [sheetOpen, selected, select, setLens, inbox, showDetail, lens, libRefs, sub, openFromList, bulk, bulkApprove]);
 
   // ---- render -------------------------------------------------------------------------
   const Pane = current ? LENSES.get(current.kind)?.Pane : undefined;
@@ -234,7 +451,21 @@ export function ReviewWorkspace({
   const decided = decidedCount(inbox.items, lens, lensCtx);
 
   let pane: React.ReactNode;
-  if (current && Pane) {
+  if (sub) {
+    pane = (
+      <LibraryPane
+        target={sub}
+        back={subBack}
+        onOpen={openFromSub}
+        library={library}
+        bank={inbox.bank}
+        wordCache={inbox.wordCache}
+        origin={originItem && (originItem.kind === "spelling" || originItem.kind === "reading") ? inbox.bank.wordsById.get(originItem.id) ?? null : null}
+      />
+    );
+  } else if (isLibLens(lens)) {
+    pane = <LibraryEmpty lens={lens} onCreate={() => setCreating(lens === "lib-families" ? "family" : "concept")} />;
+  } else if (current && Pane) {
     pane = (
       <Pane
         key={current.key}
@@ -306,7 +537,53 @@ export function ReviewWorkspace({
             "min-[1500px]:grid-cols-[228px_minmax(340px,400px)_minmax(0,1fr)]",
           )}
         >
-          <ReviewRail lens={lens} onLens={setLens} kinds={REGISTERED_KINDS} counts={inbox.counts} viewCounts={viewCounts} roles={inbox.roles} />
+          <ReviewRail
+            lens={lens}
+            onLens={setLens}
+            kinds={REGISTERED_KINDS}
+            counts={inbox.counts}
+            viewCounts={viewCounts}
+            roles={inbox.roles}
+            library={{
+              families: library.familiesStatus === "ready" ? library.families.length : null,
+              concepts: library.concepts ? library.concepts.length : null,
+            }}
+          />
+          {isLibLens(lens) ? (
+            <LibraryList
+              lens={lens}
+              onLens={setLens}
+              kinds={REGISTERED_KINDS}
+              counts={inbox.counts}
+              q={q}
+              onQ={setQ}
+              familyGap={familyGap}
+              onFamilyGap={setFamilyGap}
+              conceptGap={conceptGap}
+              onConceptGap={setConceptGap}
+              allFamilies={library.familyRows}
+              families={shownFamilies}
+              allConcepts={library.concepts}
+              concepts={shownConcepts}
+              status={
+                lens === "lib-families"
+                  ? library.familiesStatus
+                  : library.conceptsStatus === "error"
+                    ? "error"
+                    : library.conceptsStatus === "ready"
+                      ? "ready"
+                      : "loading"
+              }
+              conceptsLoading={library.conceptsStatus !== "ready"}
+              onRetry={lens === "lib-families" ? library.retryFamilies : library.retryConcepts}
+              open={sub}
+              onOpen={(ref) => openFromList(ref, { focus: true })}
+              onCreate={() => setCreating(lens === "lib-families" ? "family" : "concept")}
+              searchRef={searchRef}
+              listboxRef={listboxRef}
+              hidden={showDetail && !!sub}
+            />
+          ) : (
           <ReviewList
             lens={lens}
             onLens={setLens}
@@ -330,16 +607,30 @@ export function ReviewWorkspace({
             onRefresh={inbox.refetchAll}
             searchRef={searchRef}
             listboxRef={listboxRef}
-            hidden={showDetail && !!current}
+            hidden={showDetail && (!!current || !!sub)}
+            checked={bulk.checked}
+            onToggleCheck={bulk.toggle}
+            bulkBar={<BulkBar bulk={bulk} selectedCount={bulk.checked.size} onApprove={bulkApprove} />}
           />
+          )}
           <section
             aria-label="Decision"
-            className={cn(styles.pane, "flex min-h-0 min-w-0 flex-col", !(showDetail && current) && "max-[859px]:hidden")}
+            className={cn(styles.pane, "flex min-h-0 min-w-0 flex-col", !(showDetail && (current || sub)) && "max-[859px]:hidden")}
           >
             {pane}
           </section>
         </div>
         <ShortcutSheet open={sheetOpen} onOpenChange={setSheetOpen} groups={SHORTCUTS} />
+        <CreateFamilyDialog
+          open={creating === "family"}
+          onOpenChange={(o) => setCreating(o ? "family" : null)}
+          onCreated={(id) => onCreated({ type: "family", id })}
+        />
+        <CreateConceptDialog
+          open={creating === "concept"}
+          onOpenChange={(o) => setCreating(o ? "concept" : null)}
+          onCreated={(slug) => onCreated({ type: "concept", slug })}
+        />
       </BackToListContext.Provider>
     </PaneCommandContext.Provider>
   );

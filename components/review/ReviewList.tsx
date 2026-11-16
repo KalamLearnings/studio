@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   KIND_META,
   SORTS,
+  isBulkSafe,
   STATUS_FILTERS,
   VIEW_META,
   isKindLens,
@@ -41,32 +42,56 @@ function lensName(lens: Lens): string {
   return "this view";
 }
 
+/** CW-10: a bulk-safe row's checkbox; "space" keeps the column for the rows beside it. */
+type RowCheck = "none" | "space" | { checked: boolean; onToggle: () => void };
+
 function Row({
   item,
   selected,
   roles,
   now,
   onSelect,
+  check = "none",
 }: {
   item: InboxItem;
   selected: boolean;
   roles: ReviewRoles;
   now: number;
   onSelect: () => void;
+  check?: RowCheck;
 }) {
   const waiting = needsDecision(item) ? shortAge(item.waitingSince, now) : "";
+  const box = typeof check === "object" ? check : null;
   return (
     <div
       id={rowId(item.key)}
       role="option"
       aria-selected={selected}
+      aria-checked={box ? box.checked : undefined}
       onClick={onSelect}
       className={cn(
         "relative grid cursor-pointer grid-cols-[1fr_auto] items-center gap-x-2.5 gap-y-1 border-b border-border/70 py-2.5 pe-3 ps-3.5 hover:bg-muted/50",
+        check !== "none" && "ps-10",
         selected && "bg-primary/10 before:absolute before:inset-y-0 before:start-0 before:w-[3px] before:bg-primary",
         !needsDecision(item) && item.kind !== "letter" && "opacity-[0.62]",
       )}
     >
+      {box && (
+        <span
+          aria-hidden="true"
+          title="Select for bulk approve (x)"
+          onClick={(e) => {
+            e.stopPropagation();
+            box.onToggle();
+          }}
+          className={cn(
+            "absolute start-3 top-1/2 grid h-[18px] w-[18px] -translate-y-1/2 place-items-center rounded border border-input bg-background hover:border-primary",
+            box.checked && "border-primary bg-primary text-primary-foreground",
+          )}
+        >
+          {box.checked && <Check className="h-3 w-3" strokeWidth={3} />}
+        </span>
+      )}
       <div className="col-span-2 flex min-w-0 items-center justify-between gap-2.5">
         {item.titleScript === "ar" ? (
           <Ar className={cn(styles.rowTitle, "min-w-0 flex-1 text-[23px] leading-[1.6]")}>{item.title}</Ar>
@@ -111,6 +136,11 @@ export interface ReviewListProps {
   searchRef: React.RefObject<HTMLInputElement>;
   listboxRef: React.RefObject<HTMLDivElement>;
   hidden: boolean;
+  /** CW-10: the checked rows and their toggle; rows get a checkbox only where bulk is safe. */
+  checked?: ReadonlySet<string>;
+  onToggleCheck?: (item: InboxItem) => void;
+  /** CW-10: the selection, progress and report strip above the rows. */
+  bulkBar?: React.ReactNode;
 }
 
 export function ReviewList(p: ReviewListProps) {
@@ -118,6 +148,9 @@ export function ReviewList(p: ReviewListProps) {
   const failed = p.sources.filter((s) => s.status === "error");
   const updated = p.updatedAt ? shortAge(new Date(p.updatedAt).toISOString(), p.now) : "";
   const name = lensName(p.lens);
+  const checkable = !!p.onToggleCheck && p.visible.some(isBulkSafe);
+  const rowCheck = (it: InboxItem): RowCheck =>
+    !checkable ? "none" : isBulkSafe(it) ? { checked: !!p.checked?.has(it.key), onToggle: () => p.onToggleCheck?.(it) } : "space";
 
   const onListKey = (e: React.KeyboardEvent) => {
     if (e.key === "Home" && p.visible[0]) {
@@ -203,6 +236,8 @@ export function ReviewList(p: ReviewListProps) {
               </option>
             ))}
             <option value="v-mine">{VIEW_META["v-mine"].label}</option>
+            <option value="lib-families">Families</option>
+            <option value="lib-concepts">Concepts</option>
           </select>
           <div role="tablist" aria-label="Status" className="inline-flex gap-0.5 rounded-md border p-0.5">
             {STATUS_FILTERS.map((s) => (
@@ -248,10 +283,11 @@ export function ReviewList(p: ReviewListProps) {
             )}
           </span>
           <span aria-hidden="true">
-            <Kbd>j</Kbd> <Kbd>k</Kbd> move · <Kbd>?</Kbd> keys
+            <Kbd>j</Kbd> <Kbd>k</Kbd> move{checkable && <> · <Kbd>x</Kbd> select</>} · <Kbd>?</Kbd> keys
           </span>
         </div>
       </div>
+      {p.bulkBar}
       {failed.map((s) => (
         <div
           key={s.id}
@@ -278,7 +314,15 @@ export function ReviewList(p: ReviewListProps) {
           className="min-h-0 flex-1 overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
           {p.visible.map((it) => (
-            <Row key={it.key} item={it} selected={it.key === p.selectedKey} roles={p.roles} now={p.now} onSelect={() => p.onSelect(it.key)} />
+            <Row
+              key={it.key}
+              item={it}
+              selected={it.key === p.selectedKey}
+              roles={p.roles}
+              now={p.now}
+              onSelect={() => p.onSelect(it.key)}
+              check={rowCheck(it)}
+            />
           ))}
         </div>
       ) : (

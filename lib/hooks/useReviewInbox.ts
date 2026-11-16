@@ -200,7 +200,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
         const spec = specs.current.get(d.id);
         if (!spec) return;
         setSession((s) => sessionChanged(s, d, spec.describeError));
-        if (d.status === "failed") {
+        if (d.status === "failed" && !spec.quiet) {
           toast.dismiss(`decision-${d.id}`);
           toast.error(spec.describeError(d.error));
         }
@@ -220,6 +220,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     (spec: DecisionSpec) => {
       submitting.current = spec;
       const d = ledger.submit({ itemKey: spec.item.key, mode: spec.mode, run: spec.run, undo: spec.undo });
+      if (spec.quiet) return;
       toast(
         React.createElement(
           "span",

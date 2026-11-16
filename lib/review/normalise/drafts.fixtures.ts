@@ -34,7 +34,7 @@ export const labelDraft = (o: Partial<PictureLabelDraft> = {}): PictureLabelDraf
   word_id: "w-qitta",
   arabic: "قِطَّة",
   needs_word: false,
-  agrees_with_data: true,
+  agrees_with_data: "yes",
   source: "c4_pictures",
   run_id: "labels-1",
   created_at: "2026-11-16T10:00:00Z",

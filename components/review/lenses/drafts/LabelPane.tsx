@@ -11,7 +11,8 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { PictureLabelDraft } from "@/lib/api/contentDrafts";
+import type { DraftAgreement, PictureLabelDraft } from "@/lib/api/contentDrafts";
+import type { Pill } from "@/lib/review/inbox";
 import type { Op } from "@/lib/connections/ops";
 import { useDraftCache } from "@/lib/hooks/useContentDrafts";
 import { approveDraft } from "@/lib/review/actions/contentDrafts";
@@ -24,6 +25,13 @@ import { Hero, PaneFrame } from "../../PaneFrame";
 import { Ar, ContextCard, PaneCard, Say, StatusPill } from "../../parts";
 import type { PaneProps } from "../types";
 import { canDecideDraft, confidencePill, DraftBar } from "./DraftBar";
+
+const AGREEMENT_PILL: Record<DraftAgreement, Pill> = {
+  yes: { tone: "ok", text: "Lesson data agrees" },
+  partial: { tone: "info", text: "Lesson data partly agrees" },
+  no: { tone: "no", text: "Lesson data names something else" },
+  no_data: { tone: "neutral", text: "No lesson data names it" },
+};
 
 function pictureUrl(d: PictureLabelDraft): string | null {
   if (d.url) return d.url;
@@ -101,11 +109,7 @@ export function LabelPane(props: PaneProps) {
       <PaneCard title="Meaning">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <StatusPill pill={confidencePill(d.confidence, d.confidence_score)} />
-          {d.agrees_with_data !== null && (
-            <StatusPill
-              pill={d.agrees_with_data ? { tone: "ok", text: "Lesson data agrees" } : { tone: "no", text: "Lesson data disagrees" }}
-            />
-          )}
+          {d.agrees_with_data !== null && <StatusPill pill={AGREEMENT_PILL[d.agrees_with_data]} />}
           <span className="text-xs text-muted-foreground">from {d.source}</span>
         </div>
         {d.concept ? (

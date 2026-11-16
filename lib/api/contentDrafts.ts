@@ -13,6 +13,9 @@ import type { ConceptName } from '@/lib/types/wordFamilies';
 
 export type DraftConfidence = 'high' | 'medium' | 'low';
 
+/** C4's `agrees_with_data`: whether the file name or a meaning question names the same thing. */
+export type DraftAgreement = 'yes' | 'partial' | 'no' | 'no_data';
+
 export interface DraftWord {
   id: string;
   arabic: string;
@@ -59,6 +62,7 @@ export interface PictureLabelDraft extends DraftBase {
   id: string;
   kind: 'label';
   asset_id: string;
+  /** The registry's path; the drafted storage path when the registry has no row yet. */
   path: string | null;
   /** Null when the backend has no public host; Studio builds it from the path. */
   url: string | null;
@@ -69,7 +73,7 @@ export interface PictureLabelDraft extends DraftBase {
   word_id: string | null;
   arabic: string | null;
   needs_word: boolean;
-  agrees_with_data: boolean | null;
+  agrees_with_data: DraftAgreement | null;
   /** The meaning with the drafted slug; null: approving creates it. */
   concept: { id: string; slug: string; name: ConceptName } | null;
   /** The meanings the picture is attached to now, by slug. */

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { listWordFamilies } from "@/lib/api/wordFamilies";
 import { useCurriculumLead } from "@/lib/hooks/useCurriculumLead";
 import { usePhraseReviewer } from "@/lib/hooks/usePhraseReviewer";
+import { useReviewDraftPhraseSources } from "@/lib/hooks/useReviewDraftPhraseSources";
 import { useWordReviewQueue, WORD_REVIEW_KEY } from "@/lib/hooks/useWordReviewQueue";
 import { getClientForEnv } from "@/lib/supabase/client";
 import { useEnvironmentStore } from "@/lib/stores/environmentStore";
@@ -122,8 +123,9 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
   const { query: wordsQuery } = useWordReviewQueue();
   const notesQuery = useQuery({ queryKey: WORD_NOTES_KEY, queryFn: loadNotes, enabled: wantsWords, staleTime: 60_000 });
   const familiesQuery = useQuery({ queryKey: WORD_FAMILIES_KEY, queryFn: listWordFamilies, enabled: wantsWords, staleTime: 5 * 60_000 });
-  // CW-6 adds `useBlendReviewQueue(wants("blend"))`, CW-7 the drafts and word requests,
-  // CW-8 the phrases; each with a SourceState row below and its normaliser in `items`.
+  // CW-6 adds `useBlendReviewQueue(wants("blend"))`; each source with a SourceState row below and its normaliser in `items`.
+  // CW-7 and CW-8: drafts, word requests, phrases and recordings.
+  const draftPhrase = useReviewDraftPhraseSources(kinds);
 
   const curriculumLead = useCurriculumLead();
   const phraseReviewer = usePhraseReviewer();
@@ -136,6 +138,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       out.push(sourceState("words", "Spellings and readings", wordsQuery));
       out.push(sourceState("notes", "Word notes", notesQuery));
     }
+    out.push(...draftPhrase.sources);
     return out;
     // The query objects change identity on every render; their fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,6 +146,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     wantsWords,
     wordsQuery.status, wordsQuery.dataUpdatedAt, wordsQuery.error,
     notesQuery.status, notesQuery.dataUpdatedAt, notesQuery.error,
+    draftPhrase.sources,
   ]);
 
   // ---- items -----------------------------------------------------------------------
@@ -152,9 +156,10 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     if (wantsWords && wordsQuery.data) {
       for (const it of wordItems(wordsQuery.data as BankWord[], notesQuery.data ?? [])) if (wants(it.kind)) out.push(it);
     }
+    out.push(...draftPhrase.items);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wordsQuery.data, notesQuery.data, wantsWords, kinds.join(",")]);
+  }, [wordsQuery.data, notesQuery.data, wantsWords, kinds.join(","), draftPhrase.items]);
 
   const [session, setSession] = React.useState<InboxSession>(EMPTY_SESSION);
   const items = React.useMemo(() => applyOverlays(sourceItems, session.overlays), [sourceItems, session.overlays]);
@@ -254,8 +259,9 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       void notesQuery.refetch();
       void familiesQuery.refetch();
     }
+    draftPhrase.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wantsWords]);
+  }, [wantsWords, draftPhrase.refetch]);
 
   const updatedAt = Math.max(0, ...sources.map((s) => s.updatedAt));
   const updatedRef = React.useRef(updatedAt);

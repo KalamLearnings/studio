@@ -93,3 +93,64 @@ export function phraseReviewErrorText(error: unknown): string {
   }
   return typeof e.message === 'string' ? e.message : 'The request failed.';
 }
+
+// ---- phrase rejection (Studio Review BE-5) --------------------------------------------
+
+/**
+ * Why a reviewer rejects a whole phrase as written (its words, vowels and
+ * order). A recording has its own reasons (`PHRASE_REJECT_REASONS` in
+ * `phraseAudio.ts`). `other` needs a note.
+ */
+export const PHRASE_REJECTION_REASONS = [
+  'wrong_vowel',
+  'wrong_case_ending',
+  'wrong_word_order',
+  'unnatural',
+  'not_for_children',
+  'other',
+] as const;
+export type PhraseRejectionReason = (typeof PHRASE_REJECTION_REASONS)[number];
+
+export const PHRASE_REJECTION_LABELS: Record<PhraseRejectionReason, string> = {
+  wrong_vowel: 'Wrong vowel',
+  wrong_case_ending: 'Wrong case ending',
+  wrong_word_order: 'Wrong word order',
+  unnatural: 'Does not sound natural',
+  not_for_children: 'Not right for children',
+  other: 'Other (say why in the note)',
+};
+
+export interface PhraseRejectionBody {
+  reason: PhraseRejectionReason;
+  note?: string;
+  is_sentence?: boolean;
+}
+
+const REJECTION_NOTE_MAX = 500;
+
+/** The body a phrase rejection sends, or what to fix first. */
+export function phraseRejectionBody(
+  reason: string,
+  note: string,
+  isSentence?: boolean,
+): { ok: true; body: PhraseRejectionBody } | { ok: false; error: string } {
+  if (!(PHRASE_REJECTION_REASONS as readonly string[]).includes(reason)) return { ok: false, error: 'Pick a reason.' };
+  const trimmed = note.trim();
+  if (reason === 'other' && !trimmed) return { ok: false, error: 'Say why in the note.' };
+  if (trimmed.length > REJECTION_NOTE_MAX) {
+    return { ok: false, error: `The note is too long (${REJECTION_NOTE_MAX} characters at most).` };
+  }
+  return {
+    ok: true,
+    body: {
+      reason: reason as PhraseRejectionReason,
+      ...(trimmed ? { note: trimmed } : {}),
+      ...(isSentence === undefined ? {} : { is_sentence: isSentence }),
+    },
+  };
+}
+
+/** A rejection's reason in plain words. */
+export function rejectionReasonText(reason: string): string {
+  return (PHRASE_REJECTION_LABELS as Record<string, string>)[reason]?.replace(/ \(say why in the note\)$/, '') ?? reason;
+}

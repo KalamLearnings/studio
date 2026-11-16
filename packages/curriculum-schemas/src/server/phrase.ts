@@ -27,10 +27,10 @@ import { isRecord } from './references.ts';
 
 export const PHRASE_KIND = 'phrase' as const;
 
-/** ADR 0002, decision 1: a phrase is 2 to 4 words, a sentence 2 to 8. */
+/** ADR 0002, decision 1: a phrase is 2 to 4 words, a sentence 2 to 6 (CM-B33c). */
 export const PHRASE_MIN_WORDS = 2;
 export const PHRASE_MAX_WORDS = 4;
-export const SENTENCE_MAX_WORDS = 8;
+export const SENTENCE_MAX_WORDS = 6;
 
 /**
  * A word row id as the content index can name it (`word:<id>`, the `word`

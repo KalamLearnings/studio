@@ -228,7 +228,7 @@ export function isReservedUnitKey(key: string): boolean {
 
 /** Reads a short group of 2 to 4 words that is not a full sentence. Decoding strand. */
 export const READ_PHRASE_KEY = 'read:phrase';
-/** Reads a whole sentence of 2 to 8 words. Decoding strand. */
+/** Reads a whole sentence of 2 to 6 words. Decoding strand. */
 export const READ_SENTENCE_KEY = 'read:sentence';
 /** Understands what a phrase, sentence or story plainly says, read or heard. Comprehension strand. */
 export const COMP_LITERAL_KEY = 'comp:literal';

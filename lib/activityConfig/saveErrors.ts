@@ -1,14 +1,44 @@
 /**
  * The server's refusal of an activity save (content model CM-B8a, CM-B8b,
  * CM-S3): a 400 with code `CONFIG_INVALID` (the write schema), `CONFIG_EMPTY`
- * or `CONFIG_CHECK_FAILED` (the domain checks), and details
+ * or `CONFIG_CHECK_FAILED` (the domain checks), or `V1_DISPLAY_UNRESOLVED`
+ * (R2, CM-D3d, CM-D3e: a reference the server cannot write v1's text from,
+ * such as a `wordRef` naming no library word; shown in plain words), and details
  * `[{ field, message, check }]`. `field` is the stored config path, dotted and
  * prefixed with `config.` (`config.distractorLetters.2.letterId`), or
  * `config` for the whole config. Parsed here so every form shows each error
  * beside the field it is about (the blend forms did this first). Pure.
  */
 
-export const CONFIG_SAVE_ERROR_CODES = ["CONFIG_INVALID", "CONFIG_EMPTY", "CONFIG_CHECK_FAILED"] as const;
+export const CONFIG_SAVE_ERROR_CODES = [
+  "CONFIG_INVALID",
+  "CONFIG_EMPTY",
+  "CONFIG_CHECK_FAILED",
+  "V1_DISPLAY_UNRESOLVED",
+] as const;
+
+/** The plain message for a `wordRef` the server found no library word for. */
+export const UNKNOWN_LIBRARY_WORD_MESSAGE =
+  "This word is no longer in the word library. Pick it again from the list, or pick another word.";
+
+/** The plain message for any other item the server could not show to the v1 app. */
+export const V1_DISPLAY_MESSAGE =
+  "The app cannot show this item: what it points to is missing from the library. Pick it again.";
+
+/**
+ * A `V1_DISPLAY_UNRESOLVED` detail in plain words: a `wordRef` error is put
+ * on `wordRef` itself (the word picker shows it), any other keeps its place.
+ */
+function plainV1Display(error: ConfigFieldError): ConfigFieldError {
+  if (isUnder(error.path, "wordRef")) {
+    return {
+      path: "wordRef",
+      message: UNKNOWN_LIBRARY_WORD_MESSAGE,
+      ...(error.check !== undefined && { check: error.check }),
+    };
+  }
+  return { ...error, message: V1_DISPLAY_MESSAGE };
+}
 
 export interface ConfigFieldError {
   /** The config path without the `config.` prefix; '' for the whole config. */
@@ -38,6 +68,10 @@ export function parseConfigSaveError(
       message: entry.message,
       ...(typeof entry.check === "string" && { check: entry.check }),
     });
+  }
+  if (error.code === "V1_DISPLAY_UNRESOLVED") {
+    if (out.length === 0) return [{ path: "", message: V1_DISPLAY_MESSAGE }];
+    return out.map(plainV1Display);
   }
   if (out.length === 0) out.push({ path: "", message: "The server refused this activity." });
   return out;

@@ -9,7 +9,9 @@ import {
   LetterSelector,
   ImageLibraryModal,
   WordSelector,
+  FieldErrors,
 } from "./shared";
+import { withPickedWord } from "@/lib/activityConfig/wordRef";
 import type { BaseActivityFormProps, IntroActivityConfig } from "./types";
 
 const CONTENT_TYPES = [
@@ -123,13 +125,17 @@ export function IntroActivityForm({
       )}
 
       {contentType === "word" && (
+        <>
         <WordSelector
           value={word}
-          onChange={(value) => updateConfig({ word: value })}
+          // A library word is sent as `wordRef`; the server writes v1's `word` from it.
+          onChange={(value, wordData) => onChange(withPickedWord({ ...config }, "word", value, wordData))}
           label="Word"
           required
           placeholder="Type to search word library..."
         />
+        <FieldErrors path="wordRef" />
+        </>
       )}
 
       {contentType === "image" && (

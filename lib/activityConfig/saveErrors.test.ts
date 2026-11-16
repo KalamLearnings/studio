@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { errorLine, errorsAt, isConfigSaveError, parseConfigSaveError, unplacedErrors } from "./saveErrors";
+import {
+  errorLine,
+  errorsAt,
+  isConfigSaveError,
+  parseConfigSaveError,
+  UNKNOWN_LIBRARY_WORD_MESSAGE,
+  unplacedErrors,
+  V1_DISPLAY_MESSAGE,
+} from "./saveErrors";
 
 const refusal = {
   code: "CONFIG_INVALID",
@@ -53,5 +61,28 @@ describe("placing errors", () => {
     expect(errorLine(errors[0]!, "distractorLetters")).toBe("#2 letterId: Required");
     expect(errorLine(errors[1]!)).toBe("correctLetter: not a pop_balloons_with_letter field");
     expect(errorLine(errors[2]!)).toBe("config is empty");
+  });
+});
+
+describe("V1_DISPLAY_UNRESOLVED (CM-D3f)", () => {
+  it("an unknown wordRef id is a plain message on the word picker's path", () => {
+    const refusal = {
+      code: "V1_DISPLAY_UNRESOLVED",
+      details: [{ field: "config.wordRef.wordId", message: "no word with id w-gone", check: "v1_display" }],
+    };
+    expect(isConfigSaveError(refusal)).toBe(true);
+    const errors = parseConfigSaveError(refusal)!;
+    expect(errors).toEqual([{ path: "wordRef", message: UNKNOWN_LIBRARY_WORD_MESSAGE, check: "v1_display" }]);
+    expect(errorLine(errors[0]!, "wordRef")).toBe(UNKNOWN_LIBRARY_WORD_MESSAGE);
+  });
+
+  it("any other unresolved item keeps its place with a plain message; no details is one whole-config line", () => {
+    expect(
+      parseConfigSaveError({
+        code: "V1_DISPLAY_UNRESOLVED",
+        details: [{ field: "config.options.1.word.wordId", message: "unknown word w9", check: "v1_display" }],
+      }),
+    ).toEqual([{ path: "options.1.word.wordId", message: V1_DISPLAY_MESSAGE, check: "v1_display" }]);
+    expect(parseConfigSaveError({ code: "V1_DISPLAY_UNRESOLVED" })).toEqual([{ path: "", message: V1_DISPLAY_MESSAGE }]);
   });
 });

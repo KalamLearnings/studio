@@ -104,7 +104,7 @@ export function ActivityForm({
   const [confirmClearAudio, setConfirmClearAudio] = React.useState(false);
   // The last save's refusal, shown inline: the blend forms read BLEND_INVALID
   // and WORD_SPELLING_INVALID; every form shows the save validation errors
-  // (CONFIG_INVALID, CONFIG_EMPTY, CONFIG_CHECK_FAILED) beside their fields.
+  // (CONFIG_INVALID, CONFIG_EMPTY, CONFIG_CHECK_FAILED, V1_DISPLAY_UNRESOLVED) beside their fields.
   // Cleared on the next config edit.
   const [saveError, setSaveError] = React.useState<{ code?: string; details?: unknown } | null>(null);
   const configErrors = React.useMemo(() => parseConfigSaveError(saveError), [saveError]);

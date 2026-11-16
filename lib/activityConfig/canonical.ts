@@ -27,9 +27,11 @@
  * and for pairs an audio clip). A picture item stays in v1's shape: v1 reads
  * an option's or card's `image` as a URL string, the key the canonical item
  * holds its asset reference in, and the asset registry is not on PROD yet.
- * The server does not write `word` from `wordRef` or `image` from `imageRef`
- * either, so the word and picture modes of show_letter_or_word and
- * speech_practice stay in their legacy shape too.
+ * The server does not write `image` from `imageRef` either, so the picture
+ * mode of show_letter_or_word stays in its legacy shape, as does the word
+ * mode of speech_practice. show_letter_or_word's word mode saves canonically
+ * once it names a library word (`wordRef`, backend CM-D3e: the server writes
+ * v1's `word` from it); a typed word with no library id stays legacy.
  */
 
 import {
@@ -212,6 +214,28 @@ function writeMemoryCards(config: Config): Config {
     }),
   };
 }
+
+/** show_letter_or_word word mode naming a library word: the server writes v1's `word` from `wordRef`. */
+const isShowLibraryWord = (config: Config): boolean =>
+  config.contentType === "word" && isRecord(config.wordRef) &&
+  typeof config.wordRef.wordId === "string" && config.wordRef.wordId !== "";
+
+/**
+ * show_letter_or_word: in letter mode the reference only; in word mode with a
+ * library word, `wordRef: { wordId }` only (no `word`, the server writes it).
+ * A legacy word or picture row is returned as it is.
+ */
+function writeShow(config: Config): Config {
+  if (!isShowLibraryWord(config)) return writeShowLetter(config);
+  const next = without(config, ["letter", "word", "image", "imageRef"]);
+  next.wordRef = { wordId: (config.wordRef as Config).wordId };
+  if (next.targetLetter != null) next.targetLetter = singleRef(next.targetLetter);
+  else delete next.targetLetter;
+  return next;
+}
+
+/** What the show form edits: a library word keeps its `word` text to show; a letter row is written. */
+const viewShow = (hinted: Config): Config => (isShowLibraryWord(hinted) ? hinted : writeShowLetter(hinted));
 
 /** show_letter_or_word in letter mode: the reference only, no v1 display strings. */
 function writeShowLetter(config: Config): Config {
@@ -504,8 +528,13 @@ export const CANONICAL_FORM_TYPES: Readonly<Record<string, CanonicalType>> = {
   drag_haraka_to_letter: { write: writeHarakaToLetter },
   trace_letter: { write: writeTrace, storedOk: traceGlyphKeepsItsForm },
   memory_card_match: { write: writeMemoryCards },
-  // letter modes only (word and picture modes wait for server-written v1 strings)
-  show_letter_or_word: { write: writeShowLetter, canonicalOk: isLetterMode },
+  // letter mode, and word mode with a library word (CM-D3e); picture mode waits for the asset registry
+  show_letter_or_word: {
+    write: writeShow,
+    canonicalOk: (config) => isLetterMode(config) || isShowLibraryWord(config),
+    view: viewShow,
+  },
+  // letter mode only (word mode waits for a server-written v1 string)
   speech_practice: { write: writeSpeechLetter, canonicalOk: isLetterMode, keepAbsent: ["contentType"] },
   // answer sets (CM-S6, R2): every item one the server shows to v1 from its reference
   content_with_cards: { write: writeCards, canonicalOk: cardsCanonicalOk, storedOk: cardsStoredOk, hints: cardsHints, view: asRead },

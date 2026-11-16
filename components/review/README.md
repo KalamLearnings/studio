@@ -55,12 +55,12 @@ A kind shows in Review (rail, counts, number key, sheet rows, and its source is 
 
 | Ticket | Kind | Source (shape) | Normaliser |
 |---|---|---|---|
-| CW-6 | `blend` | `GET /words/blend/review` | `blendItems` |
+| CW-6 (done) | `blend` | `GET /words/blend/review` | `blendItems`; focus targets and overlays in `normalise/blend.ts`; split and take reviews are `hold` (`actions/blend.ts`) |
 | CW-7 (done) | `draft` | BE-1 `GET /curriculum/generation/drafts?status=pending&limit=&cursor=`, `{ items, next_cursor }`; titles are stored `{ en, ar? }` (`titleText`) | `draftItems`; preview `lib/review/draftPreview.ts`; lens tools narrow by curriculum and node (`useDraftScope`) |
 | CW-7 (done) | `request` | `GET /curriculum/generation/word-requests` | `requestItems` |
 | CW-8 (done) | `phrase` | BE-2 `GET /curriculum/reading/phrases`, `{ pending, approved, rejected, generation_enabled }`, `rejection` (`reviewed_by`, `reviewed_at`) on every entry | `phraseItems`; cache moves in `actions/phraseList.ts` |
 | CW-8 (done) | `recording` | the same list: `audio.state` on approved entries; the full take read when the item opens (`usePhraseAudio`) | `recordingItems`, `recordingTakeToHear`; audio parts in `components/phrases/audio/` |
-| CW-11 | `letter` | audio library `letter_sounds`, BE-3 `GET /assets/letter-sounds/review-flags` `{ items }` | to write; flag and unflag are `inverse` |
+| CW-11 (done) | `letter` | audio library `letter_sounds` (`getAudioAssets`), BE-3 `GET /assets/letter-sounds/review-flags` `{ items }`, `GET /letters/list` | `letterItems` (`normalise/letters.ts`); flag and clear are `inverse` (`actions/letters.ts`) |
 
 Other extension points:
 
@@ -73,6 +73,13 @@ Other extension points:
   `approveSpelling` decision with `quiet: true` (no toast), sent one at a time: the run watches the session's busy and
   error per item rather than wrapping the request, so it works with any `decide`. Undo all withdraws each one through
   its inverse route. To make another kind bulk-safe, set `bulkSafe` in its normaliser and give `useBulkApprove` its spec.
+- **Blend pane (CW-6).** It reuses the old page's parts: `lenses/blend/ReviewFormPanel` and `SplitReviewControls` (moved
+  from `app/(dashboard)/review/blend/_components`) and the builder's `FormAudioPanel`, `TakeRow`, `TakeRejectForm`,
+  `GenerateAudioControls`, `WaveformMarkEditor`. The pane drives them through optional `handleRef`s (approve, reject,
+  pick a reason, play), so the builder and the old page work unchanged. Generate, marks and the AI check are not
+  decisions; they call `useBlendAudioActions` and `useBlendAiCheck` as before.
+- **Letter sounds (CW-11).** A file with no flag is `listen` and never waits; a flagged one is `todo` ("To decide"),
+  counts as waiting, and the kind's gate is `phrase` (other staff listen only). `order` keeps the files in alphabet order.
 - **Views.** `VIEW_META` lists the kinds each view covers; a view shows in the rail once one of its kinds is registered.
 
 ## Conventions

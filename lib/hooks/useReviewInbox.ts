@@ -14,6 +14,8 @@ import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listWordFamilies } from "@/lib/api/wordFamilies";
+import { useBlendReviewQueue } from "@/lib/hooks/useBlendReview";
+import { useLetterSoundSources } from "@/lib/hooks/useLetterSoundReview";
 import { useCurriculumLead } from "@/lib/hooks/useCurriculumLead";
 import { usePhraseReviewer } from "@/lib/hooks/usePhraseReviewer";
 import { useReviewDraftPhraseSources } from "@/lib/hooks/useReviewDraftPhraseSources";
@@ -28,6 +30,8 @@ import type { WordCache } from "@/lib/review/actions/words";
 import { DecisionLedger, type Decision } from "@/lib/review/decisions";
 import { countInbox, type InboxCounts, type InboxItem, type InboxKind, type ReviewRoles } from "@/lib/review/inbox";
 import { wordItems, type BankWord } from "@/lib/review/normalise/words";
+import { letterItems } from "@/lib/review/normalise/letters";
+import { blendItems } from "@/lib/review/normalise/sources";
 import {
   applyOverlays,
   clearSessionError,
@@ -118,12 +122,14 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
   const queryClient = useQueryClient();
   const wants = (k: InboxKind) => kinds.includes(k);
   const wantsWords = wants("spelling") || wants("reading");
+  const kindsKey = kinds.join(",");
 
   // ---- sources (existing hooks first) --------------------------------------------
   const { query: wordsQuery } = useWordReviewQueue();
   const notesQuery = useQuery({ queryKey: WORD_NOTES_KEY, queryFn: loadNotes, enabled: wantsWords, staleTime: 60_000 });
   const familiesQuery = useQuery({ queryKey: WORD_FAMILIES_KEY, queryFn: listWordFamilies, enabled: wantsWords, staleTime: 5 * 60_000 });
-  // CW-6 adds `useBlendReviewQueue(wants("blend"))`; each source with a SourceState row below and its normaliser in `items`.
+  const blendQuery = useBlendReviewQueue(wants("blend"));
+  const letterSounds = useLetterSoundSources(wants("letter"));
   // CW-7 and CW-8: drafts, word requests, phrases and recordings.
   const draftPhrase = useReviewDraftPhraseSources(kinds);
 
@@ -138,6 +144,11 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       out.push(sourceState("words", "Spellings and readings", wordsQuery));
       out.push(sourceState("notes", "Word notes", notesQuery));
     }
+    if (wants("blend")) out.push(sourceState("blend", "Blend splits", blendQuery));
+    if (wants("letter")) {
+      out.push(sourceState("letter-files", "Letter sound files", letterSounds.files));
+      out.push(sourceState("letter-flags", "Letter sound flags", letterSounds.flags));
+    }
     out.push(...draftPhrase.sources);
     return out;
     // The query objects change identity on every render; their fields are what matter.
@@ -146,6 +157,9 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     wantsWords,
     wordsQuery.status, wordsQuery.dataUpdatedAt, wordsQuery.error,
     notesQuery.status, notesQuery.dataUpdatedAt, notesQuery.error,
+    blendQuery.status, blendQuery.dataUpdatedAt, blendQuery.error,
+    letterSounds.files.status, letterSounds.files.dataUpdatedAt, letterSounds.files.error,
+    letterSounds.flags.status, letterSounds.flags.dataUpdatedAt, letterSounds.flags.error,
     draftPhrase.sources,
   ]);
 
@@ -156,10 +170,18 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     if (wantsWords && wordsQuery.data) {
       for (const it of wordItems(wordsQuery.data as BankWord[], notesQuery.data ?? [])) if (wants(it.kind)) out.push(it);
     }
+    if (wants("blend") && blendQuery.data) out.push(...blendItems(blendQuery.data.items ?? []));
+    // A failed flag list leaves every file listenable; its strip says the flags are missing.
+    if (wants("letter") && letterSounds.files.data) {
+      out.push(...letterItems(letterSounds.files.data, letterSounds.flags.data ?? [], letterSounds.letters));
+    }
     out.push(...draftPhrase.items);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wordsQuery.data, notesQuery.data, wantsWords, kinds.join(","), draftPhrase.items]);
+  }, [
+    wordsQuery.data, notesQuery.data, wantsWords, kindsKey, draftPhrase.items,
+    blendQuery.data, letterSounds.files.data, letterSounds.flags.data, letterSounds.letters,
+  ]);
 
   const [session, setSession] = React.useState<InboxSession>(EMPTY_SESSION);
   const items = React.useMemo(() => applyOverlays(sourceItems, session.overlays), [sourceItems, session.overlays]);
@@ -260,9 +282,14 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       void notesQuery.refetch();
       void familiesQuery.refetch();
     }
+    if (wants("blend")) void blendQuery.refetch();
+    if (wants("letter")) {
+      void letterSounds.files.refetch();
+      void letterSounds.flags.refetch();
+    }
     draftPhrase.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wantsWords, draftPhrase.refetch]);
+  }, [wantsWords, kindsKey, draftPhrase.refetch]);
 
   const updatedAt = Math.max(0, ...sources.map((s) => s.updatedAt));
   const updatedRef = React.useRef(updatedAt);

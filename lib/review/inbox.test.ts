@@ -92,6 +92,14 @@ describe("countInbox", () => {
     expect(c.byKind.letter).toBe(1);
     expect(waitingSummary(c)).toBe("3 decisions waiting, 2 yours, 1 for another role");
   });
+  it("counts a flagged letter sound as waiting, for a phrase reviewer", () => {
+    const letters = [item("l1", { kind: "letter", state: "listen" }), item("l2", { kind: "letter", state: "todo" })];
+    expect(countInbox(letters, STAFF)).toMatchObject({ all: 1, yours: 0, byKind: { letter: 2 } });
+    expect(countInbox(letters, ALL)).toMatchObject({ all: 1, yours: 1 });
+    expect(statusPill(letters[1], ALL).text).toBe("To decide");
+    expect(statusPill(letters[1], STAFF).text).toBe("Reviewer decides");
+    expect(statusPill(letters[0], STAFF).text).toBe("Listen");
+  });
   it("says so when nothing waits", () => {
     expect(waitingSummary(countInbox([item("s", { state: "approved" })], ALL))).toBe("Nothing waits for a decision");
     expect(waitingSummary(countInbox([item("s")], ALL))).toBe("1 decision waiting");
@@ -119,10 +127,11 @@ describe("lenses and status", () => {
     expect(isLens("lib-families")).toBe(true);
     expect(isLens("nope")).toBe(false);
   });
-  it("keeps letter sounds out of Everything while deciding", () => {
+  it("keeps letter sounds out of Everything while deciding, unless flagged", () => {
     const l = item("l", { kind: "letter", state: "listen" });
     expect(inLens(l, "all", "todo", ctx)).toBe(false);
     expect(inLens(l, "all", "all", ctx)).toBe(true);
+    expect(inLens(item("f", { kind: "letter", state: "todo" }), "all", "todo", ctx)).toBe(true);
   });
   it("finds what you decided, here or on the server", () => {
     const here = item("a", { state: "approved" });

@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { pseudoProposals, sortedForms, type BlendReviewWord } from "@/lib/blendWord/review";
 import { generateBody } from "@/lib/blendWord/takes";
 import type { BlendAudioActions } from "@/lib/hooks/useBlendReview";
-import { ReviewFormPanel } from "./ReviewFormPanel";
+import { PseudoProposals } from "@/components/review/lenses/blend/PseudoProposals";
+import { ReviewFormPanel } from "@/components/review/lenses/blend/ReviewFormPanel";
 
 /** One word of the queue: its library facts, pseudo-word proposals, and each form. */
 export function ReviewWordCard({ item, actions }: { item: BlendReviewWord; actions: BlendAudioActions }) {
@@ -32,21 +33,7 @@ export function ReviewWordCard({ item, actions }: { item: BlendReviewWord; actio
           )}
         </div>
 
-        {proposals.length > 0 && (
-          <div className="rounded-md border border-amber-400/50 bg-amber-50/50 p-2 text-sm dark:bg-amber-500/10">
-            <p className="font-medium">Proposed: mark as a practice word</p>
-            <ul className="text-xs">
-              {proposals.map((p, i) => (
-                <li key={i}>
-                  {p.source}: {p.message}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-1 text-xs text-muted-foreground">
-              To mark it, tick &quot;Practice word&quot; in the word editor of an activity that uses it.
-            </p>
-          </div>
-        )}
+        <PseudoProposals proposals={proposals} />
 
         <div className="grid gap-4 lg:grid-cols-2">
           {forms.map((form) => (

@@ -6,6 +6,9 @@
  */
 
 import { INBOX_KINDS, type InboxKind } from "@/lib/review/inbox";
+import { BlendListTools } from "./blend/BlendAiCheck";
+import { BlendPane } from "./blend/BlendPane";
+import { LetterPane } from "./letter/LetterPane";
 import { DRAFT_PHRASE_LENSES } from "./draftPhraseLenses";
 import { ReadingPane } from "./reading/ReadingPane";
 import { SpellingPane } from "./spelling/SpellingPane";
@@ -40,6 +43,37 @@ const LENS_LIST: LensDefinition[] = [
     shortcuts: [{ title: "Decide", rows: [{ label: "Pick a reading", keys: ["1", "to", "9"] }] }, CONTEXT_KEYS],
   },
   ...DRAFT_PHRASE_LENSES,
+  {
+    kind: "blend",
+    Pane: BlendPane,
+    ListTools: BlendListTools,
+    shortcuts: [
+      {
+        title: "Decide",
+        rows: [
+          { label: "Next / previous decision on this word (blend)", keys: ["tab", "shift+tab"] },
+          { label: "Reject (blend: a note for a split, a reason for a take)", keys: ["r"] },
+          { label: "Pick a reason", keys: ["1", "to", "9", "0"] },
+        ],
+      },
+      { title: "Listen", rows: [{ label: "Play or stop the take", keys: ["space"] }] },
+      CONTEXT_KEYS,
+    ],
+  },
+  {
+    kind: "letter",
+    Pane: LetterPane,
+    shortcuts: [
+      {
+        title: "Decide",
+        rows: [
+          { label: "Flag a problem (letter sound)", keys: ["r"] },
+          { label: "Clear the flag (letter sound)", keys: ["a"] },
+        ],
+      },
+      { title: "Listen", rows: [{ label: "Play or stop the file", keys: ["space"] }] },
+    ],
+  },
 ];
 
 export const LENSES: ReadonlyMap<InboxKind, LensDefinition> = new Map(LENS_LIST.map((l) => [l.kind, l]));

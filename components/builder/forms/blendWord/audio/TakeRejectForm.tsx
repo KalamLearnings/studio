@@ -18,19 +18,33 @@ import {
 } from "@/lib/blendWord/takes";
 import { TakeSettingsFields } from "./TakeSettingsFields";
 
+/** What the Review pane's keys drive (CW-6): a digit picks a reason, `enter` rejects. */
+export interface TakeRejectHandle {
+  submit: () => void;
+  /** Picks the reason under key `n` (1 to 9, 0 for the tenth); false when no reason has that key. */
+  pickReasonByKey: (n: number) => boolean;
+}
+
+/** The key that picks a reason in the numbered list: 1 to 9, 0 for the tenth, none after. */
+export function reasonKey(index: number): string | null {
+  return index < 9 ? String(index + 1) : index === 9 ? "0" : null;
+}
+
 interface TakeRejectFormProps {
   take: BlendReviewTake;
   /** Generation is switched off: regenerate is not offered, with this reason. */
   generationOff: string | null;
   onSubmit: (body: TakeReviewBody) => Promise<{ ok: boolean; message?: string }>;
   onCancel: () => void;
+  /** Review pane: the reasons are numbered buttons the digit keys pick, and the pane drives the form. */
+  handleRef?: React.Ref<TakeRejectHandle>;
 }
 
 /**
  * Reject a take with a reason, and optionally regenerate it with the proposed
  * next settings, which the reviewer may edit first.
  */
-export function TakeRejectForm({ take, generationOff, onSubmit, onCancel }: TakeRejectFormProps) {
+export function TakeRejectForm({ take, generationOff, onSubmit, onCancel, handleRef }: TakeRejectFormProps) {
   const [reason, setReason] = React.useState<TakeRejectReason | "">("");
   const [note, setNote] = React.useState("");
   const canRegenerate = take.kind === "natural" && !generationOff;
@@ -39,6 +53,7 @@ export function TakeRejectForm({ take, generationOff, onSubmit, onCancel }: Take
   const [fieldErrors, setFieldErrors] = React.useState<Partial<Record<keyof TakeSettingsDraft, string>>>({});
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const noteRef = React.useRef<HTMLTextAreaElement>(null);
 
   const pickReason = (r: TakeRejectReason | "") => {
     setReason(r);
@@ -68,8 +83,51 @@ export function TakeRejectForm({ take, generationOff, onSubmit, onCancel }: Take
     if (!res.ok) setError(res.message ?? "The take was not rejected.");
   };
 
+  React.useImperativeHandle(handleRef, () => ({
+    submit: () => void submit(),
+    pickReasonByKey: (n) => {
+      const index = n === 0 ? 9 : n - 1;
+      const r = TAKE_REJECT_REASONS[index];
+      if (!r) return false;
+      pickReason(r);
+      setError(null);
+      if (r === "other") noteRef.current?.focus();
+      return true;
+    },
+  }));
+
   return (
     <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+      {handleRef ? (
+        <fieldset className="flex flex-col gap-1 text-xs">
+          <legend className="mb-1 text-muted-foreground">Reason (press its number)</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {TAKE_REJECT_REASONS.map((r, i) => {
+              const key = reasonKey(i);
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={reason === r}
+                  onClick={() => pickReason(r)}
+                  className={
+                    reason === r
+                      ? "inline-flex items-center gap-1.5 rounded-full border border-destructive bg-destructive/10 px-2.5 py-1 text-xs font-medium"
+                      : "inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs hover:border-destructive/50"
+                  }
+                >
+                  {key && (
+                    <kbd className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded border border-b-2 px-1 font-mono text-[10px] text-muted-foreground">
+                      {key}
+                    </kbd>
+                  )}
+                  {REJECT_REASON_LABELS[r]}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : (
       <label className="flex flex-col gap-1 text-xs">
         <span className="text-muted-foreground">Reason</span>
         <select
@@ -85,9 +143,10 @@ export function TakeRejectForm({ take, generationOff, onSubmit, onCancel }: Take
           ))}
         </select>
       </label>
+      )}
       <label className="flex flex-col gap-1 text-xs">
         <span className="text-muted-foreground">Note {reason === "other" ? "(needed)" : "(optional)"}</span>
-        <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} />
+        <Textarea ref={noteRef} value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} />
       </label>
       {take.kind === "natural" && (
         <div className="space-y-2">
@@ -116,7 +175,11 @@ export function TakeRejectForm({ take, generationOff, onSubmit, onCancel }: Take
           A stretched take is made again from its natural take. To change the voice, reject the natural take.
         </p>
       )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={pending}>
           Cancel

@@ -12,10 +12,11 @@ import {
   type BlendReviewForm,
   type SplitReviewBody,
 } from "@/lib/blendWord/review";
-import type { TakeRequest, TakeReviewBody } from "@/lib/blendWord/takes";
+import type { BlendReviewTake, TakeRequest, TakeReviewBody } from "@/lib/blendWord/takes";
 import { BlendFormColumn } from "@/components/builder/forms/blendWord/BlendFormColumn";
 import { FormAudioPanel } from "@/components/builder/forms/blendWord/audio/FormAudioPanel";
-import { SplitReviewControls } from "./SplitReviewControls";
+import type { TakeRowReviewProps } from "@/components/builder/forms/blendWord/audio/TakeRow";
+import { SplitReviewControls, type SplitReviewHandle } from "./SplitReviewControls";
 
 type Result = { ok: boolean; message?: string; lines?: string[] };
 
@@ -26,15 +27,33 @@ interface ReviewFormPanelProps {
   onGenerate: (regenerate: boolean, settings: TakeRequest | null) => Promise<Result>;
   onReviewTake: (takeId: string, body: TakeReviewBody) => Promise<Result>;
   onSaveMarks: (takeId: string, marks: number[]) => Promise<Result>;
+  /** The Review pane (CW-6): its keys drive the split review, and the split it focuses is outlined. */
+  split?: { handleRef: React.Ref<SplitReviewHandle>; focused: boolean };
+  /** The Review pane's extras for each take row. */
+  takeRowProps?: (take: BlendReviewTake) => TakeRowReviewProps | undefined;
 }
 
 const noop = () => {};
 
 /** One form of a word in the queue: the split, its override diff and flags, the split review, and the takes. */
-export function ReviewFormPanel({ form, generationOff, onReviewSplit, onGenerate, onReviewTake, onSaveMarks }: ReviewFormPanelProps) {
+export function ReviewFormPanel({
+  form,
+  generationOff,
+  onReviewSplit,
+  onGenerate,
+  onReviewTake,
+  onSaveMarks,
+  split,
+  takeRowProps,
+}: ReviewFormPanelProps) {
   const preview = React.useMemo(() => reviewFormPreview(form), [form]);
   const diff = React.useMemo(() => overrideDiff(form), [form]);
   const flags = form.qaFlags ?? [];
+  const splitRef = React.useRef<HTMLDivElement>(null);
+  const splitFocused = !!split?.focused;
+  React.useEffect(() => {
+    if (splitFocused) splitRef.current?.scrollIntoView({ block: "nearest" });
+  }, [splitFocused]);
 
   return (
     <div className="space-y-3">
@@ -96,7 +115,13 @@ export function ReviewFormPanel({ form, generationOff, onReviewSplit, onGenerate
         )}
       </BlendFormColumn>
 
-      <SplitReviewControls status={splitReviewLine(form)} onReview={onReviewSplit} />
+      <div
+        ref={splitRef}
+        aria-current={splitFocused ? "true" : undefined}
+        className={cn(split && "rounded-md border p-2", splitFocused && "border-primary ring-2 ring-primary/30")}
+      >
+        <SplitReviewControls status={splitReviewLine(form)} onReview={onReviewSplit} handleRef={split?.handleRef} />
+      </div>
 
       <FormAudioPanel
         takes={form.takes}
@@ -105,6 +130,7 @@ export function ReviewFormPanel({ form, generationOff, onReviewSplit, onGenerate
         onGenerate={onGenerate}
         onReviewTake={onReviewTake}
         onSaveMarks={onSaveMarks}
+        takeRowProps={takeRowProps}
       />
     </div>
   );

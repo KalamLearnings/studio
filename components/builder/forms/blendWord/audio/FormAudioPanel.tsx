@@ -4,7 +4,7 @@ import * as React from "react";
 import { anyPending, formStatusChips, latestTake, type BlendReviewTake, type TakeRequest, type TakeReviewBody } from "@/lib/blendWord/takes";
 import { Loader2 } from "lucide-react";
 import { TakeStatusChips } from "./TakeStatusChips";
-import { TakeRow } from "./TakeRow";
+import { TakeRow, type TakeRowReviewProps } from "./TakeRow";
 import { GenerateAudioControls } from "./GenerateAudioControls";
 
 type Result = { ok: boolean; message?: string; lines?: string[] };
@@ -17,17 +17,20 @@ interface FormAudioPanelProps {
   onGenerate: (regenerate: boolean, settings: TakeRequest | null) => Promise<Result>;
   onReviewTake: (takeId: string, body: TakeReviewBody) => Promise<Result>;
   onSaveMarks: (takeId: string, marks: number[]) => Promise<Result>;
+  /** The Review pane's extras for each take row (its keys, its focus). */
+  takeRowProps?: (take: BlendReviewTake) => TakeRowReviewProps | undefined;
 }
 
 /**
  * The audio of one ending form: the status chips, Generate and Regenerate,
  * and the current takes (older ones folded under "History").
  */
-export function FormAudioPanel({ takes, units, generationOff, onGenerate, onReviewTake, onSaveMarks }: FormAudioPanelProps) {
+export function FormAudioPanel({ takes, units, generationOff, onGenerate, onReviewTake, onSaveMarks, takeRowProps }: FormAudioPanelProps) {
   const current = takes.filter((t) => t.current && t.status !== "rejected");
   const history = takes.filter((t) => !current.includes(t));
   const row = (take: BlendReviewTake) => (
     <TakeRow
+      {...takeRowProps?.(take)}
       key={take.id}
       take={take}
       units={units}

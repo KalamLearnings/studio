@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseWordSpellingError, plainSpellingIssue, previewWordSpelling, WORD_IS_A_LETTER, WORD_SPELLING_INVALID } from './spelling';
+import { HARMFUL_WORD, HARMFUL_WORD_MESSAGE, parseWordSpellingError, plainSpellingIssue, previewWordSpelling, WORD_IS_A_LETTER, WORD_SPELLING_INVALID } from './spelling';
 
 const FATHA = 'َ';
 const SHADDA = 'ّ';
@@ -100,6 +100,16 @@ describe('parseWordSpellingError (the backend WORD_SPELLING_INVALID refusal)', (
     expect(out.arabic).toBe(' كتاب؟');
     expect(out.spelling).toBe('كتاب؟');
     expect(out.messages).toEqual(['"؟" (U+061F) is not an Arabic letter or haraka.']);
+  });
+
+  it('turns HARMFUL_WORD into the server\'s plain line, or a standard one', () => {
+    const message = '"بَظُرَ" is on the blocked word list: it reads as a vulgar word in Arabic. Use a different word.';
+    expect(parseWordSpellingError({ code: HARMFUL_WORD, details: { arabic: 'بَظُرَ' }, message })).toEqual({
+      arabic: 'بَظُرَ',
+      spelling: null,
+      messages: [message],
+    });
+    expect(parseWordSpellingError({ code: HARMFUL_WORD })!.messages).toEqual([HARMFUL_WORD_MESSAGE]);
   });
 
   it('turns WORD_IS_A_LETTER into a plain line', () => {

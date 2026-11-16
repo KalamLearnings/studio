@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  checkTitle,
   errorLine,
   errorsAt,
   isConfigSaveError,
@@ -84,5 +85,21 @@ describe("V1_DISPLAY_UNRESOLVED (CM-D3f)", () => {
       }),
     ).toEqual([{ path: "options.1.word.wordId", message: V1_DISPLAY_MESSAGE, check: "v1_display" }]);
     expect(parseConfigSaveError({ code: "V1_DISPLAY_UNRESOLVED" })).toEqual([{ path: "", message: V1_DISPLAY_MESSAGE }]);
+  });
+});
+
+describe("save blocks (backend CM-P1)", () => {
+  it("are config refusals shown beside their fields, with a short title", () => {
+    for (const code of ["CONFIG_INCOMPLETE", "NO_CORRECT_OPTION", "EVERY_OPTION_CORRECT", "DUPLICATE_OPTIONS", "HARMFUL_WORD"]) {
+      expect(isConfigSaveError({ code })).toBe(true);
+    }
+    const message = "Option 3 shows the same thing as option 2. Each option must be different.";
+    const errors = parseConfigSaveError({
+      code: "DUPLICATE_OPTIONS",
+      details: [{ field: "config.options.2", message, check: "duplicate_options" }],
+    });
+    expect(errors).toEqual([{ path: "options.2", message, check: "duplicate_options" }]);
+    expect(checkTitle(errors![0])).toBe("Repeated option");
+    expect(errorLine(errors![0], "options")).toBe(`#3: ${message}`);
   });
 });

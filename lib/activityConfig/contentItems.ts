@@ -458,3 +458,66 @@ export function pairSideFromItem(item: EditorItem, glyphOf: (letter: EditorLette
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// answer-set problems (a mirror of the backend's save blocks, CM-P1)
+// ---------------------------------------------------------------------------
+
+/**
+ * What an item shows, as one comparable key; null for an empty item. Text
+ * before the library id, as the server compares an option it reads in v1's
+ * shape (backend `content-blocks.ts`, `optionDisplayKey`).
+ */
+export function itemDisplayKey(item: EditorItem): string | null {
+  if (!isFilled(item)) return null;
+  switch (item.kind) {
+    case "letter": {
+      const l = item.letter!;
+      return `letter:${l.letterId}:${l.form ?? "isolated"}:${l.haraka ?? ""}:${l.madd ? "madd" : ""}`;
+    }
+    case "word": {
+      const text = filled(item.word?.text);
+      return text ? `text:${text.normalize("NFKC").trim()}` : `word:${item.word?.wordId}`;
+    }
+    case "numeral":
+      return `numeral:${item.numeral}`;
+    case "image":
+    case "audio": {
+      const ref = item[item.kind]!;
+      return ref.assetId ? `${item.kind}:asset:${ref.assetId}` : `${item.kind}:${(ref.url ?? "").trim().split("?")[0]}`;
+    }
+  }
+}
+
+/**
+ * What the server refuses to save in an answer set (backend CM-P1: no
+ * correct option, every option correct, duplicate options), in plain words,
+ * so the form says it before a save does. `options`: a multiple-choice
+ * question's options; `cards`: interactive cards (only a correct card is
+ * needed). Nothing is said about an answer set that is still empty.
+ */
+export function answerSetProblems(items: readonly EditorItem[], role: "options" | "cards"): string[] {
+  if (!items.some(isFilled)) return [];
+  const problems: string[] = [];
+  const correct = items.filter((i) => i.isCorrect === true).length;
+  if (correct === 0) {
+    problems.push(
+      role === "options"
+        ? "No option is marked correct, so the child can never finish this question. Mark the right answer."
+        : "No card is marked correct, so the child can never finish. Mark the right card, or make the cards a display.",
+    );
+  }
+  if (role === "cards") return problems;
+  if (items.length >= 2 && correct === items.length) {
+    problems.push("Every option is marked correct, so any tap wins and nothing is tested. Leave at least one wrong option.");
+  }
+  const firstAt = new Map<string, number>();
+  items.forEach((item, n) => {
+    const key = itemDisplayKey(item);
+    if (key === null) return;
+    const first = firstAt.get(key);
+    if (first === undefined) firstAt.set(key, n);
+    else problems.push(`Option ${n + 1} shows the same thing as option ${first + 1}. Each option must be different.`);
+  });
+  return problems;
+}

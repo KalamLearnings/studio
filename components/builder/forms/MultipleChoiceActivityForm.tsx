@@ -8,9 +8,11 @@ import {
   PromptKindPicker,
   WordSelector,
   FieldErrors,
+  FormProblems,
 } from "./shared";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 import {
+  answerSetProblems,
   emptied,
   gridKindOf,
   isFilled,
@@ -182,6 +184,7 @@ export function MultipleChoiceActivityForm({
         columns={4}
         topic={topic}
       />
+      <FormProblems problems={answerSetProblems(items, "options")} />
       <FieldErrors path="options" />
     </div>
   );

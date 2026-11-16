@@ -10,9 +10,11 @@ import {
   PromptKindPicker,
   WordSelector,
   FieldErrors,
+  FormProblems,
 } from "./shared";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 import {
+  answerSetProblems,
   CARD_MODE_OF_KIND,
   cardFromItem,
   cardItem,
@@ -371,6 +373,7 @@ export function ContentWithCardsActivityForm({
         maxItems={4}
         topic={topic}
       />
+      {interactive && <FormProblems problems={answerSetProblems(items, "cards")} />}
       <FieldErrors path="cards" />
 
       <p className="text-xs text-muted-foreground">

@@ -25,7 +25,7 @@
 import { z } from 'zod';
 import { ArabicTextSchema, BaseActivitySchema } from '../base.ts';
 import { BlendFormSchema } from '../blend.ts';
-import { makeReadSchema } from '../references.ts';
+import { LetterRefWriteSchema, makeReadSchema } from '../references.ts';
 
 /**
  * Sound duration schema
@@ -181,6 +181,12 @@ export const SoundBlendConfigSchema = z.object({
   stages: BlendStagesSchema
     .optional()
     .describe('The slides of the activity; the player default applies when absent'),
+
+  // Letter mode (CM-D3e): the letter blended, a reference into `letters` with its haraka
+  // (never a word row). The server writes `word` and `segments` from it for v1.
+  targetLetter: LetterRefWriteSchema
+    .optional()
+    .describe('The letter blended (contentType letter); the server writes word and segments'),
 });
 
 /**

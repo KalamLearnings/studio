@@ -8,8 +8,9 @@
  */
 
 import * as React from "react";
-import { FormField, Checkbox, WordSelector, TextInput } from "./shared";
+import { FormField, Checkbox, WordSelector, TextInput, FieldErrors } from "./shared";
 import { cn } from "@/lib/utils";
+import { withPickedWord } from "@/lib/activityConfig/wordRef";
 import type { BaseActivityFormProps } from "./types";
 
 type LetterDisplayMode = "contextual" | "isolated";
@@ -17,6 +18,8 @@ type LetterDisplayMode = "contextual" | "isolated";
 interface BuildWordConfig {
   useChildName?: boolean;
   targetWord?: string;
+  /** The library word built; the server writes `targetWord` from it (backend CM-D3e). */
+  wordRef?: { wordId: string; text?: string };
   letterDisplayMode?: LetterDisplayMode;
   wordMeaning?: { en?: string; ar?: string };
 }
@@ -46,7 +49,10 @@ export function BuildWordFromLettersForm({
 
   const handleUseChildNameChange = (checked: boolean) => {
     if (checked) {
-      updateConfig({ useChildName: true, targetWord: undefined });
+      // No word: a `wordRef` left behind would make the server write it back.
+      const next: BuildWordConfig = { ...config, useChildName: true, targetWord: undefined };
+      delete next.wordRef;
+      onChange(next);
     } else {
       updateConfig({ useChildName: false });
     }
@@ -122,13 +128,21 @@ export function BuildWordFromLettersForm({
           <WordSelector
             value={targetWord}
             onChange={(word, wordData) => {
-              updateConfig({
-                targetWord: word,
-                wordMeaning: {
-                  en: wordData?.english || wordMeaningEn,
-                  ar: wordMeaningAr,
-                },
-              });
+              // A library word is sent as `wordRef`; the server writes `targetWord` from it.
+              onChange(
+                withPickedWord(
+                  {
+                    ...config,
+                    wordMeaning: {
+                      en: wordData?.english || wordMeaningEn,
+                      ar: wordMeaningAr,
+                    },
+                  },
+                  "targetWord",
+                  word,
+                  wordData
+                )
+              );
             }}
             label="Target Word"
             required
@@ -137,6 +151,7 @@ export function BuildWordFromLettersForm({
             onTranslationChange={(value) => updateWordMeaning("en", value)}
             placeholder="Type to search word library..."
           />
+          <FieldErrors path="wordRef" />
 
           {/* Word Meaning (Arabic) */}
           <FormField

@@ -163,6 +163,8 @@ export interface IntroActivityConfig extends ActivityConfig {
   contentType?: "letter" | "word" | "image";
   targetLetter?: LetterReference | null;
   word?: string;
+  /** The library word shown (word mode); the server writes `word` from it (backend CM-D3e). */
+  wordRef?: { wordId: string };
   image?: string;
   imageWidth?: number;
   imageHeight?: number;
@@ -202,6 +204,8 @@ export interface TapActivityConfig extends ActivityConfig {
   targetLetterIndex?: number;
   targetCount?: number;
   wordMeaning?: string;
+  /** The library word; the server writes `targetWord` and the letter's form from it (backend CM-D3d). */
+  wordRef?: { wordId: string; text?: string };
 }
 
 // Target letter with distractors config (used by many activities)

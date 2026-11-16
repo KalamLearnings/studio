@@ -7,6 +7,7 @@ import { FormField, WordSelector } from "./shared";
 import { useLetters } from "@/lib/hooks/useLetters";
 import { stripTatweel } from "@/lib/utils/letterReference";
 import { harakaFromMarks } from "@kalam/curriculum-schemas";
+import { withPickedWord, withServerForm } from "@/lib/activityConfig/wordRef";
 import {
   isLetterReference,
   createLetterReference,
@@ -67,8 +68,9 @@ function stripDiacritics(char: string): string {
   return char.replace(/[ً-ٰٟ]/g, "");
 }
 
-// For tap_letter_in_word, always use 'isolated' form since we're matching
-// against the base letter character as it appears in the word string
+// The picker's placeholder form. The server derives `targetLetter.form` from
+// the word and the positions on every save (backend CM-D3d); the form keeps
+// the stored, server-derived form while the letter is unchanged (`withServerForm`).
 function determineLetterForm(): LetterForm {
   return "isolated";
 }
@@ -308,7 +310,8 @@ export function TapActivityForm({
         return;
       }
 
-      const firstRef = buildLetterRef(sorted[0]);
+      const built = buildLetterRef(sorted[0]);
+      const firstRef = built ? withServerForm(built, config?.targetLetter) : undefined;
       onChange({
         ...rest,
         targetIndices: sorted,
@@ -340,19 +343,30 @@ export function TapActivityForm({
   const handleClear = useCallback(() => commitIndices([]), [commitIndices]);
 
   // Changing the word invalidates any position-based selection — clear it.
-  const handleWordChange = (word: string, wordData?: { english?: string | null }) => {
+  // A library word is sent as `wordRef` (the server writes `targetWord` and the
+  // letter's form from it); a typed word drops any `wordRef` left behind.
+  const handleWordChange = (
+    word: string,
+    wordData?: { id?: string; arabic?: string; english?: string | null }
+  ) => {
     const {
       targetLetter: _t,
       targetLetterIndex: _i,
       ...rest
     } = config ?? ({} as TapActivityConfig);
-    onChange({
-      ...rest,
-      targetWord: word,
-      wordMeaning: wordData?.english || wordMeaning,
-      targetIndices: [],
-      targetCount: 1,
-    });
+    onChange(
+      withPickedWord(
+        {
+          ...rest,
+          wordMeaning: wordData?.english || wordMeaning,
+          targetIndices: [],
+          targetCount: 1,
+        },
+        "targetWord",
+        word,
+        wordData
+      )
+    );
   };
 
   // Human-readable summary of the current selection.
@@ -368,6 +382,7 @@ export function TapActivityForm({
         label="Target Word"
         hint="The Arabic word containing the letter(s) to find"
         required
+        errorPath="wordRef"
       >
         <WordSelector
           value={targetWord}

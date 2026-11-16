@@ -62,6 +62,12 @@ export interface SoundBlendConfig extends BlendWordConfig {
 
   // NEW, optional (the word-model fields are on BlendWordConfig).
   stages?: BlendStage[];
+  /**
+   * Letter mode (backend CM-D3e): the letter blended, a reference with its
+   * haraka. Sent with `blendVersion: 2`; the server writes `word` and
+   * `segments` from it (`lib/soundBlend/letterMode.ts`).
+   */
+  targetLetter?: { letterId: string; form: string; haraka?: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -149,10 +155,14 @@ export function stampBlendFields(
   return next;
 }
 
-/** Letter mode has no word model: drop every v2 field. */
+/**
+ * Switching between letter and word mode: drop every v2 field (the word
+ * model's, and letter mode's `targetLetter`); the next pick stamps its own.
+ */
 export function clearBlendFields(config: SoundBlendConfig): SoundBlendConfig {
   const next = { ...config };
   delete next.blendVersion;
+  delete next.targetLetter;
   delete next.wordRef;
   delete next.ending;
   delete next.stages;

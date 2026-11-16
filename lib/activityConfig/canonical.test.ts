@@ -279,6 +279,31 @@ describe("show_letter_or_word", () => {
     expect(saved).toEqual({ contentType: "letter", targetLetter: ba, imageWidth: 300 });
   });
 
+  it("a word row naming a library word saves wordRef only; the server writes v1's word (CM-D3e)", () => {
+    // as S3 stores it: the v1 text beside the reference
+    const stored = { contentType: "word", word: "باب", wordRef: { wordId: "w-bab" } };
+    const opened = openForEdit("show_letter_or_word", stored);
+    expect(opened.canonical).toBe(true);
+    // the form shows the word's text
+    expect(opened.config.word).toBe("باب");
+    const saved = toSaveConfig("show_letter_or_word", opened.config, opened.canonical);
+    expectWritable("show_letter_or_word", saved);
+    expect(saved).toEqual({ contentType: "word", wordRef: { wordId: "w-bab" } });
+    // a picked library word on a new activity
+    const picked = toSaveConfig("show_letter_or_word", {
+      contentType: "word",
+      word: "قلم",
+      wordRef: { wordId: "w-qalam" },
+      targetLetter: { letterId: "qaf", form: "initial", haraka: "none" },
+    });
+    expectWritable("show_letter_or_word", picked);
+    expect(picked).toEqual({
+      contentType: "word",
+      wordRef: { wordId: "w-qalam" },
+      targetLetter: { letterId: "qaf", form: "initial" },
+    });
+  });
+
   it("word and picture rows stay in their legacy shape (v1 reads the strings)", () => {
     const word = { contentType: "word", word: "باب" };
     expect(readConfigForEdit("show_letter_or_word", word)).toEqual(word);

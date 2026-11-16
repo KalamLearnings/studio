@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FormField, TextInput, LetterSelector, Checkbox } from "./shared";
-import { useLetters, resolveLetterReference } from "@/lib/hooks/useLetters";
+import { useLetters } from "@/lib/hooks/useLetters";
 import { useBlendWord } from "@/lib/hooks/useBlendWord";
 import { applyHaraka } from "@/lib/utils/letterReference";
 import { detectLetterDuration } from "@/lib/utils/soundBlend";
@@ -24,6 +24,7 @@ import {
   previewV1Segments,
   soundBlendWordEditor,
 } from "@/lib/soundBlend/editor";
+import { letterBlendTarget, toLetterBlendRef, withLetterBlend } from "@/lib/soundBlend/letterMode";
 import { BlendWordSection } from "./blendWord/BlendWordSection";
 import { BlendSettingsFields } from "./soundBlend/BlendSettingsFields";
 import type { BaseActivityFormProps, LetterReference } from "./types";
@@ -59,16 +60,13 @@ export function SoundBlendActivityForm({
 
   const cfg = React.useMemo<SoundBlendConfig>(() => config ?? {}, [config]);
   const contentType: BlendContentType = cfg.contentType || "word";
-  const word = cfg.word || "";
 
-  // In letter mode the picked letter is stored only as the `word` glyph (e.g.
-  // "مَ"). Resolve it back to a LetterReference so the picker pre-selects when
-  // editing. Strip diacritics first since the letters table keys on bare glyphs.
-  const letterValue = React.useMemo<LetterReference | null>(() => {
-    if (contentType !== "letter" || !word) return null;
-    const bareGlyph = word.replace(/[ً-ْٰ]/g, "");
-    return resolveLetterReference(bareGlyph, letters) as LetterReference | null;
-  }, [contentType, word, letters]);
+  // In letter mode the letter is `targetLetter` (backend CM-D3e); a legacy row
+  // without it is read from its `word` glyph with the server's glyph reader.
+  const letterValue = React.useMemo<LetterReference | null>(
+    () => letterBlendTarget(cfg) as LetterReference | null,
+    [cfg]
+  );
   const speed: BlendSpeed = cfg.speed || (contentType === "letter" ? "none" : "segmented");
   // Treat legacy values as their modern equivalents for the picker UI.
   const normalizedSpeed = normalizeSpeed(speed);
@@ -106,25 +104,22 @@ export function SoundBlendActivityForm({
     });
   };
 
-  const handleLetterSelect = (ref: LetterReference | LetterReference[] | null) => {
-    if (!ref || Array.isArray(ref)) return;
+  const handleLetterSelect = (picked: LetterReference | LetterReference[] | null) => {
+    if (!picked || Array.isArray(picked)) return;
+    const ref = toLetterBlendRef(picked);
+    if (!ref) return;
 
     const letterData = letters.find((l) => l.id === ref.letterId);
     if (!letterData) return;
 
-    // Get the letter form, then bake in the selected haraka. The sound_blend
-    // schema stores the diacritic directly in the sound/word strings (e.g.
-    // "عُ"), so the haraka from the picker MUST be applied here - otherwise the
-    // letter renders bare in the app.
+    // The v1 preview: the form's glyph with the haraka's marks (the server
+    // writes the stored `word` and `segments` from `targetLetter` on save).
     const baseChar = letterData.forms?.[ref.form] || letterData.letter;
-    const letterChar = applyHaraka(baseChar, ref.haraka);
+    const glyph = applyHaraka(baseChar, picked.haraka);
     // A sukoon is a stop (1); the apps reject a sukoon with a longer duration.
-    const segment: SoundSegment = { sound: letterChar, duration: detectLetterDuration(letterChar) };
+    const segment: SoundSegment = { sound: glyph, duration: detectLetterDuration(glyph) };
 
-    updateConfig({
-      word: letterChar,
-      segments: [segment],
-    });
+    onChange(withLetterBlend(cfg, ref, { glyph, segment }));
   };
 
   const getSpeedHint = () => {
@@ -184,7 +179,7 @@ export function SoundBlendActivityForm({
             showFormSelector
             value={letterValue}
             onChange={handleLetterSelect}
-            // The legacy sound_blend letter is baked into a glyph string; no madd field.
+            // A letter blend has no madd (the server refuses one).
             showMaddToggle={false}
           />
         </FormField>

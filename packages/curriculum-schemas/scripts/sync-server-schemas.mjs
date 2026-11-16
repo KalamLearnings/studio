@@ -9,10 +9,11 @@
  * (player projection), the save path's v1 display fields (R2), the letters
  * seed and the PROD config shapes fixture.
  *
- *   node packages/curriculum-schemas/scripts/sync-server-schemas.mjs [<backend checkout>]
+ *   node packages/curriculum-schemas/scripts/sync-server-schemas.mjs [<backend checkout>] [<ref>]
  *
  * The backend checkout defaults to ../kalam-readers-backend beside the Studio
- * checkout. Files are read from its `dev` branch. Never edit src/server by
+ * checkout. Files are read from its `dev` branch, or from `<ref>` (a branch
+ * or commit) when given, to sync a backend branch that is not merged yet. Never edit src/server by
  * hand: change the backend by pull request, sync, then rebuild the package
  * (`npm run build:schemas`). `test/server-schemas-drift.test.ts` fails when
  * the copies differ.
@@ -26,12 +27,13 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const pkg = resolve(here, '..');
 const backend = resolve(process.argv[2] ?? resolve(pkg, '../../../kalam-readers-backend'));
+const ref = process.argv[3] ?? 'dev';
 const DIR = 'supabase/functions/_shared/core/contracts/curriculum-schemas';
 const target = join(pkg, 'src/server');
 
 const git = (...args) => execFileSync('git', ['-C', backend, ...args], { encoding: 'utf8' });
 
-const files = git('ls-tree', '-r', '--name-only', 'dev', '--', DIR)
+const files = git('ls-tree', '-r', '--name-only', ref, '--', DIR)
   .split('\n')
   .filter(Boolean)
   .map((path) => path.slice(DIR.length + 1));
@@ -40,9 +42,9 @@ rmSync(target, { recursive: true, force: true });
 for (const file of files) {
   const out = join(target, file);
   mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, git('show', `dev:${DIR}/${file}`));
+  writeFileSync(out, git('show', `${ref}:${DIR}/${file}`));
 }
-console.log(`copied ${files.length} files from ${backend} dev:${DIR}`);
+console.log(`copied ${files.length} files from ${backend} ${ref}:${DIR}`);
 
 /** The v1 field golden and what it runs on, copied with their backend paths. */
 export const GOLDEN_FILES = [
@@ -61,6 +63,6 @@ rmSync(golden, { recursive: true, force: true });
 for (const file of GOLDEN_FILES) {
   const out = join(golden, file);
   mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, git('show', `dev:${file}`));
+  writeFileSync(out, git('show', `${ref}:${file}`));
 }
 console.log(`copied ${GOLDEN_FILES.length} v1 golden files to test/backend`);

@@ -47,3 +47,12 @@ export const setWordReviewed = (wordId: string, reviewed: boolean) =>
 
 /** `GET /words`: every live spelling with its curation columns (the pickers filter client-side). */
 export const listCuratedWords = () => fetchWithAuth<CuratedWord[]>('/words');
+
+/**
+ * `PUT /words/:wordId/spelling`: rewrites the spelling of a row no activity
+ * uses (owner answer 5: wrong harakat on an unused word is fixed directly).
+ * Clears the review. 400 `WORD_SPELLING_INVALID`; 409 `WORD_SPELLING_TAKEN`,
+ * `WORD_IN_USE`, `WORD_HAS_BLEND`.
+ */
+export const changeWordSpelling = (wordId: string, arabic: string) =>
+  fetchWithAuth<CuratedWord>(`/words/${enc(wordId)}/spelling`, { method: 'PUT', ...json({ arabic }) });

@@ -12,12 +12,14 @@ import {
   Check,
   X,
   Loader2,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Card,
   CardDescription,
+  CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -48,6 +50,7 @@ import {
   useCreatePromoCode,
   useUpdatePromoCode,
   useDeletePromoCode,
+  useApplyPromoCode,
 } from "@/lib/hooks/usePromoCodes";
 import type { PromoCode, PromoPlanType } from "@/lib/api/promoCodes";
 import { toast } from "sonner";
@@ -184,11 +187,14 @@ export default function PromoCodesPage() {
   const [newPlanType, setNewPlanType] = React.useState<PromoPlanType>("monthly");
   const [newMaxRedemptions, setNewMaxRedemptions] = React.useState("");
   const [newExpiresAt, setNewExpiresAt] = React.useState("");
+  const [applyCode, setApplyCode] = React.useState("");
+  const [applyUserId, setApplyUserId] = React.useState("");
 
   const { data: promoCodes, isLoading, error } = usePromoCodes();
   const createMutation = useCreatePromoCode();
   const updateMutation = useUpdatePromoCode();
   const deleteMutation = useDeletePromoCode();
+  const applyMutation = useApplyPromoCode();
 
   const filteredCodes = React.useMemo(() => {
     if (!promoCodes) return [];
@@ -284,6 +290,24 @@ export default function PromoCodesPage() {
     createMutation,
   ]);
 
+  const handleApply = React.useCallback(() => {
+    const code = applyCode.trim();
+    const userId = applyUserId.trim();
+    if (!code || !userId) return;
+
+    applyMutation.mutate(
+      { code, userId },
+      {
+        onSuccess: (result) => {
+          if (result.success) {
+            setApplyCode("");
+            setApplyUserId("");
+          }
+        },
+      }
+    );
+  }, [applyCode, applyUserId, applyMutation]);
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-destructive/50 p-12 text-center">
@@ -338,6 +362,66 @@ export default function PromoCodesPage() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Apply Promo to User */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Gift className="h-4 w-4" />
+            Apply Promo Code to User
+          </CardTitle>
+          <CardDescription>
+            Grant a promo code&apos;s plan directly to a user by their ID
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="flex flex-col gap-3 sm:flex-row sm:items-end"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleApply();
+            }}
+          >
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="applyCode">Promo Code</Label>
+              <Input
+                id="applyCode"
+                placeholder="e.g. FAMILYFRIENDS"
+                className="uppercase"
+                value={applyCode}
+                onChange={(e) => setApplyCode(e.target.value.toUpperCase())}
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="applyUserId">User ID (UUID)</Label>
+              <Input
+                id="applyUserId"
+                placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
+                className="font-mono"
+                value={applyUserId}
+                onChange={(e) => setApplyUserId(e.target.value)}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={
+                applyMutation.isPending ||
+                !applyCode.trim() ||
+                !applyUserId.trim()
+              }
+            >
+              {applyMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                "Apply"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Search */}
       <div className="relative max-w-md">

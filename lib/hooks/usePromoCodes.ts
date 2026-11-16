@@ -9,6 +9,7 @@ import {
   updatePromoCode,
   deletePromoCode,
   getPromoCodeRedemptions,
+  applyPromoCodeToUser,
 } from '@/lib/api/promoCodes';
 import type {
   PromoCode,
@@ -100,6 +101,29 @@ export function useDeletePromoCode() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete promo code');
+    },
+  });
+}
+
+/**
+ * Apply a promo code to a specific user (admin)
+ */
+export function useApplyPromoCode() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ code, userId }: { code: string; userId: string }) =>
+      applyPromoCodeToUser(code, userId),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['promoCodes'] });
+        toast.success(`Promo code applied successfully (${result.planType})`);
+      } else {
+        toast.error(result.error || 'Failed to apply promo code');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to apply promo code');
     },
   });
 }

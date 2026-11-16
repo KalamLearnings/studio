@@ -200,7 +200,10 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
         const spec = specs.current.get(d.id);
         if (!spec) return;
         setSession((s) => sessionChanged(s, d, spec.describeError));
-        if (d.status === "failed") toast.error(spec.describeError(d.error));
+        if (d.status === "failed") {
+          toast.dismiss(`decision-${d.id}`);
+          toast.error(spec.describeError(d.error));
+        }
         if (d.status === "undo_failed") toast.error(`Undo failed: ${spec.describeError(d.error)}`);
       },
     });

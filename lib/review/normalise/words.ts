@@ -52,6 +52,9 @@ function spellingState(row: QueueRow, note: ReviewNote | null): ItemState {
 
 const used = (n: number) => `used by ${n}`;
 
+/** Arabic inside a Latin line, wrapped in Unicode isolates so it never reorders the text around it. */
+export const isolate = (ar: string) => `\u2068${ar}\u2069`;
+
 export function spellingItems(words: readonly BankWord[], notes: readonly ReviewNote[]): SpellingItem[] {
   const rows = buildReviewQueue(words);
   const noteById = new Map(notes.map((n) => [n.wordId, n]));
@@ -108,9 +111,9 @@ export function readingItems(words: readonly BankWord[], spellingIds: ReadonlySe
       : [];
     const context = waiting
       ? candidates.length
-        ? `Read as ${candidates.slice(0, 3).map((c) => c.arabic).join(", ")}?`
+        ? `Read as ${candidates.slice(0, 3).map((c) => isolate(c.arabic)).join(", ")}?`
         : "No vowelled spelling with these letters yet"
-      : `Read as ${readsAs?.arabic ?? "another spelling"}`;
+      : `Read as ${readsAs ? isolate(readsAs.arabic) : "another spelling"}`;
     out.push({
       key: `reading:${w.id}`,
       kind: "reading",

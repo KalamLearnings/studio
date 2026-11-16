@@ -5,9 +5,8 @@ vi.mock("@/lib/api/client", () => ({ ApiError: class ApiError extends Error {} }
 import type { BlendReviewForm, BlendReviewWord } from "@/lib/blendWord/review";
 import type { BlendReviewTake } from "@/lib/blendWord/takes";
 import type { DraftRow, WordRequest } from "@/lib/generation/drafts";
-import type { PhraseAudioStatus, PhraseAudioTake } from "@/lib/phrases/phraseAudio";
-import type { PhraseEntry } from "@/lib/phrases/phraseReview";
-import { blendItems, draftItems, phraseItems, recordingItems, requestItems } from "./sources";
+import type { PhraseAudioTake } from "@/lib/phrases/phraseAudio";
+import { blendItems, draftItems, phraseItems, recordingItems, recordingTakeToHear, requestItems, type InboxPhraseEntry } from "./sources";
 
 const take = (over: Partial<BlendReviewTake>): BlendReviewTake =>
   ({ id: "t", kind: "natural", status: "ready", current: true, createdAt: "2026-11-01T00:00:00Z", ...over }) as BlendReviewTake;
@@ -38,6 +37,9 @@ describe("draftItems", () => {
       [row("p"), row("a", { approved_by: "lead" }), row("r", { provenance: { review: { decision: "rejected", by: "l", at: "x", reason: "Too close" } } as DraftRow["provenance"] })],
       new Map([["n1", "Letter ta, practice"]]),
     );
+    expect(draftItems([{ ...row("x"), node_title: "Letter ba, lesson", curriculum_title: "Kalam Readers" }])[0]).toMatchObject({
+      context: "Letter ba, lesson",
+    });
     expect(items.map((i) => i.state)).toEqual(["todo", "approved", "rejected"]);
     expect(items[0]).toMatchObject({ title: "Grid tap (themed hunts)", titleScript: "latin", context: "Letter ta, practice" });
     expect(items[2].context).toBe("Letter ta, practice · Too close");
@@ -53,28 +55,46 @@ describe("requestItems", () => {
 });
 
 describe("phraseItems", () => {
-  const p = (key: string, over: Partial<PhraseEntry> = {}): PhraseEntry => ({
-    phrase_key: key, word_ids: key.split(" "), is_sentence: false, text: "بَابٌ كَبِيرٌ", word_problems: [], used_in: [], approval: null, reason: "unreviewed", ...over,
+  const p = (key: string, over: Partial<InboxPhraseEntry> = {}): InboxPhraseEntry => ({
+    phrase_key: key, word_ids: key.split(" "), is_sentence: false, text: "بَابٌ كَبِيرٌ", word_problems: [], used_in: [], approval: null, reason: "unreviewed", rejection: null, ...over,
   });
-  it("lists pending then approved, and asks to confirm a flag mismatch again", () => {
-    const items = phraseItems({ pending: [p("a b", { reason: "flag_mismatch" })], approved: [p("c d", { reason: null })] });
-    expect(items.map((i) => [i.state, i.todoLabel])).toEqual([["todo", "Confirm again"], ["approved", undefined]]);
+  it("lists pending, approved and rejected, and asks to confirm a flag mismatch again", () => {
+    const items = phraseItems({
+      pending: [p("a b", { reason: "flag_mismatch" })],
+      approved: [p("c d", { reason: null })],
+      rejected: [p("e f", { reason: null, rejection: { reason: "wrong_word_order", note: "Order is off", by: "u", at: "2026-11-15T00:00:00Z" } })],
+    });
+    expect(items.map((i) => [i.state, i.todoLabel])).toEqual([["todo", "Confirm again"], ["approved", undefined], ["rejected", undefined]]);
+    expect(items[2]).toMatchObject({ context: "Phrase · 0 uses · Order is off", decidedBy: "u" });
+  });
+  it("reads the old answer with no rejected list", () => {
+    expect(phraseItems({ pending: [p("a b")], approved: [] })).toHaveLength(1);
   });
 });
 
-describe("recordingItems", () => {
-  const t = (over: Partial<PhraseAudioTake>): PhraseAudioTake =>
-    ({ id: "t", status: "approved", current: true, served: false, created_at: "2026-11-01T00:00:00Z", ...over }) as PhraseAudioTake;
-  const s = (key: string, takes: PhraseAudioTake[], approved = true): PhraseAudioStatus =>
-    ({ phrase_key: key, word_ids: [], text: "فِي البَيْتِ", phrase_approved: approved, is_sentence: false, generation_enabled: true, served_take_id: null, takes });
-  it("waits on a take to hear, fails on a failed take, skips phrases with no take", () => {
-    const items = recordingItems([
-      s("a", [t({ status: "needs_review" }), t({ id: "s", served: true })]),
-      s("b", [t({ status: "failed" })]),
-      s("c", []),
-      s("d", [t({ status: "needs_review" })], false),
-    ]);
-    expect(items.map((i) => [i.id, i.state])).toEqual([["a", "todo"], ["b", "failed"]]);
+describe("recordingItems (BE-2 audio summary)", () => {
+  const e = (key: string, audio: InboxPhraseEntry["audio"]): InboxPhraseEntry => ({
+    phrase_key: key, word_ids: [], is_sentence: false, text: "فِي البَيْتِ", word_problems: [], used_in: [], approval: null, reason: null, audio,
+  });
+  it("waits on a take to hear, fails on a failed take, skips phrases with no audio", () => {
+    const items = recordingItems({
+      pending: [],
+      approved: [
+        e("a", { state: "needs_review", needs_review_take_id: "t2", served_take_id: "t1" }),
+        e("b", { state: "failed" }),
+        e("c", { state: "none" }),
+        e("d", null),
+        e("f", { state: "served", served_take_id: "t1" }),
+        e("g", { state: "in_progress" }),
+      ],
+      generation_enabled: false,
+    });
+    expect(items.map((i) => [i.id, i.state])).toEqual([["a", "todo"], ["b", "failed"], ["f", "approved"], ["g", "listen"]]);
     expect(items[0].context).toBe("Phrase · new take beside the served one");
+    expect(items[0].data.generationEnabled).toBe(false);
+  });
+  it("picks the take to hear from the full read", () => {
+    const t = (over: Partial<PhraseAudioTake>): PhraseAudioTake => ({ id: "t", status: "approved", current: true, served: false, created_at: "x", ...over }) as PhraseAudioTake;
+    expect(recordingTakeToHear({ takes: [t({ id: "s", served: true }), t({ id: "n", status: "needs_review" })] })?.id).toBe("n");
   });
 });

@@ -51,16 +51,28 @@ export function blendItems(words: readonly BlendReviewWord[]): BlendItem[] {
 
 // ---- AI drafts (per node today; BE-1 lists them across nodes) -------------------------
 
-export type DraftItem = InboxItem<"draft", DraftRow>;
+/**
+ * A draft of `GET /curriculum/generation/drafts` (BE-1, `{ items, next_cursor }`): the
+ * per-node draft row plus where it lives. The per-node route has none of these fields.
+ */
+export interface InboxDraftRow extends DraftRow {
+  node_title?: string | null;
+  topic_id?: string | null;
+  topic_title?: string | null;
+  curriculum_id?: string | null;
+  curriculum_title?: string | null;
+}
+
+export type DraftItem = InboxItem<"draft", InboxDraftRow>;
 
 const typeLabel = (type: string) => GENERATION_TYPES.find((t) => t.value === type)?.label ?? type;
 
-/** `nodeTitles` names a node in the row's context line when known. */
-export function draftItems(rows: readonly DraftRow[], nodeTitles: ReadonlyMap<string, string> = new Map()): DraftItem[] {
+/** The node is named by the row's `node_title` (BE-1), else by `nodeTitles`, else by its id. */
+export function draftItems(rows: readonly InboxDraftRow[], nodeTitles: ReadonlyMap<string, string> = new Map()): DraftItem[] {
   return rows.map((d) => {
     const status = draftStatus(d);
     const state: ItemState = status === "pending" ? "todo" : status === "rejected" ? "rejected" : "approved";
-    const node = nodeTitles.get(d.node_id) ?? d.node_id;
+    const node = d.node_title ?? nodeTitles.get(d.node_id) ?? d.node_id;
     const rejected = d.provenance?.review?.reason;
     return {
       key: `draft:${d.id}`,
@@ -74,7 +86,7 @@ export function draftItems(rows: readonly DraftRow[], nodeTitles: ReadonlyMap<st
       waitingSince: d.provenance?.created_at ?? d.created_at,
       decidedAt: d.approved_at ?? d.provenance?.review?.at ?? null,
       decidedBy: d.approved_by ?? d.provenance?.review?.by ?? null,
-      searchText: `${d.type} ${node} ${d.node_id}`,
+      searchText: [d.type, node, d.node_id, d.topic_title, d.curriculum_title].filter(Boolean).join(" "),
       bulkSafe: false,
       familyId: null,
       data: d,
@@ -110,9 +122,37 @@ export function requestItems(rows: readonly WordRequest[], nodeTitles: ReadonlyM
 
 // ---- phrases (GET /curriculum/reading/phrases) ----------------------------------------
 
-export type PhraseItem = InboxItem<"phrase", PhraseEntry>;
+/** BE-5: a rejected phrase carries its rejection; every entry has the field (null unless rejected). */
+export interface PhraseRejection {
+  reason: string;
+  note?: string | null;
+  by?: string | null;
+  at?: string | null;
+}
 
-function phraseItem(p: PhraseEntry, approved: boolean): PhraseItem {
+/** BE-2: the audio summary on an approved entry. */
+export interface PhraseAudioSummary {
+  state: "none" | "in_progress" | "needs_review" | "served" | "failed";
+  needs_review_take_id?: string | null;
+  served_take_id?: string | null;
+}
+
+export interface InboxPhraseEntry extends PhraseEntry {
+  rejection?: PhraseRejection | null;
+  audio?: PhraseAudioSummary | null;
+}
+
+/** `GET /curriculum/reading/phrases` with BE-2 and BE-5: rejected and the recording switch are optional so the old answer still reads. */
+export interface InboxPhraseList extends Omit<PhraseList, "pending" | "approved"> {
+  pending: InboxPhraseEntry[];
+  approved: InboxPhraseEntry[];
+  rejected?: InboxPhraseEntry[];
+  generation_enabled?: boolean;
+}
+
+export type PhraseItem = InboxItem<"phrase", InboxPhraseEntry>;
+
+function phraseItem(p: InboxPhraseEntry, state: "todo" | "approved" | "rejected"): PhraseItem {
   const kindWord = p.is_sentence ? "Sentence" : "Phrase";
   const problems = p.word_problems.length;
   return {
@@ -121,21 +161,22 @@ function phraseItem(p: PhraseEntry, approved: boolean): PhraseItem {
     id: p.phrase_key,
     title: p.text ?? p.phrase_key,
     titleScript: p.text ? "ar" : "latin",
-    state: approved ? "approved" : "todo",
+    state,
     todoLabel: p.reason === "flag_mismatch" ? "Confirm again" : undefined,
     context: [
       kindWord,
       problems
         ? `${problems} word ${problems === 1 ? "problem" : "problems"}`
         : `${p.used_in.length} ${p.used_in.length === 1 ? "use" : "uses"}`,
-      approved ? "" : reasonText(p.reason),
+      state === "todo" ? reasonText(p.reason) : "",
+      state === "rejected" && p.rejection ? p.rejection.note || p.rejection.reason : "",
     ]
       .filter(Boolean)
       .join(" · "),
     usage: p.used_in.length,
     waitingSince: null,
-    decidedAt: p.approval?.reviewed_at ?? null,
-    decidedBy: p.approval?.reviewed_by ?? null,
+    decidedAt: state === "rejected" ? (p.rejection?.at ?? null) : (p.approval?.reviewed_at ?? null),
+    decidedBy: state === "rejected" ? (p.rejection?.by ?? null) : (p.approval?.reviewed_by ?? null),
     searchText: p.used_in.map((u) => `${u.type} ${u.node_id}`).join(" "),
     bulkSafe: false,
     familyId: null,
@@ -143,43 +184,63 @@ function phraseItem(p: PhraseEntry, approved: boolean): PhraseItem {
   };
 }
 
-export function phraseItems(list: PhraseList): PhraseItem[] {
-  return [...list.pending.map((p) => phraseItem(p, false)), ...list.approved.map((p) => phraseItem(p, true))];
+export function phraseItems(list: InboxPhraseList): PhraseItem[] {
+  return [
+    ...list.pending.map((p) => phraseItem(p, "todo")),
+    ...list.approved.map((p) => phraseItem(p, "approved")),
+    ...(list.rejected ?? []).map((p) => phraseItem(p, "rejected")),
+  ];
 }
 
-// ---- recordings (per phrase today; BE-2 summarises them on the phrase list) -----------
+// ---- recordings ---------------------------------------------------------------------
 
-export type RecordingItem = InboxItem<"recording", PhraseAudioStatus>;
+/** From the BE-2 summary on the phrase list: one item per approved phrase whose audio is not `none`. */
+export type RecordingItem = InboxItem<"recording", { entry: InboxPhraseEntry; audio: PhraseAudioSummary; generationEnabled: boolean }>;
 
-/** One item per approved phrase that has takes; phrases with no take yet are not a decision. */
-export function recordingItems(statuses: readonly PhraseAudioStatus[]): RecordingItem[] {
+export function recordingItems(list: InboxPhraseList): RecordingItem[] {
   const out: RecordingItem[] = [];
-  for (const s of statuses) {
-    if (!s.phrase_approved || s.takes.length === 0) continue;
-    const toHear = takeToReview(s);
-    const latest = s.takes.find((t) => t.current) ?? s.takes[0];
-    const served = s.takes.some((t) => t.served);
-    const state: ItemState = toHear ? "todo" : latest?.status === "failed" ? "failed" : served ? "approved" : "rejected";
+  for (const p of list.approved) {
+    const audio = p.audio;
+    if (!audio || audio.state === "none") continue;
+    const state: ItemState =
+      audio.state === "needs_review" ? "todo" : audio.state === "failed" ? "failed" : audio.state === "served" ? "approved" : "listen";
     out.push({
-      key: `recording:${s.phrase_key}`,
+      key: `recording:${p.phrase_key}`,
       kind: "recording",
-      id: s.phrase_key,
-      title: s.text ?? s.phrase_key,
-      titleScript: s.text ? "ar" : "latin",
+      id: p.phrase_key,
+      title: p.text ?? p.phrase_key,
+      titleScript: p.text ? "ar" : "latin",
       state,
+      todoLabel: audio.state === "in_progress" ? "Being made" : undefined,
       context: [
-        s.is_sentence ? "Sentence" : "Phrase",
-        toHear ? (served ? "new take beside the served one" : "first take") : state === "failed" ? "last take failed" : "",
+        p.is_sentence ? "Sentence" : "Phrase",
+        audio.state === "needs_review"
+          ? audio.served_take_id
+            ? "new take beside the served one"
+            : "first take"
+          : audio.state === "failed"
+            ? "last take failed"
+            : audio.state === "in_progress"
+              ? "a take is being made"
+              : "",
       ]
         .filter(Boolean)
         .join(" · "),
-      usage: 0,
-      waitingSince: toHear?.created_at ?? null,
+      usage: p.used_in.length,
+      waitingSince: null,
       searchText: "",
       bulkSafe: false,
       familyId: null,
-      data: s,
+      data: { entry: p, audio, generationEnabled: list.generation_enabled ?? true },
     });
   }
   return out;
+}
+
+/**
+ * The take a Recording pane plays and decides, from the full read it makes when
+ * the item opens (`GET .../:key/audio`); the summary above only names its id.
+ */
+export function recordingTakeToHear(status: Pick<PhraseAudioStatus, "takes">) {
+  return takeToReview(status);
 }

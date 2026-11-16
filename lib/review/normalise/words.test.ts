@@ -56,7 +56,7 @@ describe("readingItems", () => {
     const r = byId.get("kitabBare");
     expect(r).toMatchObject({ key: "reading:kitabBare", state: "todo" });
     expect(r?.data.candidates.map((c) => c.id)).toEqual(["kitab"]);
-    expect(r?.context).toBe("Read as كِتَاب? · family book");
+    expect(r?.context).toBe("Read as \u2068كِتَاب\u2069? · family book");
   });
   it("shows a confirmed reading as decided", () => {
     expect(byId.get("waladBare")).toMatchObject({ state: "approved" });

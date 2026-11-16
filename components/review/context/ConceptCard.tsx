@@ -9,16 +9,17 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { loadConceptDetails } from "@/lib/api/concepts";
 import type { ConceptDetail } from "@/lib/types/wordFamilies";
+import { useLibraryApi } from "../library/api";
 import { Ar, ContextCard, Kbd } from "../parts";
 
 export const CONCEPT_DETAILS_KEY = ["concept-details"] as const;
 
 export function useFamilyConcept(familyId: string | null) {
+  const api = useLibraryApi();
   const query = useQuery({
     queryKey: CONCEPT_DETAILS_KEY,
-    queryFn: loadConceptDetails,
+    queryFn: api.loadConceptDetails,
     enabled: !!familyId,
     staleTime: 5 * 60_000,
   });

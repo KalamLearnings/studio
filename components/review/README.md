@@ -13,11 +13,15 @@ The old pages keep their routes until CW-12; only their sidebar items are gone.
 | `lib/review/decisions.ts` | The ledger: `inverse` decisions are sent now and undone with their inverse route; `hold` decisions wait 5 s so Undo cancels them. |
 | `lib/review/session.ts` | Optimistic overlays, per-item errors and busy state, folded from the ledger's events. |
 | `lib/review/keyboard.ts` | Key to command, and the shortcut sheet rows. |
-| `lib/review/url.ts` | `lens`, `status`, `sort`, `q`, `item` (and `family`, `concept` for CW-9). |
+| `lib/review/url.ts` | `lens`, `status`, `sort`, `q`, `item`, and `family` / `concept` (the editor open in the pane). |
+| `lib/review/library.ts` | Pure: Families and Concepts rows, gap filters (no concept, no headword, not reviewed, readings; no picture, picture problem, no family), search, `LibraryRef`. |
+| `lib/review/bulk.ts` | Pure: the bulk selection (bulk-safe only) and the sequential run with progress and partial-failure report. |
 | `lib/hooks/useReviewInbox.ts` | Reads the sources of the registered kinds, applies the session, offers `decide` and `undo`. |
 | `components/review/ReviewWorkspace.tsx` | Rail, list, pane, URL sync, keyboard, focus. |
 | `components/review/lenses/` | The lens registry and one folder per lens pane. |
 | `components/review/PaneFrame.tsx`, `parts.tsx`, `context/` | What every pane composes: hero, cards, decision bar, gate bar, Family and Concept cards. |
+| `components/review/library/` | CW-9: the Family and Concept editors (moved from the old pages, which import them from here), the create dialogs, the Families and Concepts list, the in-pane sub-views, `useReviewLibrary`, and `LibraryApiContext` (the routes, swappable in a preview or test). |
+| `components/review/bulk/` | CW-10: `useBulkApprove` and the selection, progress and report strip. |
 
 ## Adding a lens
 
@@ -60,11 +64,15 @@ A kind shows in Review (rail, counts, number key, sheet rows, and its source is 
 
 Other extension points:
 
-- **Library (CW-9).** `lib-families`, `lib-concepts` are valid lenses and `family`, `concept` are parsed from the URL,
-  but the workspace sends both to Everything until CW-9 adds the list and the in-pane editors. Change
-  `openFamily` / `openConcept` in `ReviewWorkspace` (they go to the old pages today).
-- **Bulk (CW-10).** `item.bulkSafe` (unflagged, fully vowelled spellings that wait) and `isBulkSafe` exist; `x` and `A`
-  resolve to `toggleSelect` and `bulkApprove` commands that nothing handles yet. Rows have no checkbox column yet.
+- **Library (CW-9).** `lib-families` and `lib-concepts` swap the list column for `LibraryList`; a row, `f` / `c`, or a
+  context card's Edit opens the editor in the pane (`LibraryPane`) with "Back to <item>" (`esc`). `openFamily(null)`
+  ("Add to a family") opens the Families lens and the family you pick offers the word you came from;
+  `openConcept(null)` opens the word's family, where concepts are linked. Panes only call `openFamily` / `openConcept`.
+- **Bulk (CW-10).** Only items with `isBulkSafe` (today: unflagged, fully vowelled spellings that wait; never audio,
+  drafts or phrases) get a row checkbox; `x` toggles, `shift+A` approves the checked rows. Each is its own
+  `approveSpelling` decision with `quiet: true` (no toast), sent one at a time: the run watches the session's busy and
+  error per item rather than wrapping the request, so it works with any `decide`. Undo all withdraws each one through
+  its inverse route. To make another kind bulk-safe, set `bulkSafe` in its normaliser and give `useBulkApprove` its spec.
 - **Views.** `VIEW_META` lists the kinds each view covers; a view shows in the rail once one of its kinds is registered.
 
 ## Conventions

@@ -148,9 +148,9 @@ export function ReviewList(p: ReviewListProps) {
   const failed = p.sources.filter((s) => s.status === "error");
   const updated = p.updatedAt ? shortAge(new Date(p.updatedAt).toISOString(), p.now) : "";
   const name = lensName(p.lens);
-  const checkable = !!p.onToggleCheck && p.visible.some(canBulk);
+  const checkable = !!p.onToggleCheck && p.visible.some((it) => canBulk(it, p.roles));
   const rowCheck = (it: InboxItem): RowCheck =>
-    !checkable ? "none" : canBulk(it) ? { checked: !!p.checked?.has(it.key), onToggle: () => p.onToggleCheck?.(it) } : "space";
+    !checkable ? "none" : canBulk(it, p.roles) ? { checked: !!p.checked?.has(it.key), onToggle: () => p.onToggleCheck?.(it) } : "space";
 
   const onListKey = (e: React.KeyboardEvent) => {
     if (e.key === "Home" && p.visible[0]) {

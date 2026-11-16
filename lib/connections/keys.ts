@@ -63,20 +63,6 @@ export function wordsUrlSearch(state: WordsUrlState): string {
   return s ? `?${s}` : "";
 }
 
-/** Where the old Families and Concepts routes send a visitor (CG-1). */
-export function legacyRedirect(
-  route: "families" | "concepts",
-  params: Record<string, string | string[] | undefined>,
-): string {
-  const one = (k: string) => {
-    const v = params[k];
-    return (Array.isArray(v) ? v[0] : v)?.trim() || null;
-  };
-  const id = route === "families" ? one("family") ?? one("id") : one("concept") ?? one("slug");
-  if (!id) return "/words";
-  return `/words${wordsUrlSearch({ focus: nodeKey(route === "families" ? "family" : "concept", id), view: "focus" })}`;
-}
-
 // ---- the trail ---------------------------------------------------------------------------
 
 /** How many places the breadcrumb keeps. */

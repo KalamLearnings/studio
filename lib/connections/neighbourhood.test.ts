@@ -3,7 +3,7 @@ import type { WordUsageItem } from "../api/wordUsage";
 import { buildGraph } from "./graph";
 import { SAMPLE } from "./fixtures";
 import type { NodeKey } from "./keys";
-import { activityRows, existsInGraph, neighbourhood, usageUnitsFor, type Box, type UsageLookup } from "./neighbourhood";
+import { activityRows, bookRows, existsInGraph, neighbourhood, usageUnitsFor, type Box, type UsageLookup } from "./neighbourhood";
 
 const g = buildGraph(SAMPLE);
 
@@ -17,6 +17,15 @@ const use = (o: Partial<WordUsageItem> = {}): WordUsageItem => ({
   curriculum_title: "Level 1",
   role: "target",
   ...o,
+});
+
+const book = (unit_id: string, book_id = "b1") => ({
+  unit_id,
+  book_id,
+  book_title: `Book ${book_id}`,
+  book_title_ar: null,
+  item_id: null,
+  role: "exposure",
 });
 
 const ready = (byUnit: Record<string, WordUsageItem[]>): UsageLookup => (unit) =>
@@ -76,19 +85,29 @@ describe("a spelling in focus", () => {
     expect(keys(letters)).toEqual(["letter:kaf", "letter:ta", "letter:alif", "letter:ba"]);
     expect(letters.editable).toBe(false);
   });
-  it("lists the lessons that use it, one row per activity", () => {
+  it("lists the activities that use it, one row per activity", () => {
     const [u] = byKind(
       boxes("word:w-kitab", ready({ "word:w-kitab": [use(), use({ role: "distractor" }), use({ activity_id: "a2" })] })),
-      "usedIn",
+      "activities",
     );
-    expect(u.title).toBe("Used in lessons");
+    expect(u.title).toBe("Activities");
+    expect(u.area).toBe("bottom");
     expect(u.state).toBe("ready");
     expect(u.activities?.map((a) => [a.activityId, a.roles])).toEqual([["a1", ["target", "distractor"]], ["a2", ["target"]]]);
     expect(u.activities?.[0].path).toBe("Level 1 › Kaf › Letter Kaf");
   });
   it("waits for the lessons, and says when they fail", () => {
-    expect(byKind(boxes("word:w-kitab", loading), "usedIn")[0].state).toBe("loading");
-    expect(byKind(boxes("word:w-kitab", () => ({ status: "error" })), "usedIn")[0].state).toBe("error");
+    expect(byKind(boxes("word:w-kitab", loading), "activities")[0].state).toBe("loading");
+    expect(byKind(boxes("word:w-kitab", loading), "books")[0].state).toBe("loading");
+    expect(byKind(boxes("word:w-kitab", () => ({ status: "error" })), "books")[0].state).toBe("error");
+  });
+  it("lists the books that show it in their own box, one row per book", () => {
+    const usage: UsageLookup = () => ({ status: "ready", items: [], books: [book("u1"), book("u2"), book("u3", "b2")] });
+    const [b] = byKind(boxes("word:w-kitab", usage), "books");
+    expect(b.title).toBe("Books");
+    expect(b.area).toBe("br");
+    expect(b.editable).toBe(false);
+    expect(b.books?.map((r) => [r.bookId, r.units])).toEqual([["b1", 2], ["b2", 1]]);
   });
   it("suggests a split for جمل", () => {
     const n = neighbourhood(g, "word:w-jml", ready({}));
@@ -117,7 +136,7 @@ describe("a word (family) in focus", () => {
   it("gathers the lessons of every form", () => {
     const [u] = byKind(
       boxes("family:book", ready({ "word:w-kitab": [use()], "word:w-ktb": [use(), use({ activity_id: "a3" })] })),
-      "usedIn",
+      "activities",
     );
     expect(u.activities?.map((a) => [a.activityId, a.wordIds])).toEqual([["a1", ["w-kitab", "w-ktb"]], ["a3", ["w-ktb"]]]);
     expect(usageUnitsFor(g, "family:book")).toEqual(["word:w-kitab", "word:w-ktb", "word:w-kitabu"]);
@@ -134,6 +153,8 @@ describe("a meaning in focus", () => {
       ["left", "Words for it"],
       ["right", "Pictures"],
       ["bottom", "Forms of the word"],
+      ["bl", "Activities"],
+      ["br", "Books"],
     ]);
     expect(keys(bs[0])).toEqual(["family:book"]);
     expect(bs[2].editable).toBe(false);
@@ -151,10 +172,14 @@ describe("a picture and a letter in focus", () => {
     expect(keys(bs[0])).toEqual(["concept:book"]);
     expect(keys(bs[1])).toEqual(["family:book"]);
   });
-  it("lists a letter's spellings and says its lessons are not available yet", () => {
-    const bs = neighbourhood(g, "letter:jeem", () => ({ status: "unavailable", reason: "later" })).boxes;
+  it("lists a letter's spellings, and its own activities and books", () => {
+    const bs = neighbourhood(g, "letter:jeem", ready({ "letter:jeem": [use()] })).boxes;
     expect(keys(bs[0])).toEqual(["word:w-jamal", "word:w-jml", "word:w-jumal"]);
-    expect(bs[1]).toMatchObject({ kind: "usedIn", state: "unavailable", stateText: "later" });
+    expect(bs[1]).toMatchObject({ kind: "activities", area: "br", state: "ready" });
+    expect(bs[1].activities?.[0].wordIds).toEqual([]);
+    expect(bs[2]).toMatchObject({ kind: "books", area: "bl" });
+    expect(usageUnitsFor(g, "letter:jeem")).toEqual(["letter:jeem"]);
+    expect(usageUnitsFor(g, "concept:book")).toEqual(["concept:book"]);
   });
 });
 
@@ -172,5 +197,15 @@ describe("activityRows", () => {
     const rows = activityRows([{ wordId: "x", items: [use({ activity_id: "b", topic_title: "" }), use({ activity_id: "a" })] }]);
     expect(rows.map((r) => r.activityId)).toEqual(["b", "a"]);
     expect(rows[0].path).toBe("Level 1 › Letter Kaf");
+  });
+});
+
+describe("bookRows", () => {
+  it("counts units once and keeps the forms that appear", () => {
+    const rows = bookRows([
+      { wordId: "w1", books: [book("u1"), book("u1")] },
+      { wordId: "w2", books: [book("u1")] },
+    ]);
+    expect(rows).toEqual([{ bookId: "b1", title: "Book b1", titleAr: null, units: 1, roles: ["exposure"], wordIds: ["w1", "w2"] }]);
   });
 });

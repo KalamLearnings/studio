@@ -4,7 +4,8 @@
  * The Family context card (CW-5): the word's family, its members and their
  * states, the current spelling highlighted. Members come from the `GET /words`
  * rows already loaded (each carries `family_id`); the gloss and headword from
- * `GET /words/families`. `f` opens the family.
+ * `GET /words/families`. `f` opens the family. "Show connections" opens the
+ * spelling, or the family, on the Words page (CG-7).
  */
 
 import * as React from "react";
@@ -12,6 +13,7 @@ import type { ReviewBank } from "@/lib/hooks/useReviewInbox";
 import { awaitsReadsAs } from "@/lib/words/family";
 import { cn } from "@/lib/utils";
 import { Ar, ContextCard, Kbd, StatusPill } from "../parts";
+import { ShowConnections } from "./ShowConnections";
 
 export function familyMembers(bank: ReviewBank, familyId: string) {
   return bank.words
@@ -37,6 +39,11 @@ export function FamilyCard({
         <button type="button" className="text-[12.5px] text-primary hover:underline" onClick={() => onOpen(null)}>
           Add to a family <Kbd>f</Kbd>
         </button>
+        {currentWordId && (
+          <p className="mt-2 border-t pt-2">
+            <ShowConnections focus={`word:${currentWordId}`} label="Show this spelling's connections" />
+          </p>
+        )}
       </ContextCard>
     );
   }
@@ -46,9 +53,12 @@ export function FamilyCard({
     <ContextCard
       title="Family"
       aside={
-        <button type="button" className="text-[12.5px] normal-case tracking-normal text-primary hover:underline" onClick={() => onOpen(familyId)}>
-          Edit <Kbd>f</Kbd>
-        </button>
+        <span className="flex items-center gap-3">
+          <ShowConnections focus={`family:${familyId}`} label="Connections" />
+          <button type="button" className="text-[12.5px] normal-case tracking-normal text-primary hover:underline" onClick={() => onOpen(familyId)}>
+            Edit <Kbd>f</Kbd>
+          </button>
+        </span>
       }
     >
       <div className="mb-1.5 text-[12.5px]">
@@ -91,6 +101,11 @@ export function FamilyCard({
           );
         })}
       </ul>
+      {currentWordId && (
+        <p className="mt-2 border-t pt-2">
+          <ShowConnections focus={`word:${currentWordId}`} label="Show this spelling's connections" />
+        </p>
+      )}
     </ContextCard>
   );
 }

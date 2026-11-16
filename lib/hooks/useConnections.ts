@@ -30,7 +30,7 @@ export function useConnectionsUsage(source: ConnectionsSource, units: readonly N
       queryKey: ["connections", "usage", unit],
       queryFn: async () => {
         const p = source.usage(unit);
-        return p ? { items: await p } : { items: null };
+        return p ? await p : null;
       },
       staleTime: 60_000,
     })),
@@ -41,8 +41,8 @@ export function useConnectionsUsage(source: ConnectionsSource, units: readonly N
     const r = i >= 0 ? results[i] : undefined;
     if (!r || r.isLoading) return { status: "loading" };
     if (r.isError) return { status: "error" };
-    if (!r.data || r.data.items === null) return { status: "unavailable", reason: USAGE_UNAVAILABLE };
-    return { status: "ready", items: r.data.items };
+    if (!r.data) return { status: "unavailable", reason: USAGE_UNAVAILABLE };
+    return { status: "ready", items: r.data.activities, books: r.data.books };
   };
 }
 

@@ -51,10 +51,15 @@ export const CONNECTION_KINDS = {
     editable: false,
     explain: "Worked out from the spelling. To change them, change the spelling.",
   },
-  usedIn: {
-    name: "Used in lessons",
+  activities: {
+    name: "Activities",
     editable: false,
-    explain: "Worked out from each activity's settings. Change it in the lesson builder.",
+    explain: "Lesson activities that use it. Worked out from each activity's settings; change it in the lesson builder.",
+  },
+  books: {
+    name: "Books",
+    editable: false,
+    explain: "Storybook pages that show it. Worked out from the book's text; change it in the book editor.",
   },
 } as const;
 
@@ -65,9 +70,11 @@ export const THROUGH_FAMILY = "Comes from the family. Connect the family, not th
 export const THROUGH_MEANING = "Comes from the meaning. Connect the picture to the meaning.";
 export const THROUGH_WORDS = "Comes from the words with this meaning.";
 
-/** Owner decision 3: who may make connections, and what everyone else is told. */
-export const READ_ONLY_REASON =
-  "Read only. Only a curriculum lead or a phrase reviewer can make connections.";
+/** Owner decision 3: who may make connections (the backend's `PHRASE_REVIEWER_REQUIRED`). */
+export const CONNECT_ROLE_TEXT = "Only a curriculum lead or a phrase reviewer can make connections.";
+
+/** What everyone else is told on the Words page. */
+export const READ_ONLY_REASON = `Read only. ${CONNECT_ROLE_TEXT}`;
 
 /** Owner decision 4. Kept for the connect dialog (CG-5) so the refusal reads the same everywhere. */
 export const NO_MEANING_LINKS = "Meanings are not linked to each other.";

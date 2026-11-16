@@ -4,7 +4,8 @@
  * The Words page (CG-1): search, the gaps rail, and either the focus frame
  * around one item or "All words". The URL holds `?focus=<type>:<id>&view=all`;
  * every move pushes a history entry, so Back retraces the trail.
- * Read only: connecting (CG-5) plugs in through `extension.ts`.
+ * Connecting (CG-5) plugs in through `extension.ts`: `editing/ConnectEditing`
+ * fills it for a curriculum lead or a phrase reviewer; everyone else reads.
  */
 
 import * as React from "react";
@@ -29,6 +30,7 @@ import { existsInGraph, neighbourhood, usageUnitsFor } from "@/lib/connections/n
 import { searchIndex } from "@/lib/connections/search";
 import { useConnectionsGraph, useConnectionsUsage } from "@/lib/hooks/useConnections";
 import { AllWords } from "./AllWords";
+import { ConnectEditing } from "./editing/ConnectEditing";
 import { FocusFrame } from "./FocusFrame";
 import { GapsRail } from "./GapsRail";
 import { KindsDialog } from "./KindsDialog";
@@ -168,7 +170,13 @@ export function WordsPage({ access }: { access: ConnectAccess | null }) {
             <>
               <Trail graph={graph} trail={trail} focus={focus} onOpen={open} />
               {hood ? (
-                <FocusFrame graph={graph} hood={hood} onOpen={open} cardRef={cardRef} />
+                access?.canConnect ? (
+                  <ConnectEditing graph={graph}>
+                    <FocusFrame graph={graph} hood={hood} onOpen={open} cardRef={cardRef} />
+                  </ConnectEditing>
+                ) : (
+                  <FocusFrame graph={graph} hood={hood} onOpen={open} cardRef={cardRef} />
+                )
               ) : (
                 <div className="mx-auto max-w-md py-12 text-center text-sm text-muted-foreground">
                   <p>{focus && typeOfKey(focus) === "activity" ? "Lesson activities open in the lesson builder." : "That item is not in the word bank any more."}</p>

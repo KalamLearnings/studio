@@ -12,11 +12,12 @@ import * as React from "react";
 import { Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { canBulk } from "@/lib/review/bulk";
+import { BULK_HINT, canBulk } from "@/lib/review/bulk";
 import { useReviewInbox } from "@/lib/hooks/useReviewInbox";
 import type { DecisionSpec } from "@/lib/review/actions/types";
 import {
   INBOX_KINDS,
+  canDecide,
   decidedCount,
   inLens,
   inStatus,
@@ -47,6 +48,7 @@ import { CreateConceptDialog, CreateFamilyDialog } from "./library/CreateDialogs
 import { LibraryEmpty, LibraryPane, type SubviewBack } from "./library/LibraryPane";
 import { LibraryList, libRowId } from "./library/LibraryList";
 import { useReviewLibrary } from "./library/useReviewLibrary";
+import { ConnectAccessContext } from "./library/access";
 import { Ar, Kbd, SkeletonBar } from "./parts";
 import { ReviewList } from "./ReviewList";
 import { ReviewRail } from "./ReviewRail";
@@ -72,8 +74,8 @@ const LIBRARY_SHORTCUTS = [
   {
     title: "Decide",
     rows: [
-      { label: "Select for bulk approve (unflagged, fully vowelled spellings)", keys: ["x"] },
-      { label: "Approve every selected spelling", keys: ["shift", "A"] },
+      { label: "Select for bulk approve (unflagged, fully vowelled spellings; suggested words of case endings)", keys: ["x"] },
+      { label: "Approve every selected item", keys: ["shift", "A"] },
     ],
   },
   {
@@ -402,8 +404,8 @@ export function ReviewWorkspace({
         case "toggleSelect": {
           if (isLibLens(lens) || sub) return;
           const it = visibleRef.current.find((i) => i.key === selected) ?? null;
-          if (it && !canBulk(it) && !bulk.checked.has(it.key)) {
-            toast("Only unflagged, fully vowelled spellings that wait can be approved together.", { id: "bulk-hint" });
+          if (it && !canBulk(it, inbox.roles) && !bulk.checked.has(it.key)) {
+            toast(BULK_HINT, { id: "bulk-hint" });
             return;
           }
           bulk.toggle(it);
@@ -520,6 +522,7 @@ export function ReviewWorkspace({
   }
 
   return (
+    <ConnectAccessContext.Provider value={canDecide("phrase", inbox.roles)}>
     <PaneCommandContext.Provider value={paneHandler}>
       <BackToListContext.Provider value={() => setShowDetail(false)}>
         <HeaderSlot>
@@ -625,7 +628,7 @@ export function ReviewWorkspace({
         </div>
         <ShortcutSheet open={sheetOpen} onOpenChange={setSheetOpen} groups={SHORTCUTS} />
         <CreateFamilyDialog
-          open={creating === "family"}
+          open={creating === "family" && canDecide("phrase", inbox.roles)}
           onOpenChange={(o) => setCreating(o ? "family" : null)}
           onCreated={(id) => onCreated({ type: "family", id })}
         />
@@ -636,5 +639,6 @@ export function ReviewWorkspace({
         />
       </BackToListContext.Provider>
     </PaneCommandContext.Provider>
+    </ConnectAccessContext.Provider>
   );
 }

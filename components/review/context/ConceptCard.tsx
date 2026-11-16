@@ -4,7 +4,8 @@
  * The Concept context card (CW-5): the concept the word's family names, with
  * its first picture. The backend has no family-to-concept read, so the
  * concept details are loaded once (as the family editor does) and shared by
- * every pane through the query cache. `c` opens the concept.
+ * every pane through the query cache. `c` opens the concept; "Connections"
+ * opens it on the Words page (CG-7).
  */
 
 import * as React from "react";
@@ -12,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ConceptDetail } from "@/lib/types/wordFamilies";
 import { useLibraryApi } from "../library/api";
 import { Ar, ContextCard, Kbd } from "../parts";
+import { ShowConnections } from "./ShowConnections";
 
 export const CONCEPT_DETAILS_KEY = ["concept-details"] as const;
 
@@ -79,9 +81,12 @@ export function ConceptCard({
     <ContextCard
       title="Concept"
       aside={
-        <button type="button" className="text-[12.5px] normal-case tracking-normal text-primary hover:underline" onClick={() => onOpen(concept.slug)}>
-          Edit <Kbd>c</Kbd>
-        </button>
+        <span className="flex items-center gap-3">
+          <ShowConnections focus={`concept:${concept.slug}`} label="Connections" />
+          <button type="button" className="text-[12.5px] normal-case tracking-normal text-primary hover:underline" onClick={() => onOpen(concept.slug)}>
+            Edit <Kbd>c</Kbd>
+          </button>
+        </span>
       }
     >
       <div className="flex items-center gap-2.5">

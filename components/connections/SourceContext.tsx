@@ -8,7 +8,7 @@
 import * as React from "react";
 import { listCuratedWords, listWordFamilies } from "@/lib/api/wordFamilies";
 import { loadConceptDetails } from "@/lib/api/concepts";
-import { getWordUsage } from "@/lib/api/wordUsage";
+import { getContentUsage } from "@/lib/api/contentUsage";
 import { fetchLetters } from "@/lib/hooks/useLetters";
 import { routesSource, type ConnectionsSource } from "@/lib/connections/source";
 
@@ -17,7 +17,7 @@ export const defaultSource: ConnectionsSource = routesSource({
   listFamilies: listWordFamilies,
   listConceptDetails: loadConceptDetails,
   listLetters: fetchLetters,
-  wordUsage: getWordUsage,
+  contentUsage: getContentUsage,
 });
 
 const SourceContext = React.createContext<ConnectionsSource>(defaultSource);

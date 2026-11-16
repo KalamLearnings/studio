@@ -11,6 +11,7 @@
  * set only on boxes made by hand, and nothing reads it until CG-5.
  */
 
+import type { BookUnitUse } from "../api/contentUsage";
 import type { WordUsageItem, WordUsageRole } from "../api/wordUsage";
 import { CONNECTION_KINDS, THROUGH_FAMILY, THROUGH_MEANING, THROUGH_WORDS, type ConnectionKind } from "./kinds";
 import type { Graph, WordNode } from "./graph";
@@ -34,7 +35,7 @@ export interface BoxItem {
   flags: ItemFlag[];
 }
 
-/** One lesson activity in a "Used in lessons" box. */
+/** One lesson activity in an "Activities" box. */
 export interface ActivityRow {
   activityId: string;
   type: string;
@@ -46,7 +47,19 @@ export interface ActivityRow {
   wordIds: string[];
 }
 
-/** Where a box's contents stand. Only "Used in lessons" loads separately. */
+/** One storybook in a "Books" box: its units (pages) that show the item. */
+export interface BookRow {
+  bookId: string;
+  title: string;
+  titleAr: string | null;
+  /** How many of its units show it. */
+  units: number;
+  roles: string[];
+  /** The spellings of the focus it shows (a family's box lists which form). */
+  wordIds: string[];
+}
+
+/** Where a box's contents stand. Only "Activities" and "Books" load separately. */
 export type BoxState = "ready" | "loading" | "error" | "unavailable";
 
 export interface Box {
@@ -58,8 +71,10 @@ export interface Box {
   /** The plain sentence under the heading. */
   explain: string;
   items: BoxItem[];
-  /** Only on "Used in lessons". */
+  /** Only on "Activities". */
   activities?: ActivityRow[];
+  /** Only on "Books". */
+  books?: BookRow[];
   /** Made by hand (a solid wire). False: worked out from elsewhere (a dashed wire and a lock). */
   editable: boolean;
   /** For a worked-out box: where it comes from and where to change it. */
@@ -86,7 +101,7 @@ export interface Neighbourhood {
 }
 
 export type UsageState =
-  | { status: "ready"; items: readonly WordUsageItem[] }
+  | { status: "ready"; items: readonly WordUsageItem[]; books?: readonly BookUnitUse[] }
   | { status: "loading" }
   | { status: "error" }
   | { status: "unavailable"; reason: string };
@@ -149,30 +164,71 @@ export function activityRows(uses: ReadonlyArray<{ wordId: string; items: readon
         rows.set(it.activity_id, r);
       }
       if (!r.roles.includes(it.role)) r.roles.push(it.role);
-      if (!r.wordIds.includes(wordId)) r.wordIds.push(wordId);
+      if (wordId && !r.wordIds.includes(wordId)) r.wordIds.push(wordId);
     }
   }
   return Array.from(rows.values());
 }
 
-/** The "Used in lessons" box for some spellings: loading until every one has answered. */
-function usedInBox(area: Area, wordIds: readonly string[], usage: UsageLookup, empty: string, title?: string): Box {
-  const states = wordIds.map((id) => ({ id, s: usage(nodeKey("word", id)) }));
-  const base = { empty, rows: true, title };
+/** Folds storybook units into one row per book, in the backend's order. */
+export function bookRows(uses: ReadonlyArray<{ wordId: string; books: readonly BookUnitUse[] }>): BookRow[] {
+  const rows = new Map<string, BookRow & { seen: Set<string> }>();
+  for (const { wordId, books } of uses) {
+    for (const b of books) {
+      let r = rows.get(b.book_id);
+      if (!r) {
+        r = {
+          bookId: b.book_id,
+          title: (b.book_title ?? "").trim() || (b.book_title_ar ?? "").trim() || "Untitled book",
+          titleAr: b.book_title_ar?.trim() || null,
+          units: 0,
+          roles: [],
+          wordIds: [],
+          seen: new Set(),
+        };
+        rows.set(b.book_id, r);
+      }
+      if (!r.seen.has(b.unit_id)) {
+        r.seen.add(b.unit_id);
+        r.units += 1;
+      }
+      if (!r.roles.includes(b.role)) r.roles.push(b.role);
+      if (wordId && !r.wordIds.includes(wordId)) r.wordIds.push(wordId);
+    }
+  }
+  return Array.from(rows.values()).map(({ seen: _seen, ...r }) => r);
+}
+
+export interface UsageEmpty {
+  activities: string;
+  books: string;
+}
+
+/**
+ * The "Activities" and "Books" boxes for some units (a spelling, a family's
+ * forms, a letter, a meaning): loading until every one has answered.
+ */
+function usageBoxes(
+  areas: { activities: Area; books: Area },
+  units: readonly NodeKey[],
+  usage: UsageLookup,
+  empty: UsageEmpty,
+): Box[] {
+  const states = units.map((unit) => ({ wordId: typeOfKey(unit) === "word" ? idOfKey(unit) : "", s: usage(unit) }));
+  const make = (kind: "activities" | "books", extra: Partial<Box>) =>
+    box(areas[kind], kind, [], { empty: empty[kind], rows: true, ...extra });
   const unavailable = states.find((x) => x.s.status === "unavailable");
-  if (unavailable && unavailable.s.status === "unavailable") {
-    return box(area, "usedIn", [], { ...base, state: "unavailable", stateText: unavailable.s.reason });
-  }
-  if (states.some((x) => x.s.status === "error")) {
-    return box(area, "usedIn", [], { ...base, state: "error", stateText: "The lessons could not be loaded." });
-  }
-  if (states.some((x) => x.s.status === "loading")) {
-    return box(area, "usedIn", [], { ...base, state: "loading", stateText: "Loading the lessons..." });
-  }
-  const activities = activityRows(
-    states.map((x) => ({ wordId: x.id, items: x.s.status === "ready" ? x.s.items : [] })),
-  );
-  return box(area, "usedIn", [], { ...base, activities });
+  let common: Partial<Box> | null = null;
+  if (unavailable && unavailable.s.status === "unavailable") common = { state: "unavailable", stateText: unavailable.s.reason };
+  else if (states.some((x) => x.s.status === "error")) common = { state: "error", stateText: "Could not be loaded." };
+  else if (states.some((x) => x.s.status === "loading")) common = { state: "loading", stateText: "Loading..." };
+  if (common) return [make("activities", common), make("books", common)];
+  const ready = states.map((x) => ({
+    wordId: x.wordId,
+    items: x.s.status === "ready" ? x.s.items : [],
+    books: x.s.status === "ready" ? (x.s.books ?? []) : [],
+  }));
+  return [make("activities", { activities: activityRows(ready) }), make("books", { books: bookRows(ready) })];
 }
 
 function wordBoxes(g: Graph, id: string, usage: UsageLookup): Box[] {
@@ -245,7 +301,12 @@ function wordBoxes(g: Graph, id: string, usage: UsageLookup): Box[] {
       empty: "None.",
     }),
   );
-  out.push(usedInBox("bottom", [w.id], usage, "Not used in any lesson."));
+  out.push(
+    ...usageBoxes({ activities: "bottom", books: "br" }, [nodeKey("word", w.id)], usage, {
+      activities: "Not used in any activity.",
+      books: "Not in any book.",
+    }),
+  );
   return out;
 }
 
@@ -289,17 +350,15 @@ function familyBoxes(g: Graph, id: string, usage: UsageLookup): Box[] {
     );
   }
   out.push(
-    usedInBox(
-      "bottom",
-      members.map((m) => m.id),
-      usage,
-      "No spelling of this word is used yet.",
-    ),
+    ...usageBoxes({ activities: "bottom", books: "br" }, members.map((m) => nodeKey("word", m.id)), usage, {
+      activities: "No spelling of this word is used in an activity yet.",
+      books: "No spelling of this word is in a book yet.",
+    }),
   );
   return out;
 }
 
-function conceptBoxes(g: Graph, slug: string): Box[] {
+function conceptBoxes(g: Graph, slug: string, usage: UsageLookup): Box[] {
   const c = g.concepts.get(slug);
   if (!c) return [];
   const fams = g.familiesOfConcept(slug);
@@ -327,6 +386,12 @@ function conceptBoxes(g: Graph, slug: string): Box[] {
       fams.flatMap((f) => g.membersOf(f.id).map((m) => wordItem(g, m.id, { head: m.id === f.headwordId }))),
       { empty: "None yet.", through: THROUGH_WORDS },
     ),
+  );
+  out.push(
+    ...usageBoxes({ activities: "bl", books: "br" }, [nodeKey("concept", slug)], usage, {
+      activities: "No activity uses this meaning itself (its pictures).",
+      books: "No book shows this meaning itself.",
+    }),
   );
   return out;
 }
@@ -363,29 +428,24 @@ function pictureBoxes(g: Graph, assetId: string): Box[] {
   return out;
 }
 
-/** The letters' usage read is the backend's `GET /content/usage?unit=letter:` (B-1). */
+/** A letter: the spellings with it (worked out), and where the letter itself is used. */
 function letterBoxes(g: Graph, letterId: string, usage: UsageLookup): Box[] {
   const l = g.letters.get(letterId);
   if (!l) return [];
   const words = Array.from(g.words.values())
     .filter((w) => !w.retired && g.lettersOf(w).some((x) => x.id === letterId))
     .sort((a, b) => b.usageCount - a.usageCount || a.id.localeCompare(b.id));
-  const s = usage(nodeKey("letter", letterId));
-  const out: Box[] = [
+  return [
     box("bottom", "letters", words.map((w) => wordItem(g, w.id)), {
       title: "Spellings with this letter",
       explain: CONNECTION_KINDS.letters.explain,
       empty: "No spelling in the word bank has it.",
     }),
+    ...usageBoxes({ activities: "br", books: "bl" }, [nodeKey("letter", letterId)], usage, {
+      activities: "No activity uses this letter.",
+      books: "No book shows this letter.",
+    }),
   ];
-  if (s.status === "unavailable") {
-    out.push(box("br", "usedIn", [], { empty: "", rows: true, state: "unavailable", stateText: s.reason }));
-  } else if (s.status === "ready") {
-    out.push(box("br", "usedIn", [], { empty: "Not used in any lesson.", rows: true, activities: activityRows([{ wordId: "", items: s.items }]) }));
-  } else {
-    out.push(box("br", "usedIn", [], { empty: "", rows: true, state: s.status, stateText: s.status === "loading" ? "Loading the lessons..." : "The lessons could not be loaded." }));
-  }
-  return out;
 }
 
 function uniqueBy<T>(list: readonly T[], key: (t: T) => string): T[] {
@@ -429,7 +489,7 @@ export function neighbourhood(g: Graph, focus: NodeKey, usage: UsageLookup): Nei
       meanings = severalMeaningsInFamily(g, id);
       break;
     case "concept":
-      boxes = conceptBoxes(g, id);
+      boxes = conceptBoxes(g, id, usage);
       break;
     case "picture":
       boxes = pictureBoxes(g, id);
@@ -452,7 +512,9 @@ export function usageUnitsFor(g: Graph, focus: NodeKey): NodeKey[] {
     case "family":
       return g.membersOf(id).map((m) => nodeKey("word", m.id));
     case "letter":
-      return [focus];
+      return g.letters.has(id) ? [focus] : [];
+    case "concept":
+      return g.concepts.has(id) ? [focus] : [];
     default:
       return [];
   }

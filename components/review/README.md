@@ -51,12 +51,12 @@ A kind shows in Review (rail, counts, number key, sheet rows, and its source is 
 
 | Ticket | Kind | Source (shape) | Normaliser |
 |---|---|---|---|
-| CW-6 | `blend` | `GET /words/blend/review` | `blendItems` |
+| CW-6 | `blend` | `GET /words/blend/review` | `blendItems`; focus targets and overlays in `normalise/blend.ts`; split and take reviews are `hold` (`actions/blend.ts`) |
 | CW-7 | `draft` | BE-1 `GET /curriculum/generation/drafts?status=pending&limit=&cursor=`, `{ items, next_cursor }`; each item is the per-node draft plus `node_title`, `topic_*`, `curriculum_*` | `draftItems` (reads `node_title`) |
 | CW-7 | `request` | `GET /curriculum/generation/word-requests` | `requestItems` |
 | CW-8 | `phrase` | BE-2 `GET /curriculum/reading/phrases`, `{ pending, approved, rejected, generation_enabled }`, `rejection` on every entry | `phraseItems` |
 | CW-8 | `recording` | the same list: `audio.state` on approved entries; the full take read when the item opens | `recordingItems`, `recordingTakeToHear` |
-| CW-11 | `letter` | audio library `letter_sounds`, BE-3 `GET /assets/letter-sounds/review-flags` `{ items }` | to write; flag and unflag are `inverse` |
+| CW-11 | `letter` | audio library `letter_sounds` (`getAudioAssets`), BE-3 `GET /assets/letter-sounds/review-flags` `{ items }`, `GET /letters/list` | `letterItems` (`normalise/letters.ts`); flag and clear are `inverse` (`actions/letters.ts`) |
 
 Other extension points:
 
@@ -65,6 +65,13 @@ Other extension points:
   `openFamily` / `openConcept` in `ReviewWorkspace` (they go to the old pages today).
 - **Bulk (CW-10).** `item.bulkSafe` (unflagged, fully vowelled spellings that wait) and `isBulkSafe` exist; `x` and `A`
   resolve to `toggleSelect` and `bulkApprove` commands that nothing handles yet. Rows have no checkbox column yet.
+- **Blend pane (CW-6).** It reuses the old page's parts: `lenses/blend/ReviewFormPanel` and `SplitReviewControls` (moved
+  from `app/(dashboard)/review/blend/_components`) and the builder's `FormAudioPanel`, `TakeRow`, `TakeRejectForm`,
+  `GenerateAudioControls`, `WaveformMarkEditor`. The pane drives them through optional `handleRef`s (approve, reject,
+  pick a reason, play), so the builder and the old page work unchanged. Generate, marks and the AI check are not
+  decisions; they call `useBlendAudioActions` and `useBlendAiCheck` as before.
+- **Letter sounds (CW-11).** A file with no flag is `listen` and never waits; a flagged one is `todo` ("To decide"),
+  counts as waiting, and the kind's gate is `phrase` (other staff listen only). `order` keeps the files in alphabet order.
 - **Views.** `VIEW_META` lists the kinds each view covers; a view shows in the rail once one of its kinds is registered.
 
 ## Conventions

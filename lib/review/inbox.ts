@@ -57,7 +57,8 @@ export const KIND_META: Record<InboxKind, KindMeta> = {
   request: { label: "Word requests", one: "Word request", gate: "staff", key: "5", todoLabel: "Open" },
   phrase: { label: "Phrases", one: "Phrase", gate: "phrase", key: "6", todoLabel: "Pending" },
   recording: { label: "Recordings", one: "Recording", gate: "phrase", key: "7", todoLabel: "Take to hear" },
-  letter: { label: "Letter sounds", one: "Letter sound", gate: "staff", key: "8", todoLabel: "Listen" },
+  // Anyone listens; flagging a file, and deciding a flagged one, is a phrase reviewer's (BE-3).
+  letter: { label: "Letter sounds", one: "Letter sound", gate: "phrase", key: "8", todoLabel: "To decide" },
 };
 
 export function canDecide(gate: Gate, roles: ReviewRoles): boolean {
@@ -81,7 +82,8 @@ export const GATE_TAG: Record<Exclude<Gate, "staff">, string> = { lead: "Lead", 
 
 /**
  * Where an item stands. `todo` and `failed` wait for a person; `listen` is a
- * listen-only item (letter sounds) that never counts as a decision.
+ * listen-only item (a letter sound with no flag) that never counts as a decision.
+ * A flagged letter sound is `todo`.
  */
 export type ItemState =
   | "todo"
@@ -122,11 +124,14 @@ export interface InboxItem<K extends InboxKind = InboxKind, D = unknown> {
   bulkSafe: boolean;
   /** The word family the item belongs to, for the Family and Concept context cards. */
   familyId: string | null;
+  /** The source's own order, the last tie-break of every sort (letter sounds: alphabet order). */
+  order?: number;
   data: D;
 }
 
 export function needsDecision(item: Pick<InboxItem, "state" | "kind">): boolean {
-  if (item.kind === "letter") return false;
+  // A letter sound waits only while it is flagged; a missing file is a library matter.
+  if (item.kind === "letter") return item.state === "todo";
   return item.state === "todo" || item.state === "failed";
 }
 
@@ -177,7 +182,7 @@ export interface InboxCounts {
   all: number;
   /** Of those, the ones your roles can decide. */
   yours: number;
-  /** Waiting items per kind; a listen-only kind counts its items. */
+  /** Waiting items per kind; Letter sounds counts its files (the flagged ones also count as waiting). */
   byKind: Record<InboxKind, number>;
 }
 
@@ -186,12 +191,9 @@ export function countInbox(items: readonly InboxItem[], roles: ReviewRoles): Inb
   let all = 0;
   let yours = 0;
   for (const it of items) {
-    if (it.kind === "letter") {
-      byKind.letter += 1;
-      continue;
-    }
+    if (it.kind === "letter") byKind.letter += 1;
     if (!needsDecision(it)) continue;
-    byKind[it.kind] += 1;
+    if (it.kind !== "letter") byKind[it.kind] += 1;
     all += 1;
     if (canDecide(KIND_META[it.kind].gate, roles)) yours += 1;
   }
@@ -280,8 +282,8 @@ export interface LensContext {
 export function inLens(item: InboxItem, lens: Lens, status: StatusFilter, ctx: LensContext): boolean {
   switch (lens) {
     case "all":
-      // Letter sounds never wait, so they stay out of the To decide list.
-      return item.kind !== "letter" || status !== "todo";
+      // Letter sounds stay out of the To decide list unless they are flagged.
+      return item.kind !== "letter" || status !== "todo" || needsDecision(item);
     case "v-ai":
       return VIEW_META["v-ai"].kinds!.includes(item.kind);
     case "v-failed":
@@ -338,7 +340,10 @@ export function sortItems(items: readonly InboxItem[], sort: SortKey): InboxItem
   };
   return [...items].sort(
     (a, b) =>
-      primary[sort](a, b) || kindRank(a.kind) - kindRank(b.kind) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
+      primary[sort](a, b) ||
+      kindRank(a.kind) - kindRank(b.kind) ||
+      (a.order ?? 0) - (b.order ?? 0) ||
+      (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
   );
 }
 

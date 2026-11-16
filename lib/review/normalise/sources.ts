@@ -11,6 +11,7 @@ import { draftStatus, GENERATION_TYPES, type DraftRow, type WordRequest } from "
 import { takeToReview, type PhraseAudioStatus } from "../../phrases/phraseAudio";
 import { reasonText, type PhraseEntry, type PhraseList } from "../../phrases/phraseReview";
 import type { InboxItem, ItemState } from "../inbox";
+import { blendTargets } from "./blend";
 
 // ---- blend (GET /words/blend/review) ------------------------------------------------
 
@@ -18,13 +19,15 @@ export type BlendItem = InboxItem<"blend", BlendReviewWord>;
 
 export function blendItems(words: readonly BlendReviewWord[]): BlendItem[] {
   return words.map((w) => {
-    const waits = matchesFilter(w, "needs_review");
+    // A split rejected by its current review waits for the author, not for a reviewer.
+    const targets = blendTargets(w);
     const notVoiceable = matchesFilter(w, "not_voiceable");
     const failed = notVoiceable || matchesFilter(w, "failed");
-    const state: ItemState = waits ? "todo" : failed ? "failed" : "approved";
+    const rejected = w.forms.some((f) => f.review?.current && f.review.decision === "rejected");
+    const state: ItemState = targets.length ? "todo" : failed ? "failed" : rejected ? "rejected" : "approved";
     const title = w.word?.arabic ?? w.forms[0]?.vowelisedText ?? w.wordId;
-    const splits = w.forms.filter((f) => f.reviewStatus === "needs_review").length;
-    const takes = w.forms.reduce((n, f) => n + f.takes.filter((t) => t.current && t.status === "needs_review").length, 0);
+    const splits = targets.filter((t) => t.type === "split").length;
+    const takes = targets.length - splits;
     const parts = [
       splits ? `${splits} ${splits === 1 ? "split" : "splits"} to review` : "",
       takes ? `${takes} ${takes === 1 ? "take" : "takes"} to hear` : "",

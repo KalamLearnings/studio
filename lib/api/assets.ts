@@ -11,6 +11,7 @@
 import { ApiError, fetchWithAuth } from './client';
 import type { AudioCategory } from '@/lib/types/audio';
 import type { AssetCategory } from '@/lib/types/assets';
+import type { LetterFlagInput, LetterSoundFlag } from '@/lib/review/normalise/letters';
 import type {
   AssetLabel,
   AssetProvenance,
@@ -178,4 +179,29 @@ export async function updateRegistryAssetLibrary(
     method: 'PUT',
     body: JSON.stringify(patch),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Letter-sound review flags (Studio Review, BE-3). A flag is a note for the
+// content team: it changes no file and no status. Flag and clear need a phrase
+// reviewer or a curriculum lead (403 PHRASE_REVIEWER_REQUIRED); staff list.
+// ---------------------------------------------------------------------------
+
+/** `GET /assets/letter-sounds/review-flags`: the open flags, newest first, each with its file. */
+export async function listLetterSoundFlags(): Promise<LetterSoundFlag[]> {
+  const res = await fetchWithAuth<{ items: LetterSoundFlag[] }>('/assets/letter-sounds/review-flags');
+  return res.items ?? [];
+}
+
+/** `PUT /assets/:assetId/review-flag`: opens or replaces the flag; `other` needs a note. */
+export async function flagLetterSound(assetId: string, input: LetterFlagInput): Promise<LetterSoundFlag> {
+  return fetchWithAuth<LetterSoundFlag>(`/assets/${encodeURIComponent(assetId)}/review-flag`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
+
+/** `DELETE /assets/:assetId/review-flag`: clears the open flag (404 when it has none). */
+export async function clearLetterSoundFlag(assetId: string): Promise<LetterSoundFlag> {
+  return fetchWithAuth<LetterSoundFlag>(`/assets/${encodeURIComponent(assetId)}/review-flag`, { method: 'DELETE' });
 }

@@ -5,7 +5,7 @@
  * Letters are cached globally and rarely change, so we use a long staleTime.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createClient, getEnvironmentBaseUrl, getEdgeFunctionAuthHeaders } from '@/lib/supabase/client';
 import { HARAKA_CHARS, applyHaraka } from '@kalam/curriculum-schemas';
 import { withMaddGlyph } from '@/lib/utils/letterMadd';
@@ -49,7 +49,7 @@ function getLettersApiUrl() {
   return `${getEnvironmentBaseUrl()}/functions/v1/letters/list`;
 }
 
-async function fetchLetters(): Promise<Letter[]> {
+export async function fetchLetters(): Promise<Letter[]> {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -164,8 +164,6 @@ export const letterFilters = {
 };
 
 export function useLetters(): UseLettersReturn {
-  const queryClient = useQueryClient();
-
   const {
     data: letters = [],
     isLoading: loading,

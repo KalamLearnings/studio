@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Check, Loader2, X, AudioWaveform } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   KIND_LABELS,
   MAX_TAKE_ATTEMPTS,
@@ -15,13 +16,32 @@ import {
 } from "@/lib/blendWord/takes";
 import { VOICES } from "@/lib/constants/voices";
 import { StatusPill } from "./TakeStatusChips";
-import { PlayTakeButton } from "./PlayTakeButton";
-import { TakeRejectForm } from "./TakeRejectForm";
+import { PlayTakeButton, type PlayTakeHandle } from "./PlayTakeButton";
+import { TakeRejectForm, type TakeRejectHandle } from "./TakeRejectForm";
 import { WaveformMarkEditor } from "./WaveformMarkEditor";
 
 type Result = { ok: boolean; message?: string; lines?: string[] };
 
-interface TakeRowProps {
+/** What the Review pane's keys drive (CW-6). */
+export interface TakeRowHandle {
+  approve: () => void;
+  /** Opens the reject form; false when this take cannot be rejected. */
+  startReject: () => boolean;
+  /** Closes the reject form; false when it was not open. */
+  cancelReject: () => boolean;
+  submitReject: () => void;
+  pickReasonByKey: (n: number) => boolean;
+  play: () => void;
+}
+
+/** The Review pane's extras: its keys drive the row, and the row it focuses is outlined. */
+export interface TakeRowReviewProps {
+  handleRef?: React.Ref<TakeRowHandle>;
+  focused?: boolean;
+  onRejectingChange?: (open: boolean) => void;
+}
+
+interface TakeRowProps extends TakeRowReviewProps {
   take: BlendReviewTake;
   units: readonly { text: string }[];
   generationOff: string | null;
@@ -35,9 +55,16 @@ function voiceName(id: string | null): string | null {
 }
 
 /** One take: play, approve, reject (and regenerate), and the mark editor. */
-export function TakeRow({ take, units, generationOff, onReview, onSaveMarks }: TakeRowProps) {
+export function TakeRow({ take, units, generationOff, onReview, onSaveMarks, handleRef, focused, onRejectingChange }: TakeRowProps) {
   const actions = takeActions(take);
-  const [rejecting, setRejecting] = React.useState(false);
+  const [rejecting, setRejectingState] = React.useState(false);
+  const setRejecting = (open: boolean) => {
+    setRejectingState(open);
+    onRejectingChange?.(open);
+  };
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const playRef = React.useRef<PlayTakeHandle>(null);
+  const rejectRef = React.useRef<TakeRejectHandle>(null);
   const [marksOpen, setMarksOpen] = React.useState(() => actions.editMarks && take.qaFlags.length > 0);
   const [approving, setApproving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -52,8 +79,37 @@ export function TakeRow({ take, units, generationOff, onReview, onSaveMarks }: T
     if (!res.ok) setError(res.message ?? "The take was not approved.");
   };
 
+  React.useImperativeHandle(handleRef, () => ({
+    approve: () => {
+      if (actions.approve) void approve();
+      else setError("This take has no audio or marks yet, so it cannot be approved.");
+    },
+    startReject: () => {
+      if (!actions.reject) return false;
+      setRejecting(true);
+      return true;
+    },
+    cancelReject: () => {
+      if (!rejecting) return false;
+      setRejecting(false);
+      return true;
+    },
+    submitReject: () => rejectRef.current?.submit(),
+    pickReasonByKey: (n) => rejectRef.current?.pickReasonByKey(n) ?? false,
+    play: () => playRef.current?.toggle(),
+  }));
+
+  React.useEffect(() => {
+    if (focused) rootRef.current?.scrollIntoView({ block: "nearest" });
+  }, [focused]);
+
   return (
-    <div className="space-y-2 rounded-md border p-2">
+    <div
+      ref={rootRef}
+      data-take-id={take.id}
+      aria-current={focused ? "true" : undefined}
+      className={cn("space-y-2 rounded-md border p-2", focused && "border-primary ring-2 ring-primary/30")}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="font-medium">{KIND_LABELS[take.kind]}</span>
@@ -65,7 +121,7 @@ export function TakeRow({ take, units, generationOff, onReview, onSaveMarks }: T
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <PlayTakeButton url={take.url} />
+          <PlayTakeButton url={take.url} handleRef={playRef} />
           {actions.editMarks && (
             <Button type="button" variant="ghost" size="sm" onClick={() => setMarksOpen(!marksOpen)}>
               <AudioWaveform className="mr-1 h-3.5 w-3.5" /> {marksOpen ? "Hide marks" : "Marks"}
@@ -95,6 +151,7 @@ export function TakeRow({ take, units, generationOff, onReview, onSaveMarks }: T
       {error && <p className="text-sm text-destructive">{error}</p>}
       {rejecting && (
         <TakeRejectForm
+          handleRef={handleRef ? rejectRef : undefined}
           take={take}
           generationOff={generationOff}
           onCancel={() => setRejecting(false)}

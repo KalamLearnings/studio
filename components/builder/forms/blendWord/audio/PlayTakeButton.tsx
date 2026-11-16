@@ -4,8 +4,21 @@ import * as React from "react";
 import { Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+/** What the Review pane's `space` drives. */
+export interface PlayTakeHandle {
+  toggle: () => void;
+}
+
 /** Plays a take's audio. One button, one audio element; it stops at the end. */
-export function PlayTakeButton({ url, label = "Play" }: { url: string | null; label?: string }) {
+export function PlayTakeButton({
+  url,
+  label = "Play",
+  handleRef,
+}: {
+  url: string | null;
+  label?: string;
+  handleRef?: React.Ref<PlayTakeHandle>;
+}) {
   const audio = React.useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -38,6 +51,8 @@ export function PlayTakeButton({ url, label = "Play" }: { url: string | null; la
       }
     );
   };
+
+  React.useImperativeHandle(handleRef, () => ({ toggle }));
 
   return (
     <span className="inline-flex items-center gap-2">

@@ -9,6 +9,7 @@ import { INBOX_KINDS, type InboxKind } from "@/lib/review/inbox";
 import { BlendListTools } from "./blend/BlendAiCheck";
 import { BlendPane } from "./blend/BlendPane";
 import { LetterPane } from "./letter/LetterPane";
+import { DRAFT_PHRASE_LENSES } from "./draftPhraseLenses";
 import { ReadingPane } from "./reading/ReadingPane";
 import { SpellingPane } from "./spelling/SpellingPane";
 import type { LensDefinition } from "./types";
@@ -41,6 +42,7 @@ const LENS_LIST: LensDefinition[] = [
     Pane: ReadingPane,
     shortcuts: [{ title: "Decide", rows: [{ label: "Pick a reading", keys: ["1", "to", "9"] }] }, CONTEXT_KEYS],
   },
+  ...DRAFT_PHRASE_LENSES,
   {
     kind: "blend",
     Pane: BlendPane,

@@ -9,7 +9,7 @@
 import { matchesFilter, type BlendReviewWord } from "../../blendWord/review";
 import { draftStatus, GENERATION_TYPES, type DraftRow, type WordRequest } from "../../generation/drafts";
 import { takeToReview, type PhraseAudioStatus } from "../../phrases/phraseAudio";
-import { reasonText, type PhraseEntry, type PhraseList } from "../../phrases/phraseReview";
+import { reasonText, rejectionReasonText, type PhraseEntry, type PhraseList } from "../../phrases/phraseReview";
 import type { InboxItem, ItemState } from "../inbox";
 import { blendTargets } from "./blend";
 
@@ -59,11 +59,23 @@ export function blendItems(words: readonly BlendReviewWord[]): BlendItem[] {
  * per-node draft row plus where it lives. The per-node route has none of these fields.
  */
 export interface InboxDraftRow extends DraftRow {
-  node_title?: string | null;
+  /** BE-1 sends the stored localized title (`{ en, ar? }`); a plain string is read too. */
+  node_title?: StoredTitle;
   topic_id?: string | null;
-  topic_title?: string | null;
+  topic_title?: StoredTitle;
   curriculum_id?: string | null;
-  curriculum_title?: string | null;
+  curriculum_title?: StoredTitle;
+}
+
+/** A title as the backend stores it: `{ en, ar? }`, or null when the row is missing. */
+export type StoredTitle = string | { en?: unknown; ar?: unknown } | null;
+
+/** The English of a stored title (the Arabic when there is no English), or null. */
+export function titleText(t: StoredTitle | undefined): string | null {
+  if (typeof t === "string") return t.trim() || null;
+  if (!t || typeof t !== "object") return null;
+  for (const v of [t.en, t.ar]) if (typeof v === "string" && v.trim()) return v.trim();
+  return null;
 }
 
 export type DraftItem = InboxItem<"draft", InboxDraftRow>;
@@ -75,7 +87,7 @@ export function draftItems(rows: readonly InboxDraftRow[], nodeTitles: ReadonlyM
   return rows.map((d) => {
     const status = draftStatus(d);
     const state: ItemState = status === "pending" ? "todo" : status === "rejected" ? "rejected" : "approved";
-    const node = d.node_title ?? nodeTitles.get(d.node_id) ?? d.node_id;
+    const node = titleText(d.node_title) ?? nodeTitles.get(d.node_id) ?? d.node_id;
     const rejected = d.provenance?.review?.reason;
     return {
       key: `draft:${d.id}`,
@@ -89,7 +101,7 @@ export function draftItems(rows: readonly InboxDraftRow[], nodeTitles: ReadonlyM
       waitingSince: d.provenance?.created_at ?? d.created_at,
       decidedAt: d.approved_at ?? d.provenance?.review?.at ?? null,
       decidedBy: d.approved_by ?? d.provenance?.review?.by ?? null,
-      searchText: [d.type, node, d.node_id, d.topic_title, d.curriculum_title].filter(Boolean).join(" "),
+      searchText: [d.type, node, d.node_id, titleText(d.topic_title), titleText(d.curriculum_title)].filter(Boolean).join(" "),
       bulkSafe: false,
       familyId: null,
       data: d,
@@ -125,13 +137,22 @@ export function requestItems(rows: readonly WordRequest[], nodeTitles: ReadonlyM
 
 // ---- phrases (GET /curriculum/reading/phrases) ----------------------------------------
 
-/** BE-5: a rejected phrase carries its rejection; every entry has the field (null unless rejected). */
+/**
+ * BE-5: a rejected phrase carries its rejection; every entry has the field
+ * (null unless rejected). The backend names the reviewer and time
+ * `reviewed_by` and `reviewed_at`; `by` and `at` are read too.
+ */
 export interface PhraseRejection {
   reason: string;
   note?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
   by?: string | null;
   at?: string | null;
 }
+
+export const rejectedBy = (r: PhraseRejection | null | undefined) => r?.reviewed_by ?? r?.by ?? null;
+export const rejectedAt = (r: PhraseRejection | null | undefined) => r?.reviewed_at ?? r?.at ?? null;
 
 /** BE-2: the audio summary on an approved entry. */
 export interface PhraseAudioSummary {
@@ -172,14 +193,14 @@ function phraseItem(p: InboxPhraseEntry, state: "todo" | "approved" | "rejected"
         ? `${problems} word ${problems === 1 ? "problem" : "problems"}`
         : `${p.used_in.length} ${p.used_in.length === 1 ? "use" : "uses"}`,
       state === "todo" ? reasonText(p.reason) : "",
-      state === "rejected" && p.rejection ? p.rejection.note || p.rejection.reason : "",
+      state === "rejected" && p.rejection ? p.rejection.note || rejectionReasonText(p.rejection.reason) : "",
     ]
       .filter(Boolean)
       .join(" · "),
     usage: p.used_in.length,
     waitingSince: null,
-    decidedAt: state === "rejected" ? (p.rejection?.at ?? null) : (p.approval?.reviewed_at ?? null),
-    decidedBy: state === "rejected" ? (p.rejection?.by ?? null) : (p.approval?.reviewed_by ?? null),
+    decidedAt: state === "rejected" ? rejectedAt(p.rejection) : (p.approval?.reviewed_at ?? null),
+    decidedBy: state === "rejected" ? rejectedBy(p.rejection) : (p.approval?.reviewed_by ?? null),
     searchText: p.used_in.map((u) => `${u.type} ${u.node_id}`).join(" "),
     bulkSafe: false,
     familyId: null,

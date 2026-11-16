@@ -14,6 +14,19 @@ import type {
 
 const BASE = '/curriculum/generation';
 
+/** One page of `GET /curriculum/generation/drafts` (Review BE-1): the pending drafts of every node, newest first. */
+export interface PendingDraftPage<Row> {
+  items: Row[];
+  next_cursor: string | null;
+}
+
+/** BE-1: the pending drafts across every node, a page at a time (`limit` 1 to 200). */
+export const listPendingDrafts = <Row = DraftRow>(page: { limit?: number; cursor?: string | null } = {}) => {
+  const q = new URLSearchParams({ status: 'pending', limit: String(page.limit ?? 100) });
+  if (page.cursor) q.set('cursor', page.cursor);
+  return fetchWithAuth<PendingDraftPage<Row>>(`${BASE}/drafts?${q.toString()}`);
+};
+
 export const listNodeDrafts = (nodeId: string) =>
   fetchWithAuth<DraftRow[]>(`${BASE}/nodes/${encodeURIComponent(nodeId)}/drafts`);
 

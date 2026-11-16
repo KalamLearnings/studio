@@ -149,6 +149,10 @@ export type ContentRefWrite = z.infer<typeof ContentRefWriteSchema>;
 /**
  * What a choice asks (design 3.1, new in CM-B12): the skill kind of an MCQ,
  * match pairs or cards comes from it (`skills.ts` `kindFromPrompt`).
+ *
+ * `letter_in_word` (CM-D3b, additive): "which word has the letter X". The
+ * answers are words; `target`, when the config names it, is the letter. The
+ * grader is unchanged: the correct word options are the answer rows.
  */
 export const PROMPT_KINDS = [
   'sound_to_symbol',
@@ -159,6 +163,7 @@ export const PROMPT_KINDS = [
   'form',
   'haraka',
   'count',
+  'letter_in_word',
 ] as const;
 export type PromptKind = typeof PROMPT_KINDS[number];
 

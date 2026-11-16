@@ -211,6 +211,7 @@ export const PROMPT_KIND_OPTIONS = [
   { value: "form", label: "Letter form", hint: "Which form of the letter" },
   { value: "haraka", label: "Haraka", hint: "Which short vowel" },
   { value: "count", label: "Count", hint: "How many (numeral answers)" },
+  { value: "letter_in_word", label: "Letter in word", hint: "Pick the word that has the letter" },
 ] as const;
 
 export type PromptKind = typeof PROMPT_KIND_OPTIONS[number]["value"];

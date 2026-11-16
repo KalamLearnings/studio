@@ -38,8 +38,9 @@ import type { TakeRowHandle } from "@/components/builder/forms/blendWord/audio/T
 import { usePaneCommands } from "../../commands";
 import { ConceptCard, useFamilyConcept } from "../../context/ConceptCard";
 import { FamilyCard } from "../../context/FamilyCard";
+import { UsageCard } from "../../context/UsageCard";
 import { DecisionBar, Hero, NextHint, PaneFrame } from "../../PaneFrame";
-import { ContextCard, KBD_ON_BUTTON, Kbd, Say } from "../../parts";
+import { KBD_ON_BUTTON, Kbd, Say } from "../../parts";
 import type { PaneProps } from "../types";
 import { BlendAiCheckCard } from "./BlendAiCheck";
 import { PseudoProposals } from "./PseudoProposals";
@@ -257,11 +258,10 @@ export function BlendPane(props: PaneProps) {
         </>
       )}
       <BlendAiCheckCard word={word} />
-      <ContextCard title="Where it is used">
-        <p className="text-[12.5px]">
-          {word.word ? `${usage} ${usage === 1 ? "activity" : "activities"}` : "The word is missing from the library."}
-        </p>
-      </ContextCard>
+      <UsageCard
+        wordId={word.word ? item.id : null}
+        countLine={word.word ? `${usage} ${usage === 1 ? "activity" : "activities"}` : "The word is missing from the library."}
+      />
     </>
   );
 

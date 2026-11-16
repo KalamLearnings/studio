@@ -113,7 +113,8 @@ export function isSingleLetter(raw: string): boolean {
     .replace(INVISIBLE, '')
     .replace(/\s+/g, '');
   const chars = Array.from(bare).filter((ch) => !isArabicMark(ch));
-  return chars.length === 1 && isArabicLetter(chars[0]);
+  const [only] = chars;
+  return chars.length === 1 && only !== undefined && isArabicLetter(only);
 }
 
 export const WORD_IS_A_LETTER = 'WORD_IS_A_LETTER';

@@ -23,4 +23,6 @@ export interface DecisionSpec {
   describeError: (e: unknown) => string;
   /** Open the next item that waits once this one is decided (default true). */
   advance?: boolean;
+  /** No toast for this decision (a bulk run reports its items itself, CW-10). */
+  quiet?: boolean;
 }

@@ -12,12 +12,12 @@ import * as React from "react";
 import { Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { canBulk } from "@/lib/review/bulk";
 import { useReviewInbox } from "@/lib/hooks/useReviewInbox";
 import type { DecisionSpec } from "@/lib/review/actions/types";
 import {
   INBOX_KINDS,
   decidedCount,
-  isBulkSafe,
   inLens,
   isKindLens,
   moveSelection,
@@ -399,7 +399,7 @@ export function ReviewWorkspace({
         case "toggleSelect": {
           if (isLibLens(lens) || sub) return;
           const it = visibleRef.current.find((i) => i.key === selected) ?? null;
-          if (it && !isBulkSafe(it) && !bulk.checked.has(it.key)) {
+          if (it && !canBulk(it) && !bulk.checked.has(it.key)) {
             toast("Only unflagged, fully vowelled spellings that wait can be approved together.", { id: "bulk-hint" });
             return;
           }

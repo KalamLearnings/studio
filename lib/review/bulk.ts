@@ -12,7 +12,14 @@
  * the session's error and the item's state. So it works with any `decide`.
  */
 
-import { isBulkSafe, type InboxItem, type ItemState } from "./inbox";
+import { isBulkSafe as isSafeItem, type InboxItem, type InboxKind, type ItemState } from "./inbox";
+
+/** The kinds bulk approve covers. Audio, drafts and phrases never join, whatever their normaliser says. */
+export const BULK_KINDS: readonly InboxKind[] = ["spelling"];
+
+/** Bulk-safe (`isBulkSafe`) and of a bulk kind. */
+export const canBulk = (item: InboxItem): boolean => BULK_KINDS.includes(item.kind) && isSafeItem(item);
+const isBulkSafe = canBulk;
 
 // ---------------------------------------------------------------------------
 // Selection

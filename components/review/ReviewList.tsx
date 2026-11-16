@@ -9,10 +9,10 @@ import * as React from "react";
 import { AlertTriangle, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { canBulk } from "@/lib/review/bulk";
 import {
   KIND_META,
   SORTS,
-  isBulkSafe,
   STATUS_FILTERS,
   VIEW_META,
   isKindLens,
@@ -148,9 +148,9 @@ export function ReviewList(p: ReviewListProps) {
   const failed = p.sources.filter((s) => s.status === "error");
   const updated = p.updatedAt ? shortAge(new Date(p.updatedAt).toISOString(), p.now) : "";
   const name = lensName(p.lens);
-  const checkable = !!p.onToggleCheck && p.visible.some(isBulkSafe);
+  const checkable = !!p.onToggleCheck && p.visible.some(canBulk);
   const rowCheck = (it: InboxItem): RowCheck =>
-    !checkable ? "none" : isBulkSafe(it) ? { checked: !!p.checked?.has(it.key), onToggle: () => p.onToggleCheck?.(it) } : "space";
+    !checkable ? "none" : canBulk(it) ? { checked: !!p.checked?.has(it.key), onToggle: () => p.onToggleCheck?.(it) } : "space";
 
   const onListKey = (e: React.KeyboardEvent) => {
     if (e.key === "Home" && p.visible[0]) {

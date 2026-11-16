@@ -44,10 +44,11 @@ describe("selection", () => {
     expect(toggleChecked(new Set(), null).size).toBe(0);
   });
 
-  it("never selects a blend, a draft or a phrase, even if marked safe", () => {
-    // The normalisers mark only spellings; the kind check is theirs. A key already checked can always be removed.
-    const s = new Set(["blend:x"]);
-    expect(toggleChecked(s, item("x", { key: "blend:x", kind: "blend" })).size).toBe(0);
+  it("never selects a blend, a draft, a phrase or a recording, even if marked safe", () => {
+    for (const kind of ["blend", "draft", "phrase", "recording"] as const) {
+      expect(toggleChecked(new Set(), item("x", { key: `${kind}:x`, kind })).size).toBe(0);
+      expect(bulkTargets([item("x", { key: `${kind}:x`, kind })], new Set([`${kind}:x`]))).toEqual([]);
+    }
   });
 
   it("prunes keys that are gone or decided, and keeps identity when nothing changes", () => {

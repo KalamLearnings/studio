@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, Search } from "lucide-react";
 import type { Environment } from "@/lib/stores/environmentStore";
 
+export const PAGE_HEADER_SLOT_ID = "page-header-slot";
+
 interface HeaderProps {
   title?: string;
   environment: Environment;
@@ -20,8 +22,10 @@ export function Header({ title, environment, onEnvironmentClick, user }: HeaderP
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-4">
         {title && <h1 className="text-xl font-semibold">{title}</h1>}
+        {/* A page may portal its own title here (components/review/HeaderSlot.tsx). */}
+        <div id={PAGE_HEADER_SLOT_ID} className="flex min-w-0 items-baseline gap-3" />
       </div>
 
       <div className="flex items-center gap-2">

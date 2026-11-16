@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
@@ -24,6 +24,9 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, title }: DashboardShellProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  // The Review workspace fills the area edge to edge and scrolls its own columns.
+  const fullBleed = pathname === "/review";
   const queryClient = useQueryClient();
   const { environment, setEnvironment } = useEnvironmentStore();
 
@@ -160,7 +163,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
             user={user}
           />
 
-          <main className="flex-1 overflow-auto bg-muted/30 p-6">
+          <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "flex-1 overflow-auto bg-muted/30 p-6"}>
             {children}
           </main>
         </div>

@@ -42,7 +42,10 @@ import {
   SOUND_SORT_MIN_ITEMS,
   sortByOf,
   soundSortConfig,
+  labelGivesItAway,
+  SORT_LABEL_WARNING,
   soundSortProblems,
+  soundSortWarnings,
   withBinLetter,
   withSortBy,
   type SortBin,
@@ -73,6 +76,9 @@ export function SoundSortActivityForm({ config, onChange, topic }: BaseActivityF
     },
     letterName: (id) => getLetter(id)?.letter ?? id,
   });
+
+  const wordText = (id: string) => hints.wordText(id);
+  const warnings = soundSortWarnings(items, wordText);
 
   const save = (nextBins: readonly SortBin[], nextItems: readonly SortItem[], patch: Config = {}) =>
     onChange(soundSortConfig({ ...config, sortBy, ...patch }, nextBins, nextItems));
@@ -197,6 +203,25 @@ export function SoundSortActivityForm({ config, onChange, topic }: BaseActivityF
                 allowedKinds={ITEM_KINDS}
                 topic={topic}
               />
+              {item.label !== undefined && (
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    aria-label="Staff note (never shown to the child)"
+                    placeholder="Staff note (never shown to the child)"
+                    value={item.label}
+                    onChange={(e) => {
+                      const next = { ...item, label: e.target.value };
+                      if (!e.target.value) delete (next as { label?: string }).label;
+                      setItem(i, next);
+                    }}
+                    className="w-full rounded border bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-primary"
+                  />
+                  {labelGivesItAway(item.label, item.kind === "word" ? wordText(item.word?.wordId ?? "") : null) && (
+                    <p className="text-xs text-amber-700 dark:text-amber-400">{SORT_LABEL_WARNING}</p>
+                  )}
+                </div>
+              )}
               <FormField label="Basket">
                 <Select
                   value={item.binId}
@@ -222,7 +247,7 @@ export function SoundSortActivityForm({ config, onChange, topic }: BaseActivityF
         />
       </FormField>
 
-      <FormProblems problems={problems} />
+      <FormProblems problems={[...problems, ...warnings]} />
     </div>
   );
 }

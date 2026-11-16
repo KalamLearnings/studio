@@ -81,6 +81,7 @@ const CHECK_TITLES: Readonly<Record<string, string>> = {
   phrase_reviewed: "Phrase review",
   decodable: "Decodability",
   sort_item_sound: "Basket sound",
+  sort_item_label: "Item label",
   distractors_differ: "Same as the answer",
 };
 

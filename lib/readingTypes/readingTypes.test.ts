@@ -18,7 +18,9 @@ import {
   letterIdsOf,
   removeBin,
   soundSortConfig,
+  labelGivesItAway,
   soundSortProblems,
+  soundSortWarnings,
   withBinLetter,
   withSortBy,
   type SortBin,
@@ -324,6 +326,21 @@ describe("sound_sort", () => {
       "Item 3 (w_bab) does not have the sound of its basket (heh).",
       "Item 4 (w_bayt) does not have the sound of its basket (heh).",
     ]);
+  });
+
+  it("warns when an item label has Arabic letters or is the word's text, never for a plain note", () => {
+    expect(labelGivesItAway("بيت")).toBe(true);
+    expect(labelGivesItAway("بَيْت", null)).toBe(true);
+    expect(labelGivesItAway("house", "house")).toBe(true);
+    expect(labelGivesItAway("a house photo", "بَيْت")).toBe(false);
+    expect(labelGivesItAway("  ")).toBe(false);
+    expect(labelGivesItAway(undefined)).toBe(false);
+    const items = [
+      { ...wordItem("i1", "w1", "b1"), label: "بيت" },
+      { ...wordItem("i2", "w2", "b1"), label: "staff note" },
+      wordItem("i3", "w3", "b1"),
+    ];
+    expect(soundSortWarnings(items)).toEqual(["Item 1: The child must hear this item, not read it."]);
   });
 
   it("letterIdsOf is null when a letter is not known", () => {

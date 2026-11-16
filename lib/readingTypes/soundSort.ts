@@ -121,6 +121,36 @@ export function withSortBy(bins: readonly SortBin[], sortBy: SortBy): SortBin[] 
   );
 }
 
+export const SORT_LABEL_WARNING = "The child must hear this item, not read it.";
+
+const ARABIC_LETTER = /[\u0621-\u064A\u066E-\u06D3\u06FA-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/;
+const MARKS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g;
+const bare = (text: string) => text.normalize("NFC").replace(MARKS, "").trim();
+
+/**
+ * True when an item's author-typed `label` would give the answer away: it has
+ * Arabic letters, or it is the item word's own text. The server's
+ * `sort_item_label` finding is the same rule. `wordText` is the library word's
+ * text, when known.
+ */
+export function labelGivesItAway(label: string | undefined, wordText?: string | null): boolean {
+  if (!label || !label.trim()) return false;
+  return ARABIC_LETTER.test(label) || (!!wordText && bare(label) === bare(wordText));
+}
+
+/** Warnings (they never stop a save): one per item whose label the child could read. */
+export function soundSortWarnings(
+  items: readonly SortItem[],
+  wordText?: (wordId: string) => string | null | undefined,
+): string[] {
+  const out: string[] = [];
+  items.forEach((it, n) => {
+    const text = it.kind === "word" && it.word?.wordId ? wordText?.(it.word.wordId) : null;
+    if (labelGivesItAway(it.label, text)) out.push(`Item ${n + 1}: ${SORT_LABEL_WARNING}`);
+  });
+  return out;
+}
+
 /** The letter ids of an Arabic text, in order; null when a letter is not known. */
 export function letterIdsOf(text: string, letterIdByChar: (ch: string) => string | undefined): string[] | null {
   const out: string[] = [];

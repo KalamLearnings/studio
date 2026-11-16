@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseWordSpellingError, plainSpellingIssue, previewWordSpelling, WORD_SPELLING_INVALID } from './spelling';
+import { parseWordSpellingError, plainSpellingIssue, previewWordSpelling, WORD_IS_A_LETTER, WORD_SPELLING_INVALID } from './spelling';
 
 const FATHA = 'َ';
 const SHADDA = 'ّ';
@@ -100,6 +100,14 @@ describe('parseWordSpellingError (the backend WORD_SPELLING_INVALID refusal)', (
     expect(out.arabic).toBe(' كتاب؟');
     expect(out.spelling).toBe('كتاب؟');
     expect(out.messages).toEqual(['"؟" (U+061F) is not an Arabic letter or haraka.']);
+  });
+
+  it('turns WORD_IS_A_LETTER into a plain line', () => {
+    expect(parseWordSpellingError({ code: WORD_IS_A_LETTER, details: { arabic: 'ب' } })).toEqual({
+      arabic: 'ب',
+      spelling: null,
+      messages: ['This is a single letter. Letters live in the alphabet, not the word bank.'],
+    });
   });
 
   it('still says what went wrong without details', () => {

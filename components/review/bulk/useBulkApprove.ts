@@ -13,6 +13,10 @@ import { approveSpelling, withdrawSpelling } from "@/lib/review/actions/words";
 import { approveLink, withdrawLink } from "@/lib/review/actions/links";
 import type { DecisionSpec } from "@/lib/review/actions/types";
 import { useLinkCache, type LinkCache } from "@/lib/hooks/useLinkProposals";
+import { useDraftCache, type DraftCache } from "@/lib/hooks/useContentDrafts";
+import { approveDraft, withdrawDraft } from "@/lib/review/actions/contentDrafts";
+import { planMeaningDraft } from "@/lib/review/draftPlans";
+import type { MeaningItem } from "@/lib/review/normalise/drafts";
 import type { ReviewBank } from "@/lib/hooks/useReviewInbox";
 import { planFamilyProposal } from "@/lib/review/linkPlans";
 import type { LinkItem } from "@/lib/review/normalise/links";
@@ -45,8 +49,22 @@ export interface BulkApprove {
   dismiss: () => void;
 }
 
-/** One item's bulk decision: a spelling's approval, or a family link's connection. */
-function bulkSpec(action: BulkAction, item: InboxItem, inbox: Pick<ReviewInbox, "wordCache" | "bank">, links: LinkCache): DecisionSpec {
+/** One item's bulk decision: a spelling's approval, a family link's connection, or a drafted meaning. */
+function bulkSpec(
+  action: BulkAction,
+  item: InboxItem,
+  inbox: Pick<ReviewInbox, "wordCache" | "bank">,
+  links: LinkCache,
+  drafts: DraftCache,
+): DecisionSpec {
+  if (item.kind === "meaning") {
+    const meaning = item as MeaningItem;
+    if (action === "withdraw") return withdrawDraft(meaning, drafts);
+    const plan = planMeaningDraft(meaning.data.draft, inbox.bank.familiesById);
+    if (plan.ok) return approveDraft(meaning, plan.ops, drafts);
+    // Sent anyway, so the run reports the reason against this item.
+    return { ...approveDraft(meaning, [], drafts), run: async () => Promise.reject(new Error(plan.reason)) };
+  }
   if (item.kind === "link") {
     const link = item as LinkItem;
     if (action === "withdraw") return withdrawLink(link, links);
@@ -67,6 +85,7 @@ function bulkSpec(action: BulkAction, item: InboxItem, inbox: Pick<ReviewInbox, 
 
 export function useBulkApprove(inbox: Pick<ReviewInbox, "items" | "session" | "decide" | "wordCache" | "bank" | "userId">): BulkApprove {
   const links = useLinkCache(inbox.userId);
+  const drafts = useDraftCache(inbox.userId);
   const [rawChecked, setChecked] = React.useState<ReadonlySet<string>>(() => new Set());
   const [run, setRun] = React.useState<BulkRun | null>(null);
   const checked = React.useMemo(() => pruneChecked(rawChecked, inbox.items), [rawChecked, inbox.items]);
@@ -83,12 +102,12 @@ export function useBulkApprove(inbox: Pick<ReviewInbox, "items" | "session" | "d
       error: inbox.session.errors[key],
     }));
     if (step.type === "send") {
-      const base = bulkSpec(run.action, byKey.get(step.key)!, inbox, links);
+      const base = bulkSpec(run.action, byKey.get(step.key)!, inbox, links, drafts);
       decideRef.current({ ...base, quiet: true, advance: false });
     }
     if (step.run !== run) setRun(step.run);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `inbox` itself changes every render; its parts are listed
-  }, [run, inbox.items, inbox.session, inbox.wordCache, inbox.bank, links]);
+  }, [run, inbox.items, inbox.session, inbox.wordCache, inbox.bank, links, drafts]);
 
   const begin = React.useCallback((action: BulkAction, items: InboxItem[]) => {
     if (items.length === 0) return;

@@ -21,6 +21,8 @@ export type Op =
   | { op: "setFamily"; wordId: string; familyId: string | null; prev: string | null }
   | { op: "setReadsAs"; wordId: string; readsAsId: string | null; prev: string | null }
   | { op: "setHeadword"; familyId: string; headwordId: string | null; prev: string | null }
+  /** A family's English meaning (Review's Draft meanings); `prev` is what it said before. */
+  | { op: "setGloss"; familyId: string; gloss: string | null; prev: string | null }
   /** The headword joins the family in the same call (the backend does that). */
   | { op: "createFamily"; familyId: string; gloss: string | null; headwordId: string | null }
   | { op: "linkConcept"; familyId: string; concept: string }
@@ -40,6 +42,8 @@ export function inverseOf(o: Op): Op[] {
       return [{ ...o, readsAsId: o.prev, prev: o.readsAsId }];
     case "setHeadword":
       return [{ ...o, headwordId: o.prev, prev: o.headwordId }];
+    case "setGloss":
+      return [{ ...o, gloss: o.prev, prev: o.gloss }];
     case "setPseudo":
       return [{ ...o, isPseudo: o.prev, prev: o.isPseudo }];
     case "createFamily":
@@ -144,7 +148,7 @@ export function planMoveIntoFamily(words: SpellingLookup, m: MoveIntoFamily): Op
 export interface ConnectApi {
   setWordFamily(wordId: string, familyId: string | null): Promise<unknown>;
   setWordReadsAs(wordId: string, readsAsId: string | null): Promise<unknown>;
-  updateWordFamily(id: string, body: { headwordId?: string | null }): Promise<unknown>;
+  updateWordFamily(id: string, body: { headwordId?: string | null; glossEn?: string | null }): Promise<unknown>;
   createWordFamily(body: { id: string; glossEn?: string | null; headwordId?: string | null }): Promise<unknown>;
   linkFamilyToConcept(familyId: string, concept: string): Promise<unknown>;
   unlinkFamilyFromConcept(familyId: string, concept: string): Promise<unknown>;
@@ -162,6 +166,8 @@ export function sendOp(api: ConnectApi, o: Op): Promise<unknown> {
       return api.setWordReadsAs(o.wordId, o.readsAsId);
     case "setHeadword":
       return api.updateWordFamily(o.familyId, { headwordId: o.headwordId });
+    case "setGloss":
+      return api.updateWordFamily(o.familyId, { glossEn: o.gloss });
     case "createFamily":
       return api.createWordFamily({ id: o.familyId, glossEn: o.gloss, headwordId: o.headwordId });
     case "linkConcept":

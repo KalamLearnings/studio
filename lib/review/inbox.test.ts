@@ -113,6 +113,14 @@ describe("search", () => {
     expect(matchesSearch(item("a", { title: "كتاب" }), "كِتَاب")).toBe(true);
     expect(matchesSearch(item("a", { title: "بَاب" }), "كتاب")).toBe(false);
   });
+  it("folds hamza seats, ta marbuta and alif maqsura", () => {
+    expect(foldForSearch("أَسَد")).toBe(foldForSearch("اسد"));
+    expect(foldForSearch("إِبْرِيق")).toBe("ابريق");
+    expect(foldForSearch("آ")).toBe("ا");
+    expect(foldForSearch("زَرَافَة")).toBe(foldForSearch("زرافه"));
+    expect(foldForSearch("مُوسَى")).toBe(foldForSearch("موسي"));
+    expect(matchesSearch(item("a", { title: "أَرْنَب" }), "ارنب")).toBe(true);
+  });
   it("looks at ids and the extra search text, case-insensitively", () => {
     expect(matchesSearch(item("word_123"), "WORD_1")).toBe(true);
     expect(matchesSearch(item("a", { searchText: "Book family" }), "book")).toBe(true);

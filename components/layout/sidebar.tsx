@@ -32,9 +32,10 @@ const navItems: NavItem[] = [
   { title: "Curricula", href: "/curricula", icon: BookOpen },
   { title: "Assets", href: "/assets", icon: Image },
   { title: "Audio", href: "/audio", icon: Volume2 },
+  // Words: the connections map (CG-1). Families and Concepts redirect there.
   { title: "Words", href: "/words", icon: Type },
-  // Families, Concepts and the four review pages live inside Review now. Their
-  // old routes keep working until CW-12 removes them.
+  // The four review pages live inside Review now. Their old routes keep
+  // working until CW-12 removes them.
   { title: "Review", href: "/review", icon: ClipboardCheck },
   { title: "Books", href: "/books", icon: BookMarked },
   { title: "Games", href: "/games", icon: Gamepad2 },

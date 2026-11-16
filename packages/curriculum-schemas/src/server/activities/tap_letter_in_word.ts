@@ -36,7 +36,13 @@ import { LetterRefStoredSchema, makeReadSchema, readLetterRef } from '../referen
  */
 export const TapLetterInWordConfigSchema = z.object({
   targetWord: ArabicTextSchema
-    .describe('The Arabic word to display'),
+    .describe('The Arabic word to display (written from `wordRef` by the server when it is sent)'),
+
+  // CM-D3d (design 3.1 rule 4): the library word; the server writes `targetWord` and
+  // `wordRef.text` from it, and derives `targetLetter.form` from the word on every save.
+  wordRef: z.object({ wordId: z.string().min(1), text: z.string().optional() })
+    .optional()
+    .describe('The library word shown; the server writes its text'),
 
   targetLetter: LetterReferenceSchema
     .describe('The letter to find (with optional haraka)'),

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { approvePhrase, listPhrases, revokePhrase } from "@/lib/api/phraseReview";
+import { PhraseAudio } from "@/components/phrases/PhraseAudio";
 import { usePhraseReviewer } from "@/lib/hooks/usePhraseReviewer";
 import { phraseReviewErrorText, reasonText, usedInText, type PhraseEntry } from "@/lib/phrases/phraseReview";
 
@@ -66,6 +67,7 @@ function PhraseCard({ entry, canReview }: { entry: PhraseEntry; canReview: boole
           </div>
         )}
         {error != null && <p className="text-sm text-destructive">{phraseReviewErrorText(error)}</p>}
+        {!pending && <PhraseAudio phraseKey={entry.phrase_key} canReview={canReview} />}
       </CardContent>
     </Card>
   );

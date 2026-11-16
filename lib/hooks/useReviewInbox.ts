@@ -20,6 +20,7 @@ import { useLetterSoundSources } from "@/lib/hooks/useLetterSoundReview";
 import { useCurriculumLead } from "@/lib/hooks/useCurriculumLead";
 import { usePhraseReviewer } from "@/lib/hooks/usePhraseReviewer";
 import { useLinkMarks, useWordProposals } from "@/lib/hooks/useLinkProposals";
+import { useContentDrafts, useDraftMarks } from "@/lib/hooks/useContentDrafts";
 import { useReviewDraftPhraseSources } from "@/lib/hooks/useReviewDraftPhraseSources";
 import { useWordReviewQueue, WORD_REVIEW_KEY } from "@/lib/hooks/useWordReviewQueue";
 import { getClientForEnv } from "@/lib/supabase/client";
@@ -35,6 +36,7 @@ import { wordItems, type BankWord } from "@/lib/review/normalise/words";
 import { letterItems } from "@/lib/review/normalise/letters";
 import { blendItems } from "@/lib/review/normalise/sources";
 import { linkItems } from "@/lib/review/normalise/links";
+import { labelItems, meaningItems } from "@/lib/review/normalise/drafts";
 import {
   applyOverlays,
   clearSessionError,
@@ -132,7 +134,13 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
   // ---- sources (existing hooks first) --------------------------------------------
   const { query: wordsQuery } = useWordReviewQueue();
   const notesQuery = useQuery({ queryKey: WORD_NOTES_KEY, queryFn: loadNotes, enabled: wantsWords, staleTime: 60_000 });
-  const familiesQuery = useQuery({ queryKey: WORD_FAMILIES_KEY, queryFn: listWordFamilies, enabled: wantsWords, staleTime: 5 * 60_000 });
+  // The families also give a new family's id a free default (Draft meanings, Draft picture labels).
+  const familiesQuery = useQuery({
+    queryKey: WORD_FAMILIES_KEY,
+    queryFn: listWordFamilies,
+    enabled: wantsWords || wants("meaning") || wants("label"),
+    staleTime: 5 * 60_000,
+  });
   // Advice only: a failed read leaves every spelling reviewable, without the Automatic check card.
   const checksQuery = useQuery({ queryKey: WORD_CHECKS_KEY, queryFn: listWordChecks, enabled: wants("spelling"), staleTime: 5 * 60_000 });
   const blendQuery = useBlendReviewQueue(wants("blend"));
@@ -141,12 +149,16 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
   const draftPhrase = useReviewDraftPhraseSources(kinds);
   // Suggested links (GET /words/proposals) and the marks Studio keeps on them.
   const proposalsQuery = useWordProposals(wants("link"));
+  // Drafted meanings and picture labels (CM-DRAFTS), one read for both kinds.
+  const wantsDrafts = wants("meaning") || wants("label");
+  const draftsQuery = useContentDrafts(wantsDrafts);
 
   const curriculumLead = useCurriculumLead();
   const phraseReviewer = usePhraseReviewer();
   const roles = React.useMemo<ReviewRoles>(() => ({ curriculumLead, phraseReviewer }), [curriculumLead, phraseReviewer]);
   const userId = useStaffUserId();
   const linkMarks = useLinkMarks(userId, wants("link"));
+  const draftMarks = useDraftMarks(userId, wantsDrafts);
 
   const sources = React.useMemo<SourceState[]>(() => {
     const out: SourceState[] = [];
@@ -161,6 +173,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       out.push(sourceState("letter-flags", "Letter sound flags", letterSounds.flags));
     }
     if (wants("link")) out.push(sourceState("link", "Suggested links", proposalsQuery));
+    if (wantsDrafts) out.push(sourceState("drafts", "Drafted meanings and picture labels", draftsQuery));
     out.push(...draftPhrase.sources);
     return out;
     // The query objects change identity on every render; their fields are what matter.
@@ -174,6 +187,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     letterSounds.files.status, letterSounds.files.dataUpdatedAt, letterSounds.files.error,
     letterSounds.flags.status, letterSounds.flags.dataUpdatedAt, letterSounds.flags.error,
     proposalsQuery.status, proposalsQuery.dataUpdatedAt, proposalsQuery.error,
+    wantsDrafts, draftsQuery.status, draftsQuery.dataUpdatedAt, draftsQuery.error,
     draftPhrase.sources,
   ]);
 
@@ -192,13 +206,17 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       out.push(...letterItems(letterSounds.files.data, letterSounds.flags.data ?? [], letterSounds.letters));
     }
     if (wants("link") && proposalsQuery.data) out.push(...linkItems(proposalsQuery.data, linkMarks));
+    if (draftsQuery.data) {
+      if (wants("meaning")) out.push(...meaningItems(draftsQuery.data.meanings ?? [], draftMarks));
+      if (wants("label")) out.push(...labelItems(draftsQuery.data.pictures ?? [], draftMarks));
+    }
     out.push(...draftPhrase.items);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     wordsQuery.data, notesQuery.data, checksQuery.data, wantsWords, kindsKey, draftPhrase.items,
     blendQuery.data, letterSounds.files.data, letterSounds.flags.data, letterSounds.letters,
-    proposalsQuery.data, linkMarks,
+    proposalsQuery.data, linkMarks, draftsQuery.data, draftMarks,
   ]);
 
   const [session, setSession] = React.useState<InboxSession>(EMPTY_SESSION);
@@ -307,9 +325,13 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       void letterSounds.flags.refetch();
     }
     if (wants("link")) void proposalsQuery.refetch();
+    if (wantsDrafts) {
+      void draftsQuery.refetch();
+      void familiesQuery.refetch();
+    }
     draftPhrase.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wantsWords, kindsKey, draftPhrase.refetch]);
+  }, [wantsWords, wantsDrafts, kindsKey, draftPhrase.refetch]);
 
   const updatedAt = Math.max(0, ...sources.map((s) => s.updatedAt));
   const updatedRef = React.useRef(updatedAt);

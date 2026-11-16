@@ -15,11 +15,13 @@
 import { canDecide, isBulkSafe as isSafeItem, KIND_META, type InboxItem, type InboxKind, type ItemState, type ReviewRoles } from "./inbox";
 
 /**
- * The kinds bulk approve covers: spellings, and Suggested links that only
- * group a headword with its case endings (`familyProposalBulkSafe`). Audio,
- * drafts, phrases and picture links never join, whatever their normaliser says.
+ * The kinds bulk approve covers: spellings, Suggested links that only group a
+ * headword with its case endings (`familyProposalBulkSafe`), and
+ * high-confidence drafted meanings that replace no meaning
+ * (`meaningBulkSafe`). Audio, AI drafts, phrases, picture links and drafted
+ * picture labels never join, whatever their normaliser says.
  */
-export const BULK_KINDS: readonly InboxKind[] = ["spelling", "link"];
+export const BULK_KINDS: readonly InboxKind[] = ["spelling", "link", "meaning"];
 
 /** Bulk-safe (`isBulkSafe`) and of a bulk kind; with `roles`, also one this reviewer may decide. */
 export const canBulk = (item: InboxItem, roles?: ReviewRoles): boolean =>
@@ -27,7 +29,8 @@ export const canBulk = (item: InboxItem, roles?: ReviewRoles): boolean =>
 const isBulkSafe = (item: InboxItem): boolean => canBulk(item);
 
 /** The hint when `x` lands on an item that cannot go in bulk. */
-export const BULK_HINT = "Only unflagged, fully vowelled spellings, and suggested words made of case endings only, can be approved together.";
+export const BULK_HINT =
+  "Only unflagged, fully vowelled spellings, suggested words made of case endings only, and high-confidence drafted meanings of words with no meaning yet, can be approved together.";
 
 // ---------------------------------------------------------------------------
 // Selection

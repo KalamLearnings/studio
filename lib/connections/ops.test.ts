@@ -80,6 +80,14 @@ describe("runOps", () => {
     ]);
     expect(calls).toEqual(['setWordPseudo("w",true)', 'attachConceptPicture("cat","p1")']);
   });
+  it("sends a gloss as a family update, and its inverse puts the old one back", async () => {
+    const { api, calls } = fakeApi();
+    const ops: Op[] = [{ op: "setGloss", familyId: "book", gloss: "book", prev: null }];
+    await runOps(api, ops);
+    await runOps(api, inverseOps(ops));
+    expect(calls).toEqual(['updateWordFamily("book",{"glossEn":"book"})', 'updateWordFamily("book",{"glossEn":null})']);
+    expect(fullyUndoable(ops)).toBe(true);
+  });
   it("undoes what it sent when a later call is refused, and carries the refusal", async () => {
     const { api, calls } = fakeApi((name) => name === "setWordReadsAs");
     const err = await runOps(api, [

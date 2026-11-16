@@ -16,7 +16,10 @@ import { isAuditMark, TATWEEL } from "../words/review/arabicText";
 // Kinds and roles
 // ---------------------------------------------------------------------------
 
-/** Every kind of decision, in rail order. The order also fixes the number key (1 to 9). */
+/**
+ * Every kind of decision, in rail order. The order also fixes the number key
+ * (1 to 9); the kinds after the ninth have none.
+ */
 export const INBOX_KINDS = [
   "spelling",
   "reading",
@@ -27,6 +30,8 @@ export const INBOX_KINDS = [
   "recording",
   "letter",
   "link",
+  "meaning",
+  "label",
 ] as const;
 export type InboxKind = (typeof INBOX_KINDS)[number];
 
@@ -44,7 +49,7 @@ export interface KindMeta {
   /** One item of the kind. */
   one: string;
   gate: Gate;
-  /** The number key that opens the kind (`1` to `8`). */
+  /** The number key that opens the kind (`1` to `9`); empty for the kinds after the ninth. */
   key: string;
   /** The pill on an item that waits for a decision. */
   todoLabel: string;
@@ -63,6 +68,9 @@ export const KIND_META: Record<InboxKind, KindMeta> = {
   letter: { label: "Letter sounds", one: "Letter sound", gate: "phrase", key: "8", todoLabel: "To decide" },
   // AI-proposed connections (`GET /words/proposals`); approving one is a connection write.
   link: { label: "Suggested links", one: "Suggested link", gate: "phrase", key: "9", todoLabel: "Suggested" },
+  // Drafted content (CM-DRAFTS, `GET /words/content-drafts`); approving writes a family or a link.
+  meaning: { label: "Draft meanings", one: "Draft meaning", gate: "phrase", key: "", todoLabel: "Drafted" },
+  label: { label: "Draft picture labels", one: "Draft picture label", gate: "phrase", key: "", todoLabel: "Drafted" },
 };
 
 export function canDecide(gate: Gate, roles: ReviewRoles): boolean {
@@ -161,10 +169,20 @@ export function statusPill(item: InboxItem, roles: ReviewRoles): Pill {
     case "approved":
       return {
         tone: "ok",
-        text: item.kind === "reading" ? "Confirmed" : item.kind === "request" ? "Fulfilled" : item.kind === "link" ? "Connected" : "Approved",
+        text:
+          item.kind === "reading"
+            ? "Confirmed"
+            : item.kind === "request"
+              ? "Fulfilled"
+              : item.kind === "link" || item.kind === "label"
+                ? "Connected"
+                : "Approved",
       };
     case "rejected":
-      return { tone: "no", text: item.kind === "request" ? "Declined" : item.kind === "link" ? "Skipped" : "Rejected" };
+      return {
+        tone: "no",
+        text: item.kind === "request" ? "Declined" : item.kind === "link" || item.kind === "meaning" || item.kind === "label" ? "Skipped" : "Rejected",
+      };
     case "noted_pseudo":
       return { tone: "no", text: "Noted: not a word" };
     case "noted_wrong":
@@ -248,7 +266,7 @@ export const INBOX_VIEWS = ["v-ai", "v-failed", "v-check", "v-mine"] as const;
 export type InboxView = (typeof INBOX_VIEWS)[number];
 
 export const VIEW_META: Record<InboxView, { label: string; kinds: readonly InboxKind[] | null }> = {
-  "v-ai": { label: "From the AI", kinds: ["draft", "request", "blend", "link"] },
+  "v-ai": { label: "From the AI", kinds: ["draft", "request", "blend", "link", "meaning", "label"] },
   "v-failed": { label: "Failed audio", kinds: ["blend", "recording", "letter"] },
   // Spellings an automatic word check flags (CM-AIPRE).
   "v-check": { label: "Flagged by check", kinds: ["spelling"] },

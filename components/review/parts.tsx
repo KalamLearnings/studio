@@ -48,6 +48,8 @@ export const KIND_COLORS: Record<InboxKind, string> = {
   recording: "hsl(340 60% 66%)",
   letter: "hsl(45 85% 58%)",
   link: "hsl(24 70% 58%)",
+  meaning: "hsl(100 40% 50%)",
+  label: "hsl(5 60% 62%)",
 };
 
 export function KindDot({ kind, className }: { kind: InboxKind; className?: string }) {

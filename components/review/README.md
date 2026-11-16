@@ -63,6 +63,7 @@ A kind shows in Review (rail, counts, number key, sheet rows, and its source is 
 | CW-8 (done) | `recording` | the same list: `audio.state` on approved entries; the full take read when the item opens (`usePhraseAudio`) | `recordingItems`, `recordingTakeToHear`; audio parts in `components/phrases/audio/` |
 | Words (done) | `link` | `GET /words/proposals`, `{ version, families, pictures, unregistered_pictures }`; skipped ids per staff member in localStorage (`lib/review/skippedLinks.ts`), approved ones marked until the next read (`lib/hooks/useLinkProposals.ts`) | `linkItems` (`normalise/links.ts`); the ops to send in `lib/review/linkPlans.ts`; approve, Undo, skip and "Show it again" are `inverse` (`actions/links.ts`) |
 | CW-11 (done) | `letter` | audio library `letter_sounds` (`getAudioAssets`), BE-3 `GET /assets/letter-sounds/review-flags` `{ items }`, `GET /letters/list` | `letterItems` (`normalise/letters.ts`); flag and clear are `inverse` (`actions/letters.ts`) |
+| CM-DRAFTS (done) | `meaning`, `label` | `GET /words/content-drafts`, `{ meanings, pictures }`: the newest draft per word or picture, joined with the library (`word`, `family`, `concept`, `picture_concepts`, `family_concepts`) and `applied`; skipped keys per staff member in localStorage (`skippedLinks.ts`, scope `drafts`) | `meaningItems`, `labelItems` (`normalise/drafts.ts`); the ops in `lib/review/draftPlans.ts`; approve, Undo, skip and "Show it again" are `inverse` (`actions/contentDrafts.ts`) |
 
 Other extension points:
 
@@ -80,6 +81,19 @@ Other extension points:
   backend has no dismiss, so Skip is Studio's: a skipped proposal shows as Skipped under Decided, where "Show it
   again" brings it back. Only family proposals made of a headword and its case endings, with a known unique id, are
   bulk-safe; pictures are always one at a time.
+- **Draft meanings and Draft picture labels (CM-DRAFTS).** Drafted on the backend and imported with
+  `scripts/import-content-drafts.ts` (C5 `meanings.csv`, C4 `labels.csv`); Studio never writes a draft. Both kinds are
+  gated `phrase` (plain staff read them, with a GateBar) and have no number key (the keys stop at 9). A meaning
+  (`meaning:<word id>`, pane `lenses/drafts/MeaningPane`) shows the spelling, the drafted gloss (editable) and its
+  confidence; approving writes the gloss to the word's family (`setGloss`, a `PATCH /words/families/:id`; the family
+  of the spelling it is read as when it has none of its own) or starts a family with the spelling as headword and the
+  gloss (`createFamily`), with an id the reviewer may change. A replaced gloss is shown before approving. Only
+  high-confidence meanings of real words that have no gloss yet are bulk-safe (`meaningBulkSafe`). A picture label
+  (`label:<asset id>`, pane `LabelPane`) shows the picture, the meaning and word, the confidence and the steps; approving
+  creates the meaning when missing, attaches the picture, starts the word's family when missing and links it to the
+  meaning (`planLabelDraft`), leaving out the steps already in place; never bulk. Undo sends the inverse ops (the new
+  family or meaning stays, as in Suggested links). The backend's `applied` marks a draft decided once the library says
+  what it says.
 - **Show connections (CG-7).** `context/ShowConnections.tsx` links to `/words?focus=<key>`: the Family card (the
   spelling, and the family), the Concept card, the library sub-views' hero, and the link pane.
 

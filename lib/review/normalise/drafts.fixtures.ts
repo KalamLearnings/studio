@@ -1,0 +1,51 @@
+/** Sample drafts for the draft tests (shapes of `GET /words/content-drafts`). */
+
+import type { MeaningDraft, PictureLabelDraft } from "../../api/contentDrafts";
+
+export const meaningDraft = (o: Partial<MeaningDraft> = {}): MeaningDraft => ({
+  id: "meaning:w-kitab",
+  kind: "meaning",
+  word_id: "w-kitab",
+  gloss_en: "book",
+  part_of_speech: "noun",
+  usage_count: 12,
+  drafted_arabic: "كِتَاب",
+  source: "c5_meanings",
+  run_id: "meanings-1",
+  created_at: "2026-11-16T10:00:00Z",
+  confidence: "high",
+  confidence_score: null,
+  note: null,
+  word: { id: "w-kitab", arabic: "كِتَاب", family_id: null, reads_as_id: null, is_pseudo: false },
+  family: null,
+  applied: false,
+  ...o,
+});
+
+export const labelDraft = (o: Partial<PictureLabelDraft> = {}): PictureLabelDraft => ({
+  id: "label:a1",
+  kind: "label",
+  asset_id: "a1",
+  path: "assets/animals/cat.png",
+  url: null,
+  status: "active",
+  concept_slug: "cat",
+  concept_en: "Cat",
+  word_id: "w-qitta",
+  arabic: "قِطَّة",
+  needs_word: false,
+  agrees_with_data: true,
+  source: "c4_pictures",
+  run_id: "labels-1",
+  created_at: "2026-11-16T10:00:00Z",
+  confidence: "medium",
+  confidence_score: 0.7,
+  note: null,
+  word: { id: "w-qitta", arabic: "قِطَّة", family_id: null, reads_as_id: null, is_pseudo: false },
+  family: null,
+  concept: null,
+  picture_concepts: [],
+  family_concepts: [],
+  applied: false,
+  ...o,
+});

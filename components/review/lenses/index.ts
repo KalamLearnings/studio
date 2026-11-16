@@ -2,7 +2,8 @@
  * The registered lenses. A kind appears in Review (rail, counts, number key,
  * shortcut sheet, and its source is read) only once its lens is listed here.
  * Later tickets add theirs: blend (CW-6), draft and request (CW-7), phrase and
- * recording (CW-8), letter (CW-11), link (Suggested links). See components/review/README.md.
+ * recording (CW-8), letter (CW-11), link (Suggested links), meaning and label
+ * (CM-DRAFTS). See components/review/README.md.
  */
 
 import { INBOX_KINDS, type InboxKind } from "@/lib/review/inbox";
@@ -10,6 +11,8 @@ import { BlendListTools } from "./blend/BlendAiCheck";
 import { BlendPane } from "./blend/BlendPane";
 import { LetterPane } from "./letter/LetterPane";
 import { LinkPane } from "./link/LinkPane";
+import { LabelPane } from "./drafts/LabelPane";
+import { MeaningPane } from "./drafts/MeaningPane";
 import { DRAFT_PHRASE_LENSES } from "./draftPhraseLenses";
 import { ReadingPane } from "./reading/ReadingPane";
 import { SpellingPane } from "./spelling/SpellingPane";
@@ -87,6 +90,24 @@ const LENS_LIST: LensDefinition[] = [
         ],
       },
     ],
+  },
+  {
+    kind: "meaning",
+    Pane: MeaningPane,
+    shortcuts: [
+      {
+        title: "Decide",
+        rows: [
+          { label: "Approve a drafted meaning", keys: ["a"] },
+          { label: "Skip a draft (remembered in this browser)", keys: ["r"] },
+        ],
+      },
+    ],
+  },
+  {
+    kind: "label",
+    Pane: LabelPane,
+    shortcuts: [{ title: "Decide", rows: [{ label: "Connect a drafted picture label", keys: ["a"] }] }],
   },
 ];
 

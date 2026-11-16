@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Review concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap">
+<style>
+/* Tokens: Studio app/globals.css (shadcn HSL triplets). Dark is the default here; light is Studio's :root. */
+:root {
+  --background: 0 0% 100%; --foreground: 220 13% 18%;
+  --card: 0 0% 100%; --muted: 210 20% 96%; --muted-foreground: 215 14% 45%;
+  --primary: 211 65% 57%; --primary-foreground: 0 0% 100%;
+  --secondary: 160 64% 52%; --accent: 178 50% 48%;
+  --destructive: 0 75% 63%; --border: 220 13% 90%; --input: 220 13% 90%; --ring: 211 65% 57%;
+  --success: 140 42% 49%; --warning: 37 91% 55%; --info: 211 65% 69%;
+  --sidebar-background: 210 20% 98%; --sidebar-accent: 210 20% 94%;
+  --activity-assessment: 252 39% 59%; --star: 45 91% 61%;
+  --env-dev: 45 93% 47%;
+  --radius: 0.5rem;
+  --ar-font: "Noto Sans Arabic", Arial, sans-serif;
+  color-scheme: light;
+}
+.dark {
+  --background: 222 47% 8%; --foreground: 210 40% 98%;
+  --card: 222 47% 10%; --muted: 217 33% 15%; --muted-foreground: 215 20% 65%;
+  --primary: 211 65% 52%; --secondary: 160 64% 45%; --accent: 178 50% 44%;
+  --destructive: 0 63% 45%; --border: 217 33% 18%; --input: 217 33% 18%; --ring: 211 65% 52%;
+  --success: 140 42% 42%; --warning: 37 91% 50%; --info: 211 65% 60%;
+  --sidebar-background: 222 47% 7%; --sidebar-accent: 217 33% 15%;
+  --activity-assessment: 252 39% 55%; --star: 45 91% 55%;
+  color-scheme: dark;
+}
+.naskh { --ar-font: "Noto Naskh Arabic", "Noto Sans Arabic", serif; }
+
+* { box-sizing: border-box; border-color: hsl(var(--border)); }
+html, body { height: 100%; margin: 0; }
+body {
+  background: hsl(var(--background)); color: hsl(var(--foreground));
+  font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; overflow: hidden;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.ar { font-family: var(--ar-font); direction: rtl; unicode-bidi: isolate; line-height: 1.9; }
+.muted { color: hsl(var(--muted-foreground)); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px;
+  border: 1px solid hsl(var(--border)); border-bottom-width: 2px; border-radius: 4px;
+  font: 600 10.5px/1 ui-monospace, Menlo, monospace; color: hsl(var(--muted-foreground)); background: hsl(var(--background));
+}
+
+/* ---------- concept controls (not part of the design) ---------- */
+.demo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 6px 16px;
+  background: repeating-linear-gradient(135deg, hsl(var(--muted)) 0 8px, hsl(var(--background)) 8px 16px);
+  border-bottom: 1px dashed hsl(var(--border)); font-size: 12px;
+}
+.demo b { font-weight: 600; letter-spacing: .04em; text-transform: uppercase; font-size: 10.5px; color: hsl(var(--muted-foreground)); }
+.demo label { display: inline-flex; align-items: center; gap: 6px; background: hsl(var(--card)); padding: 2px 8px; border-radius: 6px; border: 1px solid hsl(var(--border)); }
+.demo select { background: transparent; border: 0; font-size: 12px; padding: 2px 0; }
+.demo select option { background: hsl(var(--card)); }
+
+/* ---------- shell ---------- */
+.shell { display: flex; height: calc(100vh - var(--demo-h, 37px)); }
+.nav { width: 80px; flex: none; display: flex; flex-direction: column; background: hsl(var(--sidebar-background)); border-right: 1px solid hsl(var(--border)); }
+.nav .logo { height: 64px; display: grid; place-items: center; border-bottom: 1px solid hsl(var(--border)); }
+.nav .logo span { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))); display: grid; place-items: center; font-weight: 700; color: #fff; }
+.nav nav { display: flex; flex-direction: column; gap: 2px; padding: 12px 8px; overflow: auto; }
+.nav a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 8px; color: hsl(var(--foreground) / .7); text-decoration: none; font-size: 10px; font-weight: 500; text-align: center; position: relative; }
+.nav a:hover, .nav a.on { background: hsl(var(--sidebar-accent)); color: hsl(var(--foreground)); }
+.nav a svg { width: 22px; height: 22px; }
+.nav a .pip { position: absolute; top: 4px; right: 10px; min-width: 16px; height: 16px; border-radius: 8px; background: hsl(var(--primary)); color: #fff; font-size: 9.5px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
+.nav .gone { opacity: .35; text-decoration: line-through; pointer-events: none; }
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.header { height: 64px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 24px; border-bottom: 1px solid hsl(var(--border)); background: hsl(var(--background)); }
+.header h1 { font-size: 20px; font-weight: 600; margin: 0; }
+.header .sub { font-size: 12.5px; margin-left: 12px; }
+.header .right { display: flex; align-items: center; gap: 10px; }
+.env { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: hsl(var(--env-dev)); color: #000; letter-spacing: .04em; }
+.who { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: hsl(var(--primary) / .12); color: hsl(var(--primary)); display: grid; place-items: center; font-weight: 600; font-size: 13px; }
+.rolechip { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid hsl(var(--border)); color: hsl(var(--muted-foreground)); }
+
+.ws { flex: 1; min-height: 0; display: grid; grid-template-columns: 228px minmax(340px, 400px) minmax(0, 1fr); background: hsl(var(--muted) / .3); }
+
+/* ---------- rail ---------- */
+.rail { border-right: 1px solid hsl(var(--border)); overflow: auto; padding: 14px 10px 24px; background: hsl(var(--background)); }
+.rail h3 { margin: 16px 10px 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+.rail h3:first-child { margin-top: 2px; }
+.rail button { width: 100%; display: flex; align-items: center; gap: 9px; padding: 7px 10px; border: 0; background: transparent; border-radius: 7px; text-align: left; font-size: 13px; color: hsl(var(--foreground) / .85); }
+.rail button:hover { background: hsl(var(--muted)); }
+.rail button.on { background: hsl(var(--primary) / .14); color: hsl(var(--foreground)); box-shadow: inset 2px 0 0 hsl(var(--primary)); }
+.rail .n { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 12px; color: hsl(var(--muted-foreground)); }
+.rail .n.hot { color: hsl(var(--foreground)); font-weight: 600; }
+.rail .key { margin-left: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 3px; flex: none; background: var(--c, hsl(var(--muted-foreground))); }
+.rail .lock { font-size: 10px; color: hsl(var(--muted-foreground)); border: 1px solid hsl(var(--border)); border-radius: 4px; padding: 0 4px; }
+.rail .foot { margin: 18px 10px 0; font-size: 11.5px; line-height: 1.5; }
+
+/* kind colours: Studio palette (primary, secondary, accent, assessment purple, star yellow, pink) */
+.k-spelling { --c: hsl(211 65% 60%); }
+.k-reading  { --c: hsl(195 60% 55%); }
+.k-blend    { --c: hsl(178 50% 48%); }
+.k-draft    { --c: hsl(252 45% 66%); }
+.k-request  { --c: hsl(282 35% 62%); }
+.k-phrase   { --c: hsl(160 55% 48%); }
+.k-recording{ --c: hsl(340 60% 66%); }
+.k-letter   { --c: hsl(45 85% 58%); }
+
+/* ---------- list ---------- */
+.list { border-right: 1px solid hsl(var(--border)); display: flex; flex-direction: column; min-height: 0; background: hsl(var(--background)); }
+.lhead { padding: 12px 12px 8px; border-bottom: 1px solid hsl(var(--border)); display: grid; gap: 8px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 10px; top: 50%; translate: 0 -50%; width: 15px; height: 15px; color: hsl(var(--muted-foreground)); }
+.search input { width: 100%; height: 36px; padding: 0 34px 0 32px; border-radius: 7px; border: 1px solid hsl(var(--input)); background: hsl(var(--background)); }
+.search kbd { position: absolute; right: 8px; top: 50%; translate: 0 -50%; }
+.lrow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.lrow .sel { min-width: 0; }
+.list { min-width: 0; overflow: hidden; }
+.lmeta { flex-wrap: wrap; gap: 4px; }
+.seg { display: inline-flex; border: 1px solid hsl(var(--border)); border-radius: 7px; padding: 2px; gap: 2px; }
+.seg button { white-space: nowrap; border: 0; background: transparent; padding: 3px 9px; border-radius: 5px; font-size: 12px; color: hsl(var(--muted-foreground)); }
+.seg button.on { background: hsl(var(--muted)); color: hsl(var(--foreground)); font-weight: 500; }
+.sel { height: 30px; border-radius: 7px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); padding: 0 6px; font-size: 12px; }
+.kindsel { display: none; }
+.lmeta { display: flex; justify-content: space-between; font-size: 11.5px; color: hsl(var(--muted-foreground)); padding: 0 2px; }
+.items { flex: 1; overflow: auto; }
+.item { display: grid; grid-template-columns: 18px 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 12px 10px 10px; border-bottom: 1px solid hsl(var(--border) / .7); cursor: pointer; position: relative; }
+.item:hover { background: hsl(var(--muted) / .5); }
+.item.on { background: hsl(var(--primary) / .12); }
+.item.on::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: hsl(var(--primary)); }
+.item.done { opacity: .62; }
+.item .cb { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid hsl(var(--muted-foreground) / .6); display: grid; place-items: center; background: transparent; padding: 0; }
+.item .cb.on { background: hsl(var(--primary)); border-color: hsl(var(--primary)); }
+.item .cb.on::after { content: ""; width: 7px; height: 4px; border: 2px solid #fff; border-top: 0; border-right: 0; rotate: -45deg; translate: 0 -1px; }
+.item .cb[disabled] { opacity: .25; cursor: default; }
+.item .ar { font-size: 23px; line-height: 1.6; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .ar.lat { font-family: inherit; direction: ltr; text-align: left; font-size: 14px; font-weight: 500; line-height: 1.5; }
+.item .line2 { grid-column: 2 / 4; display: flex; gap: 8px; align-items: center; font-size: 11.5px; color: hsl(var(--muted-foreground)); min-width: 0; }
+.item .line2 .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .kindtag { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.item .top { grid-column: 2 / 4; display: flex; align-items: center; gap: 10px; justify-content: space-between; min-width: 0; }
+.item .top .ar { flex: 1; min-width: 0; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.pill.todo { background: hsl(var(--warning) / .14); color: hsl(var(--warning)); }
+.pill.ok { background: hsl(var(--success) / .16); color: hsl(140 45% 60%); }
+.pill.no { background: hsl(var(--destructive) / .16); color: hsl(0 70% 70%); }
+.pill.info { background: hsl(var(--info) / .14); color: hsl(var(--info)); }
+.pill.neutral { border-color: hsl(var(--border)); color: hsl(var(--muted-foreground)); }
+.pill.gate { border: 1px dashed hsl(var(--border)); color: hsl(var(--muted-foreground)); font-weight: 500; }
+:root:not(.dark) .pill.ok { color: hsl(140 50% 32%); }
+:root:not(.dark) .pill.no { color: hsl(0 60% 45%); }
+:root:not(.dark) .pill.todo { color: hsl(30 80% 35%); }
+
+.bulk { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: hsl(var(--primary) / .12); border-bottom: 1px solid hsl(var(--primary) / .35); font-size: 12.5px; }
+.bulk .sp { flex: 1; }
+
+/* ---------- detail ---------- */
+.detail { min-width: 0; display: flex; flex-direction: column; min-height: 0; container-type: inline-size; container-name: detail; }
+.dscroll { flex: 1; overflow: auto; }
+.dinner { max-width: 1120px; margin: 0 auto; padding: 20px 24px 32px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.dinner .ctx { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+@container detail (min-width: 760px) {
+  .dinner:not(.single) { grid-template-columns: minmax(0, 1fr) 264px; gap: 20px; }
+  .dinner:not(.single) .ctx { grid-template-columns: minmax(0, 1fr); }
+}
+.hero, .card { min-width: 0; }
+.dinner.single { grid-template-columns: minmax(0, 1fr); max-width: 860px; }
+.crumbs { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-size: 12px; color: hsl(var(--muted-foreground)); flex-wrap: wrap; }
+.crumbs button { border: 0; background: none; color: hsl(var(--primary)); padding: 0; font-size: 12px; }
+.hero { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 18px 20px 16px; }
+.hero .eyebrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: hsl(var(--muted-foreground)); }
+.hero .eyebrow .kindtag { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: hsl(var(--foreground)); }
+.hero .big { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 6px; }
+.hero .big .ar { font-size: 54px; line-height: 1.75; font-weight: 500; }
+.hero .big .ar.long { font-size: 38px; }
+.hero .gloss { font-size: 14px; color: hsl(var(--muted-foreground)); }
+.hero .gloss b { color: hsl(var(--foreground)); font-weight: 500; }
+.say { margin-top: 10px; font-size: 13.5px; padding: 9px 12px; border-radius: 8px; background: hsl(var(--muted) / .6); }
+.say.warn { background: hsl(var(--warning) / .1); border: 1px solid hsl(var(--warning) / .3); }
+.say.calm { background: hsl(var(--info) / .08); border: 1px solid hsl(var(--info) / .25); }
+.say.err { background: hsl(var(--destructive) / .1); border: 1px solid hsl(var(--destructive) / .35); }
+
+.card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 14px 16px; }
+.card + .card { margin-top: 14px; }
+.card h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.card h4 .muted { font-weight: 400; font-size: 12px; }
+.col { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.ctx .card { padding: 12px 14px; }
+.ctx h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: hsl(var(--muted-foreground)); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12.5px; }
+.kv dt { color: hsl(var(--muted-foreground)); }
+.kv dd { margin: 0; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; max-width: 100%; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; border: 1px solid hsl(var(--border)); font-size: 12px; background: hsl(var(--background)); }
+.chip .ar { font-size: 17px; line-height: 1.5; }
+.chip.flag { border-color: hsl(var(--warning) / .45); color: hsl(var(--warning)); }
+.chip.pass { color: hsl(140 45% 58%); }
+.chip.fail { border-color: hsl(var(--destructive) / .5); color: hsl(0 70% 70%); }
+.chip.note { color: hsl(var(--info)); }
+:root:not(.dark) .chip.pass { color: hsl(140 50% 32%); }
+.linkbtn { border: 0; background: none; color: hsl(var(--primary)); padding: 0; font-size: 12.5px; }
+.linkbtn:hover { text-decoration: underline; }
+.mem { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid hsl(var(--border) / .6); font-size: 12px; }
+.mem:first-of-type { border-top: 0; }
+.mem .ar { font-size: 22px; line-height: 1.6; }
+.mem .sp { flex: 1; }
+.mem.cur { background: hsl(var(--primary) / .08); margin: 0 -8px; padding: 6px 8px; border-radius: 6px; }
+
+.btn { height: 34px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 7px; border: 1px solid hsl(var(--input)); background: hsl(var(--background)); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.btn:hover { background: hsl(var(--muted)); }
+.btn.primary { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ok { background: hsl(var(--success)); border-color: hsl(var(--success)); color: #fff; }
+.btn.danger { border-color: hsl(var(--destructive) / .6); color: hsl(0 70% 70%); }
+:root:not(.dark) .btn.danger { color: hsl(0 60% 45%); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.sm { height: 28px; padding: 0 9px; font-size: 12px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.btn kbd { background: transparent; border-color: currentColor; color: inherit; opacity: .75; }
+.btn svg { width: 15px; height: 15px; }
+
+.play { width: 52px; height: 52px; border-radius: 50%; border: 1px solid hsl(var(--primary) / .6); background: hsl(var(--primary) / .14); color: hsl(var(--primary)); display: grid; place-items: center; flex: none; }
+.play svg { width: 22px; height: 22px; }
+.play.on { background: hsl(var(--primary)); color: #fff; }
+.player { display: flex; align-items: center; gap: 12px; }
+.player .wave { flex: 1; height: 44px; display: flex; align-items: center; gap: 2px; min-width: 120px; position: relative; }
+.player .wave i { flex: 1; background: hsl(var(--muted-foreground) / .35); border-radius: 2px; min-width: 2px; }
+.player .wave i.p { background: hsl(var(--primary)); }
+.player .wave .mark { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 1.5px dashed hsl(var(--warning)); }
+.player .meta { font-size: 11.5px; color: hsl(var(--muted-foreground)); min-width: 74px; text-align: right; }
+.audio-row { display: grid; gap: 10px; padding: 12px; border-radius: 10px; border: 1px solid hsl(var(--border)); background: hsl(var(--background) / .6); }
+.audio-row + .audio-row { margin-top: 10px; }
+.audio-row.focus { border-color: hsl(var(--primary) / .7); box-shadow: 0 0 0 3px hsl(var(--primary) / .15); }
+.audio-row .lbl { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; flex-wrap: wrap; }
+.audio-row .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.split { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.unit { font-family: var(--ar-font); font-size: 30px; line-height: 1.6; padding: 2px 12px; border-radius: 8px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); direction: rtl; }
+.unit.chg { border-color: hsl(var(--warning) / .7); background: hsl(var(--warning) / .12); }
+.unit.sm { font-size: 22px; padding: 0 9px; }
+.diffrow { display: grid; grid-template-columns: 74px 1fr; gap: 6px 10px; align-items: center; font-size: 12px; }
+
+.decision-target { outline: 2px solid hsl(var(--primary) / .7); outline-offset: 3px; border-radius: 10px; }
+
+.dbar { flex: none; border-top: 1px solid hsl(var(--border)); background: hsl(var(--card)); padding: 10px 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 58px; }
+.dbar .sp { flex: 1; }
+.dbar .status { font-size: 12.5px; color: hsl(var(--muted-foreground)); display: flex; align-items: center; gap: 8px; }
+.dbar .gate { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.dbar .gate svg { width: 16px; height: 16px; color: hsl(var(--muted-foreground)); }
+.reasons { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; width: 100%; }
+.reasons button { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 7px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); font-size: 12.5px; text-align: left; }
+.reasons button.on { border-color: hsl(var(--destructive) / .7); background: hsl(var(--destructive) / .1); }
+.reasonbox { width: 100%; display: grid; gap: 8px; }
+.reasonbox .row { display: flex; gap: 8px; align-items: center; }
+.reasonbox input, .field { height: 34px; border-radius: 7px; border: 1px solid hsl(var(--input)); background: hsl(var(--background)); padding: 0 10px; flex: 1; min-width: 0; }
+.field.ar { height: 46px; font-size: 24px; text-align: right; }
+textarea.field { height: auto; padding: 8px 10px; resize: vertical; }
+.err { color: hsl(0 70% 70%); font-size: 12.5px; }
+:root:not(.dark) .err { color: hsl(0 60% 45%); }
+
+.pics { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
+.pic { aspect-ratio: 1; border-radius: 8px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); display: grid; place-items: center; position: relative; }
+.pic svg { width: 60%; height: 60%; }
+.pic .x { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: hsl(var(--muted)); font-size: 12px; line-height: 1; }
+.pic.add { border-style: dashed; color: hsl(var(--muted-foreground)); font-size: 12px; cursor: pointer; }
+.formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.formgrid label { display: grid; gap: 4px; font-size: 12px; color: hsl(var(--muted-foreground)); }
+.formgrid .full { grid-column: 1 / -1; }
+.preview-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 420px; }
+.preview-grid span { aspect-ratio: 1; display: grid; place-items: center; border-radius: 8px; border: 1px solid hsl(var(--border)); font-family: var(--ar-font); font-size: 26px; background: hsl(var(--background)); }
+.preview-grid span.t { border-color: hsl(var(--secondary) / .7); background: hsl(var(--secondary) / .12); }
+.wordtap { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; }
+.wordtap span { font-family: var(--ar-font); font-size: 40px; padding: 4px 12px; border-radius: 8px; border: 1px solid hsl(var(--border)); }
+.wordtap span.t { border-color: hsl(var(--secondary) / .7); background: hsl(var(--secondary) / .12); }
+.hist { font-size: 12px; display: grid; gap: 6px; }
+.hist div { display: flex; gap: 8px; }
+.hist time { color: hsl(var(--muted-foreground)); min-width: 64px; }
+.badge-proposed { font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; border: 1px dashed hsl(var(--star)); color: hsl(var(--star)); }
+
+/* empty, loading, error */
+.empty { display: grid; place-items: center; align-content: center; text-align: center; padding: 48px 24px; gap: 8px; color: hsl(var(--muted-foreground)); }
+.empty p { max-width: 380px; margin: 0; }
+.empty .ring { width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid hsl(var(--border)); display: grid; place-items: center; }
+.empty .ring svg { width: 24px; height: 24px; color: hsl(var(--secondary)); }
+.empty h5 { margin: 6px 0 0; font-size: 15px; color: hsl(var(--foreground)); font-weight: 600; }
+.skel { padding: 12px; border-bottom: 1px solid hsl(var(--border) / .7); display: grid; gap: 8px; }
+.skel i { display: block; height: 12px; border-radius: 4px; background: linear-gradient(90deg, hsl(var(--muted)) 0, hsl(var(--muted) / .4) 50%, hsl(var(--muted)) 100%); background-size: 200% 100%; animation: sh 1.3s infinite linear; }
+@keyframes sh { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.srcerr { margin: 8px 12px 0; padding: 8px 10px; border-radius: 8px; font-size: 12px; border: 1px solid hsl(var(--destructive) / .4); background: hsl(var(--destructive) / .08); display: flex; gap: 8px; align-items: center; }
+.srcerr .sp { flex: 1; }
+
+.toast { position: fixed; left: 50%; bottom: 84px; translate: -50% 0; background: hsl(var(--foreground)); color: hsl(var(--background)); padding: 9px 14px; border-radius: 9px; font-size: 13px; display: flex; gap: 12px; align-items: center; box-shadow: 0 10px 30px rgb(0 0 0 / .35); z-index: 40; }
+.toast .ar { font-size: 18px; line-height: 1.4; }
+.toast button { border: 0; background: none; color: hsl(var(--primary)); font-weight: 600; }
+.toast kbd { background: transparent; color: inherit; border-color: currentColor; opacity: .6; }
+
+.overlay { position: fixed; inset: 0; background: rgb(0 0 0 / .55); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.sheet { width: min(760px, 100%); max-height: 86vh; overflow: auto; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 14px; padding: 18px 22px; }
+.sheet h2 { margin: 0 0 4px; font-size: 17px; }
+.keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 28px; margin-top: 14px; }
+.keys h6 { grid-column: 1 / -1; margin: 12px 0 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: hsl(var(--muted-foreground)); }
+.keys div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid hsl(var(--border) / .5); }
+.keys div span:last-child { display: flex; gap: 4px; }
+.picker { display: grid; gap: 4px; max-height: 260px; overflow: auto; margin-top: 8px; }
+.picker button { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 7px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); text-align: left; font-size: 12.5px; }
+.picker button:hover { border-color: hsl(var(--primary)); }
+.picker .ar { font-size: 22px; line-height: 1.5; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1499px) {
+  .ws { grid-template-columns: 204px minmax(320px, 372px) minmax(0, 1fr); }
+}
+@media (max-width: 1279px) {
+  .ws { grid-template-columns: 196px minmax(300px, 360px) minmax(0, 1fr); }
+  .hero .big .ar { font-size: 46px; }
+}
+@media (max-width: 1099px) {
+  .ws { grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); }
+  .rail { display: none; }
+  .kindsel { display: block; flex: 1; }
+  .header .sub { display: none; }
+}
+@media (max-width: 859px) {
+  .nav { width: 60px; }
+  .nav a span.l { display: none; }
+  .ws { grid-template-columns: 1fr; }
+  .ws.has-detail .list { display: none; }
+  .ws:not(.has-detail) .detail { display: none; }
+  .dinner { padding: 14px 16px 24px; }
+  .dbar { padding: 10px 16px; }
+  .header { padding: 0 16px; }
+  .who .name { display: none; }
+  .keys { grid-template-columns: 1fr; }
+}
+.backlink { display: none; }
+@media (max-width: 859px) { .backlink { display: inline-flex; } }
+</style>
+</head>
+<body>
+<div class="demo" id="demo">
+  <b>Concept controls</b>
+  <label>View as
+    <select id="role">
+      <option value="lead">Partner: curriculum lead (all roles)</option>
+      <option value="staff">Owner: staff, no review role</option>
+      <option value="phrase">Staff with phrase reviewer only</option>
+    </select>
+  </label>
+  <label>Scenario
+    <select id="scenario">
+      <option value="normal">Normal day</option>
+      <option value="recoff">Recording switched off</option>
+      <option value="loading">Loading</option>
+      <option value="partial">One source failed (drafts)</option>
+      <option value="empty">Everything decided</option>
+    </select>
+  </label>
+  <label>Theme
+    <select id="theme"><option value="dark">Dark</option><option value="light">Light</option></select>
+  </label>
+  <label>Arabic face
+    <select id="face"><option value="sans">Noto Sans Arabic (Studio today)</option><option value="naskh">Noto Naskh Arabic</option></select>
+  </label>
+  <span class="muted">Press <kbd>?</kbd> for every shortcut. No real audio plays; the player is simulated.</span>
+</div>
+
+<div class="shell">
+  <aside class="nav" aria-label="Studio">
+    <div class="logo"><span>K</span></div>
+    <nav id="nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="header">
+      <div style="display:flex;align-items:baseline;min-width:0">
+        <h1>Review</h1>
+        <span class="sub muted" id="hsub"></span>
+      </div>
+      <div class="right">
+        <span class="env">DEV</span>
+        <div class="who"><span class="rolechip" id="rolechip"></span><span class="avatar" id="avatar">S</span></div>
+      </div>
+    </header>
+    <div class="ws" id="ws">
+      <aside class="rail" id="rail" aria-label="Queues"></aside>
+      <section class="list" id="list" aria-label="Inbox"></section>
+      <section class="detail" id="detail" aria-label="Decision"></section>
+    </div>
+  </div>
+</div>
+<div id="toast-root"></div>
+<div id="overlay-root"></div>
+
+<script>
+"use strict";
+/* ===================================================================
+   Sample data. Every Arabic string comes from a real row or fixture:
+   - content-model-audit/14-word-review-queue.csv (PROD word bank, rank,
+     class, link counts, suspect flags, family members)
+   - content-model-audit/13-picture-concepts-dry-run.md (concepts, kinds,
+     picture files, library rows per concept)
+   - studio/lib/blendWord/review.test.ts and preview.test.ts (blend splits)
+   - mobile-app-v2 lesson fixtures and backend phrase fixtures (phrases)
+   - backend generate-draft.test.ts (AI drafts, word requests)
+   - backend letters.test.ts (letter names)
+   English glosses, node titles, dates and counts are sample values.
+   =================================================================== */
+
+const ICONS = {
+  book: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  volume: '<path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/>',
+  type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  layers: '<path d="m12 2 10 5-10 5L2 7l10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+  shapes: '<path d="M8.3 10a.7.7 0 0 1-.6-1L11.4 3a.7.7 0 0 1 1.2 0L16.3 9a.7.7 0 0 1-.6 1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>',
+  bookmark: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M12 2v8l3-2 3 2V2"/>',
+  game: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M8 10v4"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  play: '<path d="M7 4.5v15l12-7.5Z" fill="currentColor" stroke="none"/>',
+  pause: '<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z"/>',
+  sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  alert: '<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  wand: '<path d="m15 4 5 5L9 20l-5-5Z"/><path d="M14 2v2M20 8h2M17 3l1-1"/>',
+  mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4"/>',
+};
+const ic = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ar = (s, cls = "") => `<span class="ar ${cls}" lang="ar" dir="rtl">${esc(s)}</span>`;
+
+/* Roles: lib/generation/drafts.ts isCurriculumLead, lib/phrases/phraseReview.ts isPhraseReviewer; route-manifest.ts. */
+const ROLES = {
+  lead: { label: "Curriculum lead", name: "Partner", initials: "P", lead: true, phrase: true },
+  staff: { label: "Staff", name: "Owner", initials: "O", lead: false, phrase: false },
+  phrase: { label: "Staff, phrase reviewer", name: "Reviewer", initials: "R", lead: false, phrase: true },
+};
+const can = (gate) => gate === "staff" || (gate === "lead" && S.role.lead) || (gate === "phrase" && S.role.phrase);
+const GATE_TEXT = { lead: "a curriculum lead", phrase: "a phrase reviewer or a curriculum lead" };
+
+const KINDS = {
+  spelling:  { label: "Spellings", one: "Spelling", gate: "staff", key: "1", src: "GET /words" },
+  reading:   { label: "Readings", one: "Reading", gate: "staff", key: "2", src: "GET /words" },
+  blend:     { label: "Blend splits", one: "Blend", gate: "staff", key: "3", src: "GET /words/blend/review" },
+  draft:     { label: "AI drafts", one: "AI draft", gate: "lead", key: "4", src: "drafts per node" },
+  request:   { label: "Word requests", one: "Word request", gate: "staff", key: "5", src: "GET /curriculum/generation/word-requests" },
+  phrase:    { label: "Phrases", one: "Phrase", gate: "phrase", key: "6", src: "GET /curriculum/reading/phrases" },
+  recording: { label: "Recordings", one: "Recording", gate: "phrase", key: "7", src: "phrase audio per phrase" },
+  letter:    { label: "Letter sounds", one: "Letter sound", gate: "staff", key: "8", src: "audio library, letter_sounds" },
+};
+
+/* Word bank rows (14-word-review-queue.csv). */
+const W = {
+  bab:      { id: "word_1767234599841", ar: "بَاب", rank: 1, cls: "real_full", usage: 7, target: 0, distr: 6, sib: 0, others: ["باب"] },
+  yuqina:   { id: "word_1782095435039", ar: "يُقِنَ", rank: 2, cls: "real_full", usage: 7, target: 4, distr: 3, sib: 0, others: [] },
+  zuhira:   { id: "word_1782436567693", ar: "ظُهِرَ", rank: 4, cls: "real_full", usage: 6, target: 3, distr: 3, sib: 3, flags: ["vowel_permutations"], others: [] },
+  hal:      { id: "word_1767514474028", ar: "هَلْ", rank: 5, cls: "real_full", usage: 5, target: 4, distr: 1, sib: 3, flags: ["two_letters", "vowel_permutations"], others: ["هَلَ", "هَلِ", "هَلُ", "هل"] },
+  man:      { id: "word_1767513034538", ar: "مَنْ", rank: 8, cls: "real_full", usage: 5, target: 3, distr: 2, sib: 1, flags: ["two_letters"], others: [] },
+  mizan:    { id: "word_1765590760153", ar: "مِيزَان", rank: 11, cls: "real_full", usage: 5, target: 0, distr: 0, sib: 0, others: ["ميزان"] },
+  warda:    { id: "word_1783473264473", ar: "وَرْدَ", rank: 13, cls: "case_variant", base: "وَرْد", usage: 5, target: 4, distr: 1, sib: 4, flags: ["vowel_permutations"], others: ["وَرْد"] },
+  kitabu:   { id: "word_1794597547426", ar: "كِتَابُ", rank: 151, cls: "case_variant", base: "كِتَاب", usage: 2, target: 1, distr: 0, sib: 1, family: "book", others: ["كِتَاب", "كتاب"] },
+  kitab:    { id: "word_1767236108666", ar: "كِتَاب", rank: 176, cls: "real_full", usage: 2, target: 0, distr: 1, sib: 1, family: "book", others: ["كِتَابُ", "كتاب"], reviewed: true },
+  kitabBare:{ id: "word_1770850294597", ar: "كتاب", cls: "bare", usage: 1, family: "book" },
+  subh:     { id: "word_1772820328612", ar: "صُبح", rank: 326, cls: "real_partial", usage: 1, target: 1, distr: 0, sib: 0, others: [] },
+  walad:    { id: "word_1782345819909", ar: "وَلَدُ", rank: 160, cls: "real_full", usage: 2, target: 1, distr: 1, sib: 0, family: "boy", reviewed: true, others: ["ولد"] },
+  waladBare:{ id: "word_1764751580346", ar: "ولد", cls: "bare", usage: 1, family: "boy" },
+  dubb:     { id: "word_1764720522080", ar: "دُبّ", rank: 703, cls: "real_full", usage: 0, family: "bear", reviewed: true },
+  dubbun:   { id: "word_1764720448424", ar: "دُبٌّ", rank: 742, cls: "case_variant", base: "دُبّ", usage: 0, family: "bear" },
+  dubbi:    { id: "word_1793043410434", ar: "دُبِّ", rank: 268, cls: "case_variant", base: "دُبّ", usage: 1, family: "bear" },
+  tin:      { id: "word_1765698057038", ar: "تِين", rank: 739, cls: "real_full", usage: 0, reviewed: true, family: "fig" },
+  tamru:    { id: "word_1782346197084", ar: "تَمْرُ", rank: 492, cls: "real_full", usage: 1, reviewed: true, family: "dates" },
+};
+const CLASS_LABEL = { real_full: "Fully vowelled", real_partial: "Partly vowelled", case_variant: "Case-ending variant", bare: "No harakat" };
+const FLAG_LABEL = { two_letters: "Two consonants", vowel_permutations: "Many vowelings of the same letters", unused: "No activity uses it" };
+
+/* Families (CM-S5) and concepts (CM-B11 dry run). */
+const FAMILIES = {
+  book: { id: "book", gloss: "book", head: "kitab", notes: "", members: ["kitab", "kitabu", "kitabBare"], concept: "book" },
+  bear: { id: "bear", gloss: "bear", head: "dubb", notes: "", members: ["dubb", "dubbun", "dubbi"], concept: "bear" },
+  boy:  { id: "boy", gloss: "boy", head: "walad", notes: "", members: ["walad", "waladBare"], concept: "boy" },
+  fig:  { id: "fig", gloss: "fig", head: "tin", notes: "", members: ["tin"], concept: "fig" },
+  dates:{ id: "dates", gloss: "dates", head: "tamru", notes: "", members: ["tamru"], concept: "dates" },
+};
+const CONCEPTS = {
+  book:  { slug: "book", en: "book", ar: "كتاب", kind: "object", pics: ["misc/lor64__1770950116989.png", "misc/lor64__1770950347555.png"], families: ["book"], art: "book" },
+  bear:  { slug: "bear", en: "bear", ar: "دُبّ", kind: "animal", pics: ["animals/bear__1761799969295.png"], families: ["bear"], art: "bear" },
+  boy:   { slug: "boy", en: "boy", ar: "ولد", kind: "person", pics: ["misc/lor51__1765697652127.png"], families: ["boy"], art: "person" },
+  fig:   { slug: "fig", en: "fig", ar: "تين", kind: "food", pics: ["misc/lor39__1765592512407.png"], families: ["fig"], art: "fruit" },
+  dates: { slug: "dates", en: "dates", ar: "تمر", kind: "food", pics: ["misc/lor40__1765592502152.png"], families: ["dates"], art: "fruit" },
+  baby:  { slug: "baby", en: "baby", ar: "طِفْل", kind: "person", pics: ["misc/lor31__1765443379053.png"], families: [], art: "person" },
+  camel: { slug: "camel", en: "camel", ar: "جمل", kind: "animal", pics: ["misc/lor16__1765412590546.png"], families: [], art: "bear" },
+  cat:   { slug: "cat", en: "cat", ar: "قطة", kind: "animal", pics: [], families: [], art: "bear" },
+  "crescent-moon": { slug: "crescent-moon", en: "crescent moon", ar: "هلال", kind: "nature", pics: ["misc/lor26__1765441812179.png"], families: [], art: "moon" },
+};
+const KINDS_OF_CONCEPT = ["animal", "food", "object", "body", "person", "place", "nature", "shape", "quality", "other"];
+
+/* Reject reasons: lib/blendWord/takes.ts and lib/phrases/phraseAudio.ts. */
+const TAKE_REASONS = [["wrong_vowel","Wrong vowel"],["short_vowel_too_long","Short vowel too long"],["madd_too_short","Madd too short"],["qalqala","Missing or wrong qalqala"],["added_vowel","Added vowel"],["wrong_word","Wrong word"],["unclear_consonant","Unclear consonant"],["sun_lam_voiced","Sun lam voiced"],["seat_alif_voiced","Seat alif voiced"],["noise","Noise"],["other","Other (say why)"]];
+const PHRASE_REASONS = [["wrong_vowel","Wrong vowel"],["wrong_case_ending","Wrong case ending"],["wrong_join","Wrong join between words"],["wrong_word","Wrong word"],["unclear","Unclear"],["unnatural","Does not sound natural"],["noise","Noise"],["other","Other (say why)"]];
+
+function seedItems() {
+  const sp = (k, extra = {}) => {
+    const w = W[k];
+    return { kind: "spelling", key: "s-" + k, w: k, ar: w.ar, state: w.reviewed ? "approved" : "todo", waiting: extra.waiting ?? "3 d", ...extra };
+  };
+  return [
+    sp("bab", { waiting: "9 d" }),
+    sp("yuqina", { waiting: "9 d" }),
+    sp("zuhira", { waiting: "9 d" }),
+    sp("hal", { waiting: "9 d" }),
+    sp("man", { waiting: "9 d" }),
+    sp("mizan", { waiting: "9 d", state: "approved", by: "Partner", at: "yesterday" }),
+    sp("warda", { waiting: "6 d" }),
+    sp("kitabu", { waiting: "4 d" }),
+    sp("subh", { waiting: "2 d" }),
+    sp("kitab", { waiting: "", by: "Partner", at: "2 d ago" }),
+
+    { kind: "reading", key: "r-kitab", w: "kitabBare", ar: "كتاب", state: "todo", waiting: "5 d", candidates: ["kitab"] },
+    { kind: "reading", key: "r-walad", w: "waladBare", ar: "ولد", state: "todo", waiting: "5 d", candidates: ["walad"] },
+
+    { kind: "blend", key: "b-kitab", ar: "كِتَابٌ", en: "book", usage: 2, state: "todo", waiting: "1 d", family: "book",
+      forms: [
+        { form: "pausal", label: "Pausal form", text: "كِتَابْ", rules: ["كِ", "تَابْ"], units: ["كِتَا", "بْ"], override: true, harakat: "Typed by the author",
+          flags: [{ t: "The edited split differs from the rules", src: "Rule", review: true }],
+          split: "todo", takes: [{ id: "t1", kind: "Natural", status: "ready", dur: 0.8, by: "Partner" }] },
+        { form: "full", label: "Full form", text: "كِتَابٌ", rules: ["كِ", "تَا", "بٌ"], units: ["كِ", "تَا", "بٌ"], override: false, harakat: "Typed by the author",
+          flags: [], split: "approved", splitNote: "",
+          takes: [{ id: "t2", kind: "Natural", status: "needs_review", dur: 0.9, marks: [0.34, 0.66] }, { id: "t3", kind: "Stretched", status: "pending" }] },
+      ] },
+    { kind: "blend", key: "b-shams", ar: "الشَّمْسُ", en: "sun", usage: 1, state: "todo", waiting: "2 d", failed: true,
+      forms: [ { form: "full", label: "Full form", text: "الشَّمْسُ", units: null, split: "approved",
+        takes: [{ id: "t4", kind: "Natural", status: "not_voiceable", attempts: 5, error: "The voice said a different word." }] } ] },
+
+    { kind: "draft", key: "d-grid", ar: "Grid tap", latin: true, type: "grid_tap", node: "Letter ta, practice", state: "todo", waiting: "2 h",
+      config: { target: "ت", distractors: ["ب", "ث"], targetCount: 4, total: 12 },
+      prov: { model: "drafter (sample)", template: "grid_tap@1", prompt: "draft-prompt@1", exemplars: 2, required: null,
+        checks: [["write_schema","pass"],["contrast_required","pass"],["distractors_differ","pass"],["graded_has_target","pass"],["allowed_words","pass"],["taught_only","pass"],["required_form","pass"],["options_distinct","pass"],["target_in_focus","pass"]] } },
+    { kind: "draft", key: "d-tap", ar: "Tap the letter in a word", latin: true, type: "tap_letter_in_word", node: "Letter ta, lesson", state: "todo", waiting: "2 h",
+      config: { word: ["بَ", "تَ", "بَ"], wordText: "بَتَبَ", letter: "ت", form: "medial", indices: [1] },
+      prov: { model: "drafter (sample)", template: "tap_letter_in_word@1", prompt: "draft-prompt@1", exemplars: 0, required: "medial",
+        checks: [["write_schema","pass"],["allowed_words","pass"],["taught_only","pass"],["required_form","pass"],["target_in_focus","pass"],["decodability","note"]] }, practice: true },
+    { kind: "draft", key: "d-old", ar: "Grid tap", latin: true, type: "grid_tap", node: "Letter ba, practice", state: "rejected", reason: "Distractors are too close for week one.", by: "Partner", at: "3 d ago", waiting: "",
+      config: { target: "ب", distractors: ["ت", "ث"], targetCount: 4, total: 12 },
+      prov: { model: "drafter (sample)", template: "grid_tap@1", prompt: "draft-prompt@1", exemplars: 1, required: null, checks: [["write_schema","pass"],["taught_only","pass"]] } },
+
+    { kind: "request", key: "q-ta", ar: "a word with ta", latin: true, type: "tap_letter_in_word", node: "Letter ta, lesson", letters: ["ت"], state: "todo", waiting: "2 h" },
+    { kind: "request", key: "q-tent", ar: "a tent", latin: true, type: "grid_tap", node: "Letter ta, practice", letters: ["ت"], state: "todo", waiting: "1 d" },
+
+    { kind: "phrase", key: "p-batta", ar: "الْبَطَّةُ فِي السَّلَّةِ", sentence: false, state: "todo", reason: "unreviewed", waiting: "1 d",
+      used: ["sentence_builder (phrase) at items[0]"], problems: [] },
+    { kind: "phrase", key: "p-arnab", ar: "الْأَرْنَبُ يَأْكُلُ تُفَّاحَةً فِي السَّلَّةِ الْكَبِيرَةِ", sentence: true, state: "todo", reason: "flag_mismatch", waiting: "1 d",
+      used: ["read_aloud (sentence) at sentences[1]"], problems: [] },
+    { kind: "phrase", key: "p-bab", ar: "بَابٌ كَبِيرٌ", sentence: false, state: "todo", reason: "unreviewed", waiting: "3 d",
+      used: ["read_and_match (phrase) at pairs[0].phrase"], problems: ["A word in this phrase is not reviewed in the word bank yet."] },
+    { kind: "phrase", key: "p-bayt", ar: "فِي البَيْتِ", sentence: false, state: "approved", by: "Partner", at: "4 d ago", waiting: "", used: ["read_and_match (phrase) at pairs[2].phrase"], problems: [] },
+
+    { kind: "recording", key: "rc-walad", ar: "ذَهَبَ الْوَلَدُ إِلَى الْمَدْرَسَةِ صَبَاحًا", sentence: true, state: "todo", waiting: "40 min",
+      take: { id: "pt1", status: "needs_review", dur: 3.4 }, served: null,
+      history: [["2 d ago", "Take rejected by Partner: Wrong case ending"], ["2 d ago", "Take made"], ["40 min ago", "New take made"]] },
+    { kind: "recording", key: "rc-bayt", ar: "فِي البَيْتِ", sentence: false, state: "todo", waiting: "3 h",
+      take: { id: "pt2", status: "needs_review", dur: 1.2 }, served: { id: "pt0", dur: 1.1 },
+      history: [["4 d ago", "Take approved by Partner, now served"], ["3 h ago", "Regenerated with slower settings"]] },
+    { kind: "recording", key: "rc-hadhihi", ar: "هٰذِهِ بَطَّةٌ", sentence: false, state: "failed", waiting: "1 d",
+      take: { id: "pt3", status: "failed", error: "The voice service was busy." }, served: null, history: [["1 d ago", "Take failed: the voice service was busy"]] },
+
+    { kind: "letter", key: "l-ba", ar: "ب", name: "باء", en: "Ba", file: "letter_sounds/ba.mp3", status: "active", state: "listen", waiting: "" },
+    { kind: "letter", key: "l-ta", ar: "ت", name: "تاء", en: "Ta", file: "letter_sounds/ta.mp3", status: "active", state: "listen", waiting: "" },
+    { kind: "letter", key: "l-alif", ar: "ا", name: "ألف", en: "Alif", file: "letter_sounds/alif.mp3", status: "broken", state: "listen", waiting: "" },
+  ];
+}
+
+/* ===================================================================
+   State
+   =================================================================== */
+const S = {
+  role: ROLES.lead,
+  scenario: "normal",
+  items: seedItems(),
+  lens: "all",            // a kind, "all", or "lib-families" / "lib-concepts", "v-ai", "v-failed", "v-mine"
+  status: "todo",         // todo | done | all
+  sort: "usage",
+  q: "",
+  sel: null,
+  checked: new Set(),
+  mode: null,             // null | {type:'reject'|'fix'|'fulfil'|'decline'|'split-reject'|'fulfil'} for the open decision
+  sub: null,              // null | {type:'family', id} | {type:'concept', slug}
+  focus: 0,               // focused decision inside a multi-decision item (blend)
+  playing: null,          // {id, t}
+  history: [],            // undo stack
+  showDetailMobile: false,
+};
+
+function needsDecision(it) {
+  if (it.kind === "letter") return false;
+  return it.state === "todo" || it.state === "failed";
+}
+function statusPill(it) {
+  const st = it.state;
+  if (it.kind === "letter") return it.status === "broken" ? `<span class="pill no">File missing</span>` : `<span class="pill neutral">Listen</span>`;
+  if (st === "approved") return `<span class="pill ok">${it.kind === "reading" ? "Confirmed" : it.kind === "request" ? "Fulfilled" : "Approved"}</span>`;
+  if (st === "rejected") return `<span class="pill no">${it.kind === "request" ? "Declined" : "Rejected"}</span>`;
+  if (st === "pseudo") return `<span class="pill no">Noted: not a word</span>`;
+  if (st === "wrong") return `<span class="pill no">Noted: respell</span>`;
+  if (st === "failed") return `<span class="pill no">${it.kind === "blend" ? "Not voiceable" : "Failed"}</span>`;
+  if (!can(KINDS[it.kind].gate)) return `<span class="pill gate">${it.kind === "draft" ? "Lead decides" : "Reviewer decides"}</span>`;
+  const t = { spelling: "To review", reading: "To confirm", blend: "Needs review", draft: "Waiting", request: "Open", phrase: it.reason === "flag_mismatch" ? "Confirm again" : "Pending", recording: "Take to hear" }[it.kind];
+  return `<span class="pill todo">${t}</span>`;
+}
+
+function line2(it) {
+  const k = KINDS[it.kind];
+  const tag = `<span class="kindtag k-${it.kind}"><span class="dot"></span>${k.one}</span>`;
+  let t = "";
+  if (it.kind === "spelling") { const w = W[it.w]; t = `${CLASS_LABEL[w.cls]} · used by ${w.usage}${w.flags ? " · " + w.flags.map((f) => FLAG_LABEL[f]).join(", ") : ""}`; }
+  if (it.kind === "reading") t = `Read as ${it.candidates.map((c) => W[c].ar).join(", ")}? · family ${W[it.w].family}`;
+  if (it.kind === "blend") t = it.failed ? "Full form: not voiceable after 5 attempts" : "Pausal split edited by hand · full form take waits";
+  if (it.kind === "draft") t = `${it.node}${it.state === "rejected" ? " · " + esc(it.reason) : ""}`;
+  if (it.kind === "request") t = `${it.type} · ${it.node}`;
+  if (it.kind === "phrase") t = `${it.sentence ? "Sentence" : "Phrase"} · ${it.problems.length ? "1 word problem" : it.used.length + " use"}`;
+  if (it.kind === "recording") t = `${it.sentence ? "Sentence" : "Phrase"} · ${it.take.status === "failed" ? "last take failed" : it.served ? "new take beside the served one" : "first take"}`;
+  if (it.kind === "letter") t = `${it.en} · ${it.file}`;
+  return `${tag}<span class="t">${esc(t)}</span>${it.waiting ? `<span style="margin-left:auto;white-space:nowrap">${it.waiting}</span>` : ""}`;
+}
+
+/* ===================================================================
+   Filtering
+   =================================================================== */
+function inLens(it) {
+  const l = S.lens;
+  if (l === "all") return it.kind !== "letter" || S.status !== "todo";
+  if (l === "v-ai") return (it.kind === "draft" || it.kind === "request") || (it.kind === "blend");
+  if (l === "v-failed") return it.state === "failed" || (it.kind === "letter" && it.status === "broken");
+  if (l === "v-mine") return !!it.mine;
+  return it.kind === l;
+}
+function inStatus(it) {
+  if (it.kind === "letter") return true;
+  if (S.status === "todo") return needsDecision(it);
+  if (S.status === "done") return !needsDecision(it);
+  return true;
+}
+function matchesQ(it) {
+  const q = S.q.trim().toLowerCase();
+  if (!q) return true;
+  const stripped = q.replace(/[ً-ْٰ]/g, "");
+  const hay = [it.ar, it.en, it.node, it.type, it.w && W[it.w].id, it.w && W[it.w].family].join(" ").toLowerCase();
+  return hay.includes(q) || hay.replace(/[ً-ْٰ]/g, "").includes(stripped);
+}
+const KIND_ORDER = Object.keys(KINDS);
+function sorted(list) {
+  const u = (it) => (it.w ? W[it.w].usage : it.usage ?? 0);
+  const wait = (it) => { const m = /(\d+)\s*(min|h|d)/.exec(it.waiting || ""); if (!m) return 0; return +m[1] * { min: 1, h: 60, d: 1440 }[m[2]]; };
+  const by = {
+    usage: (a, b) => u(b) - u(a),
+    oldest: (a, b) => wait(b) - wait(a),
+    newest: (a, b) => wait(a) - wait(b),
+    kind: (a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind),
+  }[S.sort];
+  return [...list].sort((a, b) => by(a, b) || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
+}
+function visible() {
+  if (S.scenario === "loading") return [];
+  return sorted(S.items.filter((it) => inLens(it) && inStatus(it) && matchesQ(it) && !(S.scenario === "partial" && it.kind === "draft")));
+}
+function counts() {
+  const c = {}; let all = 0;
+  for (const k of KIND_ORDER) c[k] = 0;
+  for (const it of S.items) {
+    if (S.scenario === "partial" && it.kind === "draft") continue;
+    if (needsDecision(it)) { c[it.kind]++; all++; }
+  }
+  c.letter = S.items.filter((i) => i.kind === "letter").length;
+  return { ...c, all };
+}
+
+/* ===================================================================
+   Rendering: nav, rail, list
+   =================================================================== */
+function renderNav() {
+  const c = counts();
+  const items = [
+    ["Curricula", "book"], ["Assets", "image"], ["Audio", "volume"], ["Words", "type"],
+    ["Review", "clip", true, c.all],
+    ["Books", "bookmark"], ["Games", "game"], ["Promos", "ticket"], ["Shop", "bag"], ["Team", "users"],
+  ];
+  document.getElementById("nav").innerHTML = items.map(([t, i, on, n]) =>
+    `<a href="#" class="${on ? "on" : ""}" ${on ? 'aria-current="page"' : 'tabindex="-1"'} title="${t}">${ic(i)}<span class="l">${t}</span>${on && n ? `<span class="pip">${n}</span>` : ""}</a>`).join("") +
+    `<div style="margin:10px 6px 0;padding-top:8px;border-top:1px dashed hsl(var(--border));font-size:9.5px;text-align:center" class="muted">Families, Concepts and the four review pages fold into Review</div>`;
+}
+
+function railBtn(id, label, n, opts = {}) {
+  const on = S.lens === id;
+  const hot = n > 0 && opts.hot !== false;
+  return `<button class="${on ? "on" : ""} ${opts.cls || ""}" data-lens="${id}" aria-pressed="${on}">
+    ${opts.dot ? `<span class="dot"></span>` : opts.icon ? ic(opts.icon) .replace("<svg", '<svg style="width:15px;height:15px;color:hsl(var(--muted-foreground))"') : ""}
+    <span>${label}</span>${opts.lock ? `<span class="lock" title="Decisions need ${GATE_TEXT[opts.lock]}">${opts.lock === "lead" ? "Lead" : "Reviewer"}</span>` : ""}
+    <span class="n ${hot ? "hot" : ""}">${n ?? ""}</span></button>`;
+}
+function renderRail() {
+  const c = counts();
+  const lockFor = (k) => (!can(KINDS[k].gate) ? KINDS[k].gate : null);
+  let h = `<h3>To decide</h3>` + railBtn("all", "Everything", c.all, { icon: "inbox" });
+  h += `<h3>By kind</h3>`;
+  for (const k of KIND_ORDER) {
+    if (k === "letter") continue;
+    h += railBtn(k, KINDS[k].label, c[k], { dot: true, cls: "k-" + k, lock: lockFor(k) });
+  }
+  h += `<h3>Listen</h3>` + railBtn("letter", "Letter sounds", c.letter, { dot: true, cls: "k-letter", hot: false });
+  h += `<h3>Library</h3>` +
+    railBtn("lib-families", "Families", Object.keys(FAMILIES).length, { icon: "layers", hot: false }) +
+    railBtn("lib-concepts", "Concepts", Object.keys(CONCEPTS).length, { icon: "shapes", hot: false });
+  h += `<h3>Views</h3>` +
+    railBtn("v-ai", "From the AI", null, { icon: "sparkle" }) +
+    railBtn("v-failed", "Failed audio", S.items.filter((i) => i.state === "failed" || i.status === "broken").length, { icon: "alert", hot: false }) +
+    railBtn("v-mine", "Decided by me", S.items.filter((i) => i.mine).length, { icon: "history", hot: false });
+  h += `<p class="foot muted">Counts are what waits for a person. Approved, rejected and noted items stay one keystroke away under <b>Decided</b>.</p>`;
+  document.getElementById("rail").innerHTML = h;
+}
+
+function renderList() {
+  const el = document.getElementById("list");
+  if (S.lens === "lib-families" || S.lens === "lib-concepts") return renderLibraryList(el);
+  const vis = visible();
+  const c = counts();
+  const kindOpts = [["all", "Everything"], ...KIND_ORDER.map((k) => [k, KINDS[k].label]), ["lib-families", "Families"], ["lib-concepts", "Concepts"]]
+    .map(([v, l]) => `<option value="${v}" ${S.lens === v ? "selected" : ""}>${l}${c[v] ? " (" + c[v] + ")" : ""}</option>`).join("");
+  const checkedVis = vis.filter((i) => S.checked.has(i.key));
+  let h = `<div class="lhead">
+    <div class="search">${ic("search")}<input id="q" placeholder="Search Arabic, English, id, node" value="${esc(S.q)}" aria-label="Search" autocomplete="off"><kbd>/</kbd></div>
+    <div class="lrow"><select class="sel kindsel" id="kindsel" aria-label="Kind">${kindOpts}</select>
+      <div class="seg" role="tablist" aria-label="Status">
+        ${[["todo", "To decide"], ["done", "Decided"], ["all", "All"]].map(([v, l]) => `<button role="tab" data-status="${v}" class="${S.status === v ? "on" : ""}" aria-selected="${S.status === v}">${l}</button>`).join("")}
+      </div>
+      <select class="sel" id="sort" aria-label="Sort" style="margin-left:auto">
+        ${[["usage", "Most used first"], ["oldest", "Waiting longest"], ["newest", "Newest"], ["kind", "By kind"]].map(([v, l]) => `<option value="${v}" ${S.sort === v ? "selected" : ""}>${l}</option>`).join("")}
+      </select></div>
+    ${lensTools()}
+    <div class="lmeta"><span>${S.scenario === "loading" ? "Loading..." : vis.length + " shown"} · <button class="linkbtn" data-act="refresh" style="font-size:11.5px">updated just now</button></span><span><kbd>j</kbd> <kbd>k</kbd> move · <kbd>x</kbd> select</span></div>
+  </div>`;
+  if (checkedVis.length) {
+    const bulkOk = checkedVis.every(bulkSafe);
+    h += `<div class="bulk"><b>${checkedVis.length} selected</b><span class="sp"></span>
+      ${bulkOk ? `<button class="btn sm ok" data-act="bulk-approve">Approve all <kbd>A</kbd></button>` : `<span class="muted" title="Bulk approve is only for spellings and splits with no flags">Not all can be approved together</span>`}
+      <button class="btn sm ghost" data-act="bulk-clear">Clear</button></div>`;
+  }
+  if (S.scenario === "partial") {
+    h += `<div class="srcerr">${ic("alert").replace("<svg", '<svg style="width:15px;height:15px;flex:none"')}<span>AI drafts could not be loaded: the request timed out. Everything else is current.</span><span class="sp"></span><button class="btn sm" data-act="retry">Retry</button></div>`;
+  }
+  h += `<div class="items" id="items" role="listbox" aria-label="Items">`;
+  if (S.scenario === "loading") {
+    h += Array.from({ length: 7 }, (_, i) => `<div class="skel"><i style="width:${40 + (i * 13) % 45}%;margin-left:auto;height:18px"></i><i style="width:${55 + (i * 7) % 30}%"></i></div>`).join("");
+  } else if (!vis.length) {
+    h += emptyState();
+  } else {
+    for (const it of vis) {
+      const on = S.sel === it.key;
+      const safe = bulkSafe(it);
+      h += `<div class="item ${on ? "on" : ""} ${needsDecision(it) || it.kind === "letter" ? "" : "done"}" role="option" aria-selected="${on}" data-key="${it.key}" id="row-${it.key}">
+        <button class="cb ${S.checked.has(it.key) ? "on" : ""}" data-check="${it.key}" ${safe ? "" : 'disabled title="Bulk actions are only for spellings and unflagged splits"'} aria-label="Select"></button>
+        <div class="top">${it.latin ? `<span class="ar lat">${esc(it.ar)}</span>` : ar(it.ar)}${statusPill(it)}</div>
+        <div class="line2">${line2(it)}</div></div>`;
+    }
+  }
+  h += `</div>`;
+  el.innerHTML = h;
+}
+
+/* Tools that belong to one kind: the old pages' header controls, kept where they make sense. */
+function lensTools() {
+  if (S.lens === "spelling") return `<div class="lrow"><select class="sel" aria-label="Class or flag" style="flex:1"><option>Every class</option><option>Fully vowelled</option><option>Partly vowelled</option><option>Case-ending variants</option><option>Two consonants</option><option>Many vowelings of the same letters</option><option>No activity uses it</option></select><button class="btn sm" data-act="export">Export decisions</button></div>`;
+  if (S.lens === "blend") return `<div class="lrow"><button class="btn sm" data-act="ai-batch" ${S.scenario === "recoff" ? 'disabled title="The AI check is turned off."' : ""}>${ic("sparkle")} AI check the listed words</button><span class="muted" style="font-size:11.5px">up to 50</span></div>`;
+  if (S.lens === "draft") return `<div class="lrow"><select class="sel" aria-label="Curriculum" style="flex:1"><option>Every curriculum</option><option>Kalam Readers</option></select><select class="sel" aria-label="Node" style="flex:1"><option>Every node</option><option>Letter ta, lesson</option><option>Letter ta, practice</option></select><button class="btn sm" data-act="request-draft">Request drafts</button></div>`;
+  return "";
+}
+
+function emptyState() {
+  const lensName = S.lens === "all" ? "" : (KINDS[S.lens]?.label || "this view").toLowerCase();
+  if (S.q) return `<div class="empty"><h5>No match for "${esc(S.q)}"</h5><p>Search looks at the Arabic with and without harakat, the English, ids and node titles.</p><button class="btn sm" data-act="clear-q">Clear search</button></div>`;
+  if (S.status === "todo") {
+    const done = S.items.filter((i) => !needsDecision(i) && (S.lens === "all" || i.kind === S.lens) && i.kind !== "letter").length;
+    return `<div class="empty"><div class="ring">${ic("check")}</div><h5>Nothing waits${lensName ? " in " + esc(lensName) : ""}</h5>
+      <p>${done} decided so far. New items arrive when authors save words, phrases or activities, and when the AI drafts.</p>
+      <button class="btn sm" data-status="done">See what was decided</button></div>`;
+  }
+  return `<div class="empty"><h5>Nothing here yet</h5></div>`;
+}
+
+function bulkSafe(it) {
+  if (!needsDecision(it)) return false;
+  if (it.kind === "spelling") { const w = W[it.w]; return w.cls === "real_full" && !(w.flags && w.flags.length); }
+  return false;
+}
+
+/* ===================================================================
+   Library lists (Families, Concepts) as browse lenses
+   =================================================================== */
+function renderLibraryList(el) {
+  const fam = S.lens === "lib-families";
+  let h = `<div class="lhead"><div class="search">${ic("search")}<input id="q" placeholder="${fam ? "Search id, gloss or headword" : "Search slug or name"}" value="${esc(S.q)}" aria-label="Search"><kbd>/</kbd></div>
+    <div class="lrow"><select class="sel kindsel" id="kindsel">${[["all","Everything"],["lib-families","Families"],["lib-concepts","Concepts"]].map(([v,l])=>`<option value="${v}" ${S.lens===v?"selected":""}>${l}</option>`).join("")}</select>
+    <div class="seg">${fam ? '<button class="on">All families</button><button>No concept</button>' : '<button class="on">All concepts</button><button>No family</button><button>No picture</button>'}</div>
+    <button class="btn sm" style="margin-left:auto" data-act="${fam ? "new-family" : "new-concept"}">New ${fam ? "family" : "concept"}</button></div></div><div class="items">`;
+  const q = S.q.trim().toLowerCase();
+  if (fam) {
+    for (const f of Object.values(FAMILIES)) {
+      if (q && !(f.id + f.gloss + W[f.head].ar).toLowerCase().includes(q)) continue;
+      const on = S.sub && S.sub.type === "family" && S.sub.id === f.id;
+      const pending = f.members.filter((m) => !W[m].reviewed).length;
+      h += `<div class="item ${on ? "on" : ""}" data-family="${f.id}"><span></span><div class="top"><span class="ar lat">${esc(f.gloss)}</span>${ar(W[f.head].ar)}</div>
+        <div class="line2"><span class="mono">${f.id}</span><span>${f.members.length} spellings</span>${pending ? `<span class="pill todo">${pending} not reviewed</span>` : ""}<span style="margin-left:auto">${f.concept ? "concept " + f.concept : "no concept"}</span></div></div>`;
+    }
+  } else {
+    for (const c of Object.values(CONCEPTS)) {
+      if (q && !(c.slug + c.en + c.ar).toLowerCase().includes(q)) continue;
+      const on = S.sub && S.sub.type === "concept" && S.sub.slug === c.slug;
+      h += `<div class="item ${on ? "on" : ""}" data-concept="${c.slug}"><span></span><div class="top"><span class="ar lat">${esc(c.en)}</span>${ar(c.ar)}</div>
+        <div class="line2"><span class="mono">${c.slug} · ${c.kind}</span><span style="margin-left:auto">${c.pics.length ? c.pics.length + " picture" + (c.pics.length > 1 ? "s" : "") : '<span class="pill todo">no picture</span>'} · ${c.families.length ? c.families.length + " family" : '<span class="pill neutral">no family</span>'}</span></div></div>`;
+    }
+  }
+  el.innerHTML = h + `</div>`;
+}
+
+/* ===================================================================
+   Detail pane
+   =================================================================== */
+const cur = () => S.items.find((i) => i.key === S.sel);
+
+function renderDetail() {
+  const el = document.getElementById("detail");
+  document.getElementById("ws").classList.toggle("has-detail", !!(S.sel || S.sub) && S.showDetailMobile);
+  if (S.sub) return renderSub(el);
+  const it = cur();
+  if (S.scenario === "loading") { el.innerHTML = `<div class="dscroll"><div class="dinner single"><div class="hero"><div class="skel" style="border:0"><i style="width:30%"></i><i style="width:50%;height:44px;margin-left:auto"></i><i style="width:70%"></i></div></div></div></div>`; return; }
+  if (!it) {
+    el.innerHTML = `<div class="dscroll"><div class="empty" style="height:100%">${S.lens.startsWith("lib-") ? `<h5>Pick a ${S.lens === "lib-families" ? "family" : "concept"}</h5><p>Or create one. Families and concepts also open from any word you review.</p>` : `<div class="ring">${ic("inbox")}</div><h5>${visible().length ? "Pick an item" : "All clear"}</h5><p>${visible().length ? "Press <kbd>j</kbd> to start with the first one." : "Nothing in this view needs you right now."}</p>`}</div></div>`;
+    return;
+  }
+  const fn = { spelling: dSpelling, reading: dReading, blend: dBlend, draft: dDraft, request: dRequest, phrase: dPhrase, recording: dRecording, letter: dLetter }[it.kind];
+  const { main, ctx, bar } = fn(it);
+  el.innerHTML = `<div class="dscroll"><div class="dinner ${ctx ? "" : "single"}">
+      <div class="crumbs"><button class="backlink linkbtn" data-act="back">Back to the list</button><span>${KINDS[it.kind].label}</span><span>/</span><span class="mono">${esc(it.w ? W[it.w].id : it.key)}</span></div>
+      <div class="col">${main}</div>${ctx ? `<aside class="col ctx">${ctx}</aside>` : ""}
+    </div></div><div class="dbar" id="dbar">${bar}</div>`;
+}
+
+function hero(it, { big, sub, extra = "", play = null, long = false }) {
+  const k = KINDS[it.kind];
+  return `<div class="hero">
+    <div class="eyebrow"><span class="kindtag k-${it.kind}"><span class="dot"></span>${k.one}</span>${statusPill(it)}${it.waiting ? `<span>waiting ${it.waiting}</span>` : ""}${it.by ? `<span>by ${esc(it.by)}, ${esc(it.at)}</span>` : ""}</div>
+    <div class="big">${play ? playBtn(play) : ""}<div style="flex:1;min-width:0;text-align:right">${big}</div></div>
+    ${sub ? `<div class="gloss">${sub}</div>` : ""}${extra}</div>`;
+}
+function playBtn(id) {
+  const on = S.playing && S.playing.id === id;
+  return `<button class="play ${on ? "on" : ""}" data-play="${id}" aria-label="${on ? "Pause" : "Play"}" title="Play (space)">${ic(on ? "pause" : "play")}</button>`;
+}
+function wave(id, dur, marks = []) {
+  let seed = [...id].reduce((a, c) => a + c.charCodeAt(0), 7);
+  const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  const n = 56, p = S.playing && S.playing.id === id ? S.playing.t : 0;
+  const bars = Array.from({ length: n }, (_, i) => { const env = Math.sin(Math.PI * (i + 1) / (n + 1)); return `<i class="${i / n < p ? "p" : ""}" style="height:${Math.round(10 + 80 * env * (0.45 + rnd() * 0.55))}%"></i>`; }).join("");
+  return `<div class="player">${playBtn(id)}<div class="wave">${bars}${marks.map((m) => `<span class="mark" style="left:${m * 100}%"></span>`).join("")}</div><span class="meta">${dur ? dur.toFixed(1) + " s" : ""}</span></div>`;
+}
+function bar(actions, status = "") {
+  return `<span class="status">${status}</span><span class="sp"></span>${actions}`;
+}
+function gateBar(gate, statusText) {
+  return `<div class="gate">${ic("lock")}<span>${statusText} <span class="muted">Only ${GATE_TEXT[gate]} can decide this. You see the status, not the buttons.</span></span></div>`;
+}
+function nextHint() { return `<span class="muted" style="font-size:12px">then moves to the next</span>`; }
+
+function familyCard(fid, currentWordKey) {
+  if (!fid) {
+    return `<div class="card"><h4>Family</h4><p class="muted" style="margin:0 0 8px;font-size:12.5px">Not in a family yet.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-act="join-family">Add to a family <kbd>f</kbd></button><button class="btn sm ghost" data-act="new-family">New family</button></div></div>`;
+  }
+  const f = FAMILIES[fid];
+  const mem = f.members.map((m) => {
+    const w = W[m];
+    const st = w.reviewed ? '<span class="pill ok">Reviewed</span>' : w.cls === "bare" ? '<span class="pill todo">Reading?</span>' : '<span class="pill neutral">Not reviewed</span>';
+    return `<div class="mem ${m === currentWordKey ? "cur" : ""}">${ar(w.ar)}${f.head === m ? '<span class="pill info">Headword</span>' : ""}<span class="sp"></span>${st}</div>`;
+  }).join("");
+  return `<div class="card"><h4>Family <button class="linkbtn" data-family="${fid}">Edit <kbd>f</kbd></button></h4>
+    <div style="font-size:12.5px;margin-bottom:6px"><b>${esc(f.gloss)}</b> <span class="mono muted">${f.id}</span></div>${mem}</div>`;
+}
+function conceptCard(slug) {
+  if (!slug) return `<div class="card"><h4>Concept and picture</h4><p class="muted" style="margin:0 0 8px;font-size:12.5px">A family gets its picture through a concept.</p><button class="btn sm" data-act="link-concept">Link a concept <kbd>c</kbd></button></div>`;
+  const c = CONCEPTS[slug];
+  return `<div class="card"><h4>Concept <button class="linkbtn" data-concept="${slug}">Edit <kbd>c</kbd></button></h4>
+    <div style="display:flex;gap:10px;align-items:center"><div class="pic" style="width:64px">${art(c.art)}</div><div><b>${esc(c.en)}</b> ${ar(c.ar)}<div class="muted mono">${c.slug} · ${c.kind}</div><div class="muted" style="font-size:12px">${c.pics.length} picture${c.pics.length === 1 ? "" : "s"}</div></div></div></div>`;
+}
+function art(kind) {
+  const a = {
+    book: '<path d="M8 14c8-4 16-4 24 0v28c-8-4-16-4-24 0Z" fill="hsl(211 65% 55%)"/><path d="M32 14c8-4 16-4 24 0v28c-8-4-16-4-24 0Z" fill="hsl(211 65% 68%)"/>',
+    bear: '<circle cx="20" cy="18" r="7" fill="hsl(25 45% 38%)"/><circle cx="44" cy="18" r="7" fill="hsl(25 45% 38%)"/><circle cx="32" cy="34" r="17" fill="hsl(25 45% 45%)"/><ellipse cx="32" cy="40" rx="8" ry="6" fill="hsl(30 45% 70%)"/><circle cx="26" cy="30" r="2" fill="#222"/><circle cx="38" cy="30" r="2" fill="#222"/>',
+    person: '<circle cx="32" cy="20" r="9" fill="hsl(30 50% 65%)"/><path d="M16 52c2-12 9-18 16-18s14 6 16 18Z" fill="hsl(160 55% 45%)"/>',
+    fruit: '<circle cx="32" cy="36" r="15" fill="hsl(330 40% 45%)"/><path d="M32 21c0-5 3-8 7-9" stroke="hsl(120 30% 35%)" stroke-width="3" fill="none"/>',
+    moon: '<path d="M40 12a20 20 0 1 0 0 40 16 16 0 1 1 0-40Z" fill="hsl(45 90% 60%)"/>',
+  }[kind] || "";
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${a}</svg>`;
+}
+function usedCard(lines, title = "Where it is used") {
+  return `<div class="card"><h4>${title}</h4><ul style="margin:0;padding-left:16px;font-size:12.5px;display:grid;gap:3px">${lines.map((l) => `<li>${l}</li>`).join("")}</ul></div>`;
+}
+function historyCard(rows) {
+  if (!rows || !rows.length) return "";
+  return `<div class="card"><h4>History</h4><div class="hist">${rows.map(([t, s]) => `<div><time>${t}</time><span>${esc(s)}</span></div>`).join("")}</div></div>`;
+}
+
+/* ---------- spelling ---------- */
+function suggest(w) {
+  if (w.cls === "real_partial") return "Partly vowelled: correct the spelling to carry every haraka, then approve.";
+  if (w.cls === "case_variant") return `Case-ending variant of ${w.base}: approve it if the ending is a real form.`;
+  if (w.flags && (w.flags.includes("vowel_permutations") || w.flags.includes("two_letters"))) return "Check it is a real word and correctly vowelled; if it is a drill, record Not a real word.";
+  return "Approve if it is a real word and correctly vowelled.";
+}
+function dSpelling(it) {
+  const w = W[it.w];
+  const flags = (w.flags || []).map((f) => `<span class="chip flag">${FLAG_LABEL[f]}</span>`).join("");
+  const others = (w.others || []).filter((o) => o !== w.ar);
+  let fix = "";
+  if (S.mode && S.mode.type === "fix") {
+    fix = `<div class="card"><h4>Correct the harakat <span class="muted">letters stay the same</span></h4>
+      <div style="display:grid;gap:8px"><input class="field ar" id="fixin" lang="ar" dir="rtl" value="${esc(S.mode.value ?? w.ar)}" aria-label="Corrected spelling">
+      <div class="diffrow"><span class="muted">Now</span>${ar(w.ar, "unit sm")}<span class="muted">Corrected</span><span id="fixprev">${ar(S.mode.value ?? w.ar, "unit sm")}</span></div>
+      ${S.mode.err ? `<div class="err">${esc(S.mode.err)}</div>` : ""}
+      <p class="muted" style="margin:0;font-size:12px">Saved as a shared note for the clean-up run. ${w.usage === 0 ? "This spelling is unused, so it can be respelled now (PUT /words/:id/spelling)." : "Activities use it, so the bank is not changed here."}</p></div></div>`;
+  }
+  const main = hero(it, {
+    big: ar(w.ar),
+    sub: `<b>${CLASS_LABEL[w.cls]}</b> · rank ${w.rank} of 760 by use${w.base ? ` · base ${ar(w.base)}` : ""}`,
+    extra: `${flags ? `<div class="chips" style="margin-top:10px">${flags}</div>` : ""}<div class="say">${esc(suggest(w))}</div>
+      ${it.state === "pseudo" ? `<div class="say err">Noted as not a real word. The clean-up run marks it a practice word.</div>` : ""}
+      ${it.state === "wrong" ? `<div class="say err">Noted: respell as ${ar(it.fix)}.</div>` : ""}`,
+  }) + fix +
+    (others.length ? `<div class="card"><h4>Same letters, other spellings <span class="muted">${w.sib ? w.sib + " other vowelings live" : "an unvowelled spelling only"}</span></h4><div class="chips">${others.map((o) => `<span class="chip">${ar(o)}</span>`).join("")}</div></div>` : "");
+  const ctx = familyCard(w.family, it.w) + (w.family ? conceptCard(FAMILIES[w.family].concept) : conceptCard(null)) +
+    usedCard([`${w.usage} ${w.usage === 1 ? "activity" : "activities"}`, `${w.target ?? 0} as the target, ${w.distr ?? 0} only as a distractor`, `<button class="linkbtn">Open the activities</button>`]) +
+    historyCard(it.state === "approved" && it.by ? [[it.at, `Approved by ${it.by}`]] : null);
+  let b;
+  if (S.mode && S.mode.type === "fix") {
+    b = bar(`<button class="btn ghost" data-act="cancel">Cancel <kbd>esc</kbd></button><button class="btn primary" data-act="save-fix">Save note <kbd>enter</kbd></button>`, "Type the corrected spelling.");
+  } else if (it.state === "approved") {
+    b = bar(`<button class="btn" data-act="withdraw">Withdraw approval</button>`, `Approved${it.by ? " by " + esc(it.by) + ", " + esc(it.at) : ""}. It is on the allow-list.`);
+  } else if (it.state === "pseudo" || it.state === "wrong") {
+    b = bar(`<button class="btn" data-act="clear-note">Clear note</button>`, "Noted for the clean-up run. The bank is unchanged until it runs.");
+  } else {
+    b = bar(`<button class="btn" data-act="pseudo">Not a real word <kbd>p</kbd></button>
+      <button class="btn" data-act="fix">Wrong harakat <kbd>h</kbd></button>
+      <button class="btn ok" data-act="approve">${ic("check")} Approve <kbd>a</kbd></button>`, nextHint());
+  }
+  return { main, ctx, bar: b };
+}
+
+/* ---------- reading (reads-as) ---------- */
+function dReading(it) {
+  const w = W[it.w];
+  const pick = S.mode && S.mode.type === "pick" ? S.mode.i : 0;
+  const main = hero(it, {
+    big: ar(w.ar),
+    sub: `No harakat. The app needs to know how it is read before a child sees it.`,
+    extra: `<div class="say">Pick the fully vowelled spelling with the same letters. The server checks the letters, the family and that the target is not itself read as another row.</div>`,
+  }) + `<div class="card"><h4>Read as</h4>${it.state === "approved"
+      ? `<div class="mem">${ar(W[it.candidates[0]].ar)}<span class="sp"></span><span class="pill ok">Confirmed</span></div>`
+      : it.candidates.map((c, i) => `<button class="audio-row ${i === pick ? "focus" : ""}" style="width:100%;text-align:right;cursor:pointer" data-pick="${i}"><div class="lbl" style="justify-content:space-between;width:100%"><span><kbd>${i + 1}</kbd> <span class="mono muted">${W[c].id}</span></span>${ar(W[c].ar, "")}</div></button>`).join("")}
+      <p class="muted" style="font-size:12px;margin:10px 0 0">No candidate? Add the vowelled spelling to the library first, then confirm.</p></div>`;
+  const ctx = familyCard(w.family, it.w) + conceptCard(FAMILIES[w.family]?.concept) + usedCard([`${w.usage} activity`]);
+  const b = it.state === "approved"
+    ? bar(`<button class="btn" data-act="undo-read">Clear reading</button>`, "Confirmed.")
+    : bar(`<button class="btn ok" data-act="approve">${ic("check")} Confirm reading <kbd>a</kbd></button>`, `Choose with <kbd>1</kbd>-<kbd>${it.candidates.length}</kbd>`);
+  return { main, ctx, bar: b };
+}
+
+/* ---------- blend ---------- */
+function blendTargets(it) {
+  const t = [];
+  it.forms.forEach((f, fi) => {
+    if (f.split === "todo") t.push({ type: "split", fi });
+    f.takes.forEach((tk, ti) => { if (tk.status === "needs_review") t.push({ type: "take", fi, ti }); });
+  });
+  return t;
+}
+function dBlend(it) {
+  const targets = blendTargets(it);
+  const ft = targets[Math.min(S.focus, Math.max(0, targets.length - 1))];
+  const isF = (type, fi, ti) => ft && ft.type === type && ft.fi === fi && (ti === undefined || ft.ti === ti);
+  const offNote = S.scenario === "recoff" ? `<div class="say calm">Audio generation is turned off. Generate and Regenerate are off; you can still review the takes.</div>` : "";
+  let main = hero(it, { big: ar(it.ar), sub: `<b>${esc(it.en)}</b> · used by ${it.usage} ${it.usage === 1 ? "activity" : "activities"}`, extra: offNote });
+  for (const [fi, f] of it.forms.entries()) {
+    let split = "";
+    if (f.units) {
+      const diff = f.override ? `<div class="diffrow" style="margin-top:8px"><span class="muted">Rules</span><div class="split">${f.rules.map((u) => `<span class="unit sm">${esc(u)}</span>`).join("")}</div>
+        <span class="muted">Edited</span><div class="split">${f.units.map((u, i) => `<span class="unit sm ${f.rules[i] !== u ? "chg" : ""}">${esc(u)}</span>`).join("")}</div></div>` : "";
+      split = `<div class="audio-row ${isF("split", fi) ? "focus" : ""}">
+        <div class="lbl">Split ${f.split === "todo" ? '<span class="pill todo">Waits for review</span>' : '<span class="pill ok">Approved</span>'}<span class="muted" style="font-weight:400">Harakat: ${esc(f.harakat)}. ${f.override ? "Edited by the author." : "As the rules split it."}</span></div>
+        <div class="split">${f.units.map((u) => `<span class="unit">${esc(u)}</span>`).join("")}</div>${diff}
+        ${f.flags && f.flags.length ? `<div class="chips">${f.flags.map((x) => `<span class="chip flag">${esc(x.t)} (${x.src})</span>`).join("")}</div>` : ""}
+        ${isF("split", fi) && S.mode && S.mode.type === "split-reject" ? `<div class="reasonbox"><input class="field" id="splitnote" placeholder="Say why the split is wrong (needed)" value="${esc(S.mode.note || "")}">${S.mode.err ? `<div class="err">${esc(S.mode.err)}</div>` : ""}</div>` : ""}
+      </div>`;
+    }
+    const takes = f.takes.map((tk, ti) => {
+      const st = { ready: '<span class="pill ok">Ready</span>', needs_review: '<span class="pill todo">Needs review</span>', pending: '<span class="pill info">Being made</span>', not_voiceable: '<span class="pill no">Not voiceable</span>', failed: '<span class="pill no">Failed</span>', rejected: '<span class="pill neutral">Rejected</span>' }[tk.status];
+      const playable = ["ready", "needs_review"].includes(tk.status);
+      return `<div class="audio-row ${isF("take", fi, ti) ? "focus" : ""}"><div class="lbl">${tk.kind} take ${st}${tk.by ? `<span class="muted" style="font-weight:400">approved by ${tk.by}</span>` : ""}${tk.attempts ? `<span class="muted" style="font-weight:400">${tk.attempts} of 5 attempts</span>` : ""}</div>
+        ${playable ? wave(tk.id, tk.dur, tk.marks || []) : tk.status === "pending" ? `<div class="muted" style="font-size:12.5px">Being made. The list looks again every 10 seconds.</div>` : `<div class="say err" style="margin:0">${esc(tk.error)}</div>`}
+        ${playable && tk.marks ? `<div class="muted" style="font-size:12px">Dashed lines are the syllable marks. <button class="linkbtn">Fix marks</button></div>` : ""}
+        ${isF("take", fi, ti) && S.mode && S.mode.type === "reject" ? reasonPicker(TAKE_REASONS) : ""}</div>`;
+    }).join("");
+    const gen = S.scenario === "recoff" ? "" : `<div style="display:flex;gap:6px;margin-top:10px"><button class="btn sm">${ic("wand")} ${f.takes.length ? "Regenerate" : "Generate"}</button><button class="btn sm ghost">Settings</button></div>`;
+    main += `<div class="card"><h4>${f.label} ${ar(f.text)}</h4>${split}${takes ? `<div style="margin-top:10px">${takes}</div>` : ""}${gen}</div>`;
+  }
+  const ctx = familyCard(it.family, "kitab") + (it.family ? conceptCard(FAMILIES[it.family].concept) : "") +
+    `<div class="card"><h4>AI check</h4><p class="muted" style="font-size:12.5px;margin:0 0 8px">Not AI checked yet. The check flags wrong marks and likely practice words.</p><button class="btn sm" ${S.scenario === "recoff" ? 'disabled title="The AI check is turned off."' : ""}>${ic("sparkle")} Run AI check on this word</button></div>`;
+  let b;
+  if (!targets.length) b = bar("", it.state === "failed" ? "Nothing to approve: the take is not voiceable. Change the spelling or the split, then generate again." : "Everything on this word is reviewed.");
+  else if (S.mode && (S.mode.type === "reject" || S.mode.type === "split-reject")) b = bar(`<button class="btn ghost" data-act="cancel">Cancel <kbd>esc</kbd></button><button class="btn danger" data-act="confirm-reject">Reject <kbd>enter</kbd></button>`, ft.type === "split" ? "A rejected split needs a note." : "Pick a reason with its number.");
+  else b = bar(`<button class="btn danger" data-act="reject">Reject ${ft.type === "split" ? "split" : "take"} <kbd>r</kbd></button><button class="btn ok" data-act="approve">${ic("check")} Approve ${ft.type === "split" ? "split" : "take"} <kbd>a</kbd></button>`,
+      `${targets.length} decision${targets.length > 1 ? "s" : ""} on this word · <kbd>tab</kbd> next decision${ft.type === "take" ? " · <kbd>space</kbd> play" : ""}`);
+  return { main, ctx, bar: b };
+}
+function reasonPicker(list) {
+  const r = S.mode.reason;
+  return `<div class="reasonbox"><div class="reasons">${list.map(([v, l], i) => `<button class="${r === v ? "on" : ""}" data-reason="${v}"><kbd>${i < 9 ? i + 1 : i === 9 ? "0" : "-"}</kbd>${esc(l)}</button>`).join("")}</div>
+    <input class="field" id="rnote" placeholder="Note ${r === "other" ? "(needed)" : "(optional)"}" value="${esc(S.mode.note || "")}" maxlength="500">${S.mode.err ? `<div class="err">${esc(S.mode.err)}</div>` : ""}</div>`;
+}
+
+/* ---------- AI draft ---------- */
+function dDraft(it) {
+  const p = it.prov;
+  const preview = it.type === "grid_tap"
+    ? (() => { const cells = []; for (let i = 0; i < it.config.total; i++) cells.push(i % 3 === 0 && cells.filter((c) => c.t).length < it.config.targetCount ? { t: true, l: it.config.target } : { t: false, l: it.config.distractors[i % 2] }); return `<div class="preview-grid" dir="rtl">${cells.map((c) => `<span class="${c.t ? "t" : ""}">${c.l}</span>`).join("")}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Tap every ${ar(it.config.target)}: ${it.config.targetCount} targets among ${it.config.total}, distractors ${it.config.distractors.map((d) => ar(d)).join(" ")}. The app shuffles the grid.</p>`; })()
+    : `<div class="wordtap">${it.config.word.map((s, i) => `<span class="${it.config.indices.includes(i) ? "t" : ""}">${s}</span>`).join("")}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Tap the ${ar(it.config.letter)} (${it.config.form}) in ${ar(it.config.wordText)}, a practice word from the reviewed library.</p>`;
+  const checks = p.checks.map(([c, s]) => `<span class="chip ${s}">${c}: ${s}</span>`).join("");
+  const main = hero(it, {
+    big: `<div style="text-align:left;font-size:26px;font-weight:600;line-height:1.3;padding:6px 0">${esc(it.ar)}</div>`,
+    sub: `in <b>${esc(it.node)}</b> · <span class="mono">${it.type}</span>`,
+    extra: `<div class="say">Approving does not publish. After approval, publish it from the builder as usual.</div>${it.state === "rejected" ? `<div class="say err">Rejected: ${esc(it.reason)}</div>` : ""}`,
+  }) + `<div class="card"><h4>What the child sees <button class="linkbtn">Open in the builder <kbd>o</kbd></button></h4>${preview}</div>
+     <div class="card"><h4>Save checks</h4><div class="chips">${checks}</div>${p.checks.some(([, s]) => s === "note") ? `<p class="muted" style="font-size:12px;margin:8px 0 0">A note is information, never a failure.</p>` : ""}</div>
+     ${S.mode && S.mode.type === "reject" ? `<div class="card"><h4>Reject the draft</h4><div class="reasonbox"><input class="field" id="rnote" placeholder="Reason (optional)" value="${esc(S.mode.note || "")}"></div></div>` : ""}`;
+  const ctx = `<div class="card"><h4>Provenance</h4><dl class="kv"><dt>Model</dt><dd>${esc(p.model)}</dd><dt>Template</dt><dd class="mono">${p.template}</dd><dt>Prompt</dt><dd class="mono">${p.prompt}</dd><dt>Exemplars</dt><dd>${p.exemplars || "none"}</dd>${p.required ? `<dt>Required form</dt><dd>${p.required}</dd>` : ""}<dt>Requested</dt><dd>by Owner, ${it.waiting || "3 d"} ago</dd></dl></div>
+    <div class="card"><h4>More drafts for this node</h4><div style="display:flex;gap:6px;flex-wrap:wrap"><select class="sel"><option>Grid tap (themed hunts)</option><option>Tap the letter in a word</option></select><button class="btn sm" ${S.scenario === "recoff" ? "disabled" : ""}>Request a draft</button></div>${S.scenario === "recoff" ? `<p class="muted" style="font-size:12px;margin:8px 0 0">Draft generation is switched off right now.</p>` : ""}</div>`;
+  let b;
+  if (it.state !== "todo") b = bar("", it.state === "rejected" ? `Rejected by ${esc(it.by)}, ${esc(it.at)}. A rejected draft cannot be approved; request a new one.` : "Approved, not published.");
+  else if (!can("lead")) b = gateBar("lead", "Waiting for approval.");
+  else if (S.mode && S.mode.type === "reject") b = bar(`<button class="btn ghost" data-act="cancel">Cancel <kbd>esc</kbd></button><button class="btn danger" data-act="confirm-reject">Reject draft <kbd>enter</kbd></button>`, "");
+  else b = bar(`<button class="btn" data-act="open-builder">Open in builder <kbd>o</kbd></button><button class="btn danger" data-act="reject">Reject <kbd>r</kbd></button><button class="btn ok" data-act="approve">${ic("check")} Approve <kbd>a</kbd></button>`, nextHint());
+  return { main, ctx, bar: b };
+}
+
+/* ---------- word request ---------- */
+function dRequest(it) {
+  const pool = ["kitab", "tin", "tamru"].filter((k) => W[k].reviewed);
+  const fulfil = S.mode && S.mode.type === "fulfil";
+  const main = hero(it, {
+    big: `<div style="text-align:left;font-size:28px;font-weight:600;line-height:1.3;padding:6px 0">"${esc(it.ar)}"</div>`,
+    sub: `The generator needed this for <b>${esc(it.type)}</b> in ${esc(it.node)}, letters ${it.letters.map((l) => ar(l)).join(" ")}`,
+    extra: `<div class="say">Fulfil with a reviewed, live, real word, or decline.</div>`,
+  }) + (fulfil ? `<div class="card"><h4>Pick the reviewed word <span class="muted">reviewed, not retired, not a drill</span></h4><input class="field" placeholder="Filter" style="width:100%"><div class="picker">${pool.map((k, i) => `<button data-fulfil="${k}"><kbd>${i + 1}</kbd>${ar(W[k].ar)}<span class="mono muted">${W[k].id}</span><span class="muted" style="margin-left:auto">${W[k].family ? "family " + W[k].family : ""}</span></button>`).join("")}</div></div>` : "") +
+    (S.mode && S.mode.type === "reject" ? `<div class="card"><h4>Decline</h4><input class="field" id="rnote" placeholder="Reason (optional)" style="width:100%" value="${esc(S.mode.note || "")}"></div>` : "");
+  const ctx = `<div class="card"><h4>Asked by</h4><dl class="kv"><dt>Node</dt><dd>${esc(it.node)}</dd><dt>Activity</dt><dd class="mono">${it.type}</dd><dt>Opened</dt><dd>${it.waiting} ago</dd></dl></div>`;
+  let b;
+  if (it.state !== "todo") b = bar("", it.state === "approved" ? `Fulfilled with ${ar(W[it.fulfilled].ar)}.` : "Declined.");
+  else if (fulfil) b = bar(`<button class="btn ghost" data-act="cancel">Cancel <kbd>esc</kbd></button>`, "Pick with a number or click.");
+  else if (S.mode && S.mode.type === "reject") b = bar(`<button class="btn ghost" data-act="cancel">Cancel <kbd>esc</kbd></button><button class="btn danger" data-act="confirm-reject">Decline request <kbd>enter</kbd></button>`, "");
+  else b = bar(`<button class="btn danger" data-act="reject">Decline <kbd>r</kbd></button><button class="btn ok" data-act="approve">Fulfil <kbd>a</kbd></button>`, nextHint());
+  return { main, ctx, bar: b };
+}
+
+/* ---------- phrase ---------- */
+function dPhrase(it) {
+  const reasonLine = it.reason === "flag_mismatch" ? "Approved as the other kind (phrase or sentence); confirm it again." : it.reason === "unreviewed" ? "No reviewer has approved it yet." : "";
+  const words = it.ar.split(" ");
+  const main = hero(it, {
+    big: ar(it.ar, words.length > 3 ? "long" : ""),
+    sub: `<b>${it.sentence ? "Sentence" : "Phrase"}</b> · ${words.length} words${reasonLine && it.state === "todo" ? " · " + reasonLine : ""}`,
+    extra: `${it.problems.length ? `<div class="say warn">${it.problems.map(esc).join("<br>")} <button class="linkbtn" data-act="goto-word">Review the word</button></div>` : ""}
+      <div class="say">A native reader checks the words, the harakat and the case endings together. The reviewer should not be the phrase's author (team rule).</div>`,
+  }) + `<div class="card"><h4>Word by word <span class="muted">each must be a reviewed word</span></h4><div class="split">${words.map((x) => `<span class="unit sm">${esc(x)}</span>`).join("")}</div></div>` +
+    (it.state === "approved" ? `<div class="card"><h4>Recording</h4><p class="muted" style="font-size:12.5px;margin:0">Approved phrases get a whole-phrase recording. ${S.items.some((r) => r.kind === "recording" && r.ar === it.ar) ? `<button class="linkbtn" data-goto="rc-bayt">Open its recording</button>` : ""}</p></div>` : `<div class="card"><h4>Recording</h4><p class="muted" style="font-size:12.5px;margin:0">Approve the phrase before recording it.</p></div>`);
+  const ctx = usedCard(it.used.map(esc)) + historyCard(it.state === "approved" ? [[it.at, `Approved by ${it.by}`]] : null);
+  let b;
+  if (it.state === "approved") b = can("phrase") ? bar(`<button class="btn" data-act="withdraw">Revoke</button>`, `Approved by ${esc(it.by)}, ${esc(it.at)}.`) : gateBar("phrase", "Approved.");
+  else if (!can("phrase")) b = gateBar("phrase", "Pending.");
+  else b = bar(`<button class="btn ok" data-act="approve" ${it.problems.length ? 'disabled title="Fix the word problems first"' : ""}>${ic("check")} Approve ${it.sentence ? "sentence" : "phrase"} <kbd>a</kbd></button>`, it.problems.length ? "A word problem blocks approval." : nextHint());
+  return { main, ctx, bar: b };
+}
+
+/* ---------- recording ---------- */
+function dRecording(it) {
+  const off = S.scenario === "recoff";
+  const tk = it.take;
+  const takeRow = tk.status === "failed"
+    ? `<div class="audio-row"><div class="lbl">Latest take <span class="pill no">Failed</span></div><div class="say err" style="margin:0">${esc(tk.error)}</div></div>`
+    : `<div class="audio-row focus"><div class="lbl">New take <span class="pill todo">Needs review</span></div>${wave(tk.id, tk.dur)}${S.mode && S.mode.type === "reject" ? reasonPicker(PHRASE_REASONS) : ""}</div>`;
+  const servedRow = it.served ? `<div class="audio-row"><div class="lbl">Served now <span class="pill ok">Approved</span><span class="muted" style="font-weight:400">what children hear today</span></div>${wave(it.served.id, it.served.dur)}<div class="muted" style="font-size:12px"><kbd>shift</kbd> <kbd>space</kbd> plays this one to compare</div></div>` : "";
+  const offNote = off ? `<div class="say calm">${ic("mic").replace("<svg", '<svg style="width:15px;height:15px;vertical-align:-3px;margin-right:6px"')}Recording is switched off until the owner turns it on. ${tk.status === "needs_review" ? "You can still hear and decide the takes already made." : "Nothing else needs you here for now."}</div>` : "";
+  const main = hero(it, {
+    big: ar(it.ar, it.ar.split(" ").length > 3 ? "long" : ""),
+    sub: `<b>${it.sentence ? "Sentence" : "Phrase"}</b> · approved text · ${tk.status === "failed" ? "the last recording failed" : it.served ? "a new take waits beside the served one" : "a recording waits for review"}`,
+    extra: offNote,
+  }) + `<div class="card"><h4>Takes</h4>${takeRow}${servedRow}
+      ${!off && can("phrase") ? `<div style="display:flex;gap:6px;margin-top:10px"><button class="btn sm" data-act="regen">${ic("wand")} Regenerate <kbd>g</kbd></button><button class="btn sm ghost">Settings</button></div>` : ""}</div>`;
+  const ctx = historyCard(it.history) + `<div class="card"><h4>Text</h4><p class="muted" style="font-size:12.5px;margin:0">The recording is of the approved text only. If the text changes, older takes go out of date and need a new one.</p></div>`;
+  let b;
+  if (!can("phrase")) b = gateBar("phrase", tk.status === "failed" ? "The last recording failed." : "A recording waits for review.");
+  else if (tk.status === "failed") b = off ? bar("", "Recording is off, so there is nothing to do here now.") : bar(`<button class="btn primary" data-act="regen">${ic("wand")} Make a new take <kbd>g</kbd></button>`, "The voice service may be busy; try again.");
+  else if (S.mode && S.mode.type === "reject") b = bar(`<button class="btn ghost" data-act="cancel">Cancel <kbd>esc</kbd></button><button class="btn danger" data-act="confirm-reject">Reject take <kbd>enter</kbd></button>`, "Pick a reason with its number.");
+  else b = bar(`<button class="btn danger" data-act="reject">Reject <kbd>r</kbd></button><button class="btn ok" data-act="approve">${ic("check")} Approve take <kbd>a</kbd></button>`, "<kbd>space</kbd> play · " + nextHint());
+  return { main, ctx, bar: b };
+}
+
+/* ---------- letter sound ---------- */
+function dLetter(it) {
+  const broken = it.status === "broken";
+  const main = hero(it, {
+    big: `<div style="display:flex;align-items:center;justify-content:flex-end;gap:18px">${ar(it.name, "")}<span class="ar" style="font-size:84px;line-height:1.3">${esc(it.ar)}</span></div>`,
+    play: broken ? null : it.key,
+    sub: `<b>${esc(it.en)}</b> · <span class="mono">${esc(it.file)}</span> · registry status ${esc(it.status)}`,
+    extra: broken ? `<div class="say err">The file is missing from storage. Replace it in the audio library.</div>` : "",
+  }) + (broken ? "" : `<div class="card"><h4>Listen</h4>${wave(it.key + "w", 0.6)}</div>`) +
+    `<div class="card"><h4>Flag a problem <span class="badge-proposed">needs backend</span></h4><p class="muted" style="font-size:12.5px;margin:0 0 8px">Letter-sound files have no review state today; the audio library only lists them. A flag would record a reason for the owner to re-record.</p><div class="chips">${["Wrong sound", "Cut off", "Noise", "Too quiet"].map((r) => `<span class="chip">${r}</span>`).join("")}</div></div>`;
+  const ctx = `<div class="card"><h4>Letter</h4><dl class="kv"><dt>Id</dt><dd class="mono">${it.en.toLowerCase()}</dd><dt>Name</dt><dd>${ar(it.name)}</dd><dt>Category</dt><dd>Letter sounds</dd></dl></div>
+    <div class="card"><h4>Manage the file</h4><button class="btn sm">Open in the audio library</button></div>`;
+  const b = broken ? bar(`<button class="btn">Replace the file</button>`, "") : bar(`<button class="btn" data-act="flag" disabled title="Proposed: needs a backend review state">Flag a problem</button>`, "<kbd>space</kbd> play · <kbd>j</kbd> next letter");
+  return { main, ctx, bar: b };
+}
+
+/* ---------- family and concept editors inside the pane ---------- */
+function renderSub(el) {
+  const from = cur();
+  const back = from ? `<button class="linkbtn" data-act="sub-back">Back to ${from.latin ? esc(from.ar) : ar(from.ar)}</button><span>/</span>` : "";
+  let main = "", ctx = "", b = "";
+  if (S.sub.type === "family") {
+    const f = FAMILIES[S.sub.id];
+    main = `<div class="hero"><div class="eyebrow"><span class="kindtag">${ic("layers").replace("<svg", '<svg style="width:14px;height:14px"')} Family</span><span class="mono">${f.id}</span><span>The id never changes.</span></div>
+      <div class="big"><div style="text-align:left"><div style="font-size:24px;font-weight:600">${esc(f.gloss)}</div><div class="muted" style="font-size:12.5px">English gloss: the source for translations. Arabic is never translated.</div></div>${ar(W[f.head].ar, "")}</div></div>
+      <div class="card"><h4>Details</h4><div class="formgrid"><label>English gloss<input class="field" value="${esc(f.gloss)}"></label>
+        <label>Headword (fully vowelled)<select class="field">${f.members.filter((m) => W[m].cls !== "bare").map((m) => `<option ${m === f.head ? "selected" : ""}>${W[m].ar}  (${W[m].id})</option>`).join("")}</select></label>
+        <label class="full">Notes<textarea class="field" rows="2" placeholder="Plural, root, gender..."></textarea></label></div></div>
+      <div class="card"><h4>Spellings (${f.members.length}) <span class="muted">review, confirm readings, move or remove</span></h4>
+        ${f.members.map((m) => { const w = W[m]; return `<div class="mem ${from && from.w === m ? "cur" : ""}">${ar(w.ar)}<span class="mono muted">${w.id}</span>${m === f.head ? '<span class="pill info">Headword</span>' : ""}${w.cls === "bare" ? '<span class="pill todo">Reading not confirmed</span>' : ""}<span class="sp"></span>
+          ${w.cls === "bare" ? `<button class="btn sm">Read as ${ar(W[f.head].ar)}</button>` : w.reviewed ? '<button class="btn sm ghost">Withdraw review</button>' : '<button class="btn sm">Mark reviewed</button>'}<button class="btn sm ghost">Remove</button></div>`; }).join("")}
+        <div style="margin-top:10px;display:flex;gap:8px"><input class="field" placeholder="Add a spelling: type Arabic or an id" dir="auto"><button class="btn sm">Add</button></div>
+        <p class="muted" style="font-size:12px;margin:6px 0 0">Adding a spelling that is in another family moves it here, and says so.</p></div>`;
+    ctx = conceptCard(f.concept) + `<div class="card"><h4>Link or unlink</h4><select class="field" style="width:100%"><option>Link another concept...</option>${Object.values(CONCEPTS).filter((c) => c.slug !== f.concept).map((c) => `<option>${c.en} (${c.slug})</option>`).join("")}</select>${f.concept ? `<button class="btn sm ghost" style="margin-top:8px">Unlink ${esc(f.concept)}</button>` : ""}</div>`;
+    b = bar(`<button class="btn ghost" data-act="sub-back">Close <kbd>esc</kbd></button><button class="btn primary">Save family</button>`, "Spelling changes save at once; the details save with Save.");
+  } else {
+    const c = CONCEPTS[S.sub.slug];
+    main = `<div class="hero"><div class="eyebrow"><span class="kindtag">${ic("shapes").replace("<svg", '<svg style="width:14px;height:14px"')} Concept</span><span class="mono">${c.slug}</span><span>The slug never changes.</span></div>
+      <div class="big"><div style="text-align:left"><div style="font-size:24px;font-weight:600">${esc(c.en)}</div><div class="muted">${c.kind}</div></div>${ar(c.ar, "")}</div></div>
+      <div class="card"><h4>Details</h4><div class="formgrid"><label>English name<input class="field" value="${esc(c.en)}"></label><label>Arabic name<input class="field" dir="rtl" lang="ar" value="${esc(c.ar)}" style="font-family:var(--ar-font);font-size:18px"></label>
+        <label>Kind<select class="field">${KINDS_OF_CONCEPT.map((k) => `<option ${k === c.kind ? "selected" : ""}>${k}</option>`).join("")}</select></label></div></div>
+      <div class="card"><h4>Pictures (${c.pics.length})</h4><div class="pics">${c.pics.map((p) => `<div class="pic" title="${esc(p)}">${art(c.art)}<button class="x" aria-label="Remove picture">${"x"}</button></div>`).join("")}<div class="pic add">Add picture</div></div>
+        ${c.pics.length ? `<p class="muted mono" style="font-size:11px;margin:8px 0 0">${c.pics.map(esc).join("<br>")}</p>` : `<p class="muted" style="font-size:12.5px;margin:8px 0 0">No picture yet.</p>`}</div>`;
+    ctx = `<div class="card"><h4>Word families (${c.families.length})</h4>${c.families.map((fid) => `<div class="mem">${ar(W[FAMILIES[fid].head].ar)}<span>${esc(FAMILIES[fid].gloss)}</span><span class="sp"></span><button class="linkbtn" data-family="${fid}">Open</button><button class="btn sm ghost">Unlink</button></div>`).join("") || `<p class="muted" style="font-size:12.5px;margin:0">No family names this concept yet.</p>`}
+      <select class="field" style="width:100%;margin-top:8px"><option>Link a word family...</option>${Object.values(FAMILIES).filter((f) => !c.families.includes(f.id)).map((f) => `<option>${f.gloss} (${f.id})</option>`).join("")}</select></div>`;
+    b = bar(`<button class="btn ghost" data-act="sub-back">Close <kbd>esc</kbd></button><button class="btn primary">Save concept</button>`, "Pictures and links save at once; the details save with Save.");
+  }
+  el.innerHTML = `<div class="dscroll"><div class="dinner"><div class="crumbs"><button class="backlink linkbtn" data-act="back">Back to the list</button>${back}<span>${S.sub.type === "family" ? "Family" : "Concept"}</span></div><div class="col">${main}</div><aside class="col ctx">${ctx}</aside></div></div><div class="dbar">${b}</div>`;
+}
+
+/* ===================================================================
+   Actions
+   =================================================================== */
+function toast(html, undo) {
+  const root = document.getElementById("toast-root");
+  root.innerHTML = `<div class="toast" role="status">${html}${undo ? `<button data-act="undo">Undo <kbd>u</kbd></button>` : ""}</div>`;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => (root.innerHTML = ""), 5000);
+}
+function record(it, before, msg) {
+  S.history.push({ key: it.key, before });
+  it.mine = true;
+  toast(msg, true);
+}
+function advance() {
+  const vis = visible();
+  const next = vis.find((i) => needsDecision(i) && i.key !== S.sel) || null;
+  S.sel = next ? next.key : (vis[0]?.key ?? null);
+  S.focus = 0; S.mode = null;
+}
+function snapshot(it) { return JSON.parse(JSON.stringify(it)); }
+
+function approve() {
+  const it = cur(); if (!it || !can(KINDS[it.kind].gate)) return;
+  const before = snapshot(it);
+  if (it.kind === "blend") {
+    const t = blendTargets(it)[S.focus] || blendTargets(it)[0]; if (!t) return;
+    if (t.type === "split") it.forms[t.fi].split = "approved"; else it.forms[t.fi].takes[t.ti].status = "ready";
+    S.mode = null;
+    if (!blendTargets(it).length) { it.state = "approved"; record(it, before, `Blend reviewed: ${ar(it.ar)}`); advance(); }
+    else { S.focus = 0; record(it, before, `${t.type === "split" ? "Split" : "Take"} approved`); }
+    return render();
+  }
+  if (it.kind === "request") { S.mode = { type: "fulfil" }; return render(); }
+  if (it.kind === "phrase" && it.problems.length) return;
+  if (it.kind === "recording" && it.take.status !== "needs_review") return;
+  if (it.state !== "todo") return;
+  it.state = "approved"; it.by = S.role.name; it.at = "just now";
+  record(it, before, `${{ spelling: "Approved", reading: "Reading confirmed", draft: "Draft approved", phrase: "Approved", recording: "Take approved" }[it.kind]}: ${it.latin ? esc(it.ar) : ar(it.ar)}`);
+  advance(); render();
+}
+function startReject() {
+  const it = cur(); if (!it || !can(KINDS[it.kind].gate) || it.state !== "todo") return;
+  if (it.kind === "spelling" || it.kind === "reading") return;
+  if (it.kind === "phrase") return;
+  if (it.kind === "blend") { const t = blendTargets(it)[S.focus]; if (!t) return; S.mode = { type: t.type === "split" ? "split-reject" : "reject" }; }
+  else S.mode = { type: "reject" };
+  render();
+  // Reason pickers keep focus on the page so the number keys pick a reason; free-text rejections focus the note.
+  const needsText = S.mode.type === "split-reject" || it.kind === "draft" || it.kind === "request";
+  if (needsText) setTimeout(() => document.getElementById(S.mode.type === "split-reject" ? "splitnote" : "rnote")?.focus({ preventScroll: true }), 0);
+}
+function confirmReject() {
+  const it = cur(); if (!it || !S.mode) return;
+  const note = (document.getElementById("rnote") || document.getElementById("splitnote"))?.value.trim() ?? "";
+  S.mode.note = note;
+  if (S.mode.type === "split-reject" && !note) { S.mode.err = "Say why the split is wrong in the note."; return render(); }
+  if ((it.kind === "recording" || it.kind === "blend") && S.mode.type === "reject") {
+    if (!S.mode.reason) { S.mode.err = "Pick a reason."; return render(); }
+    if (S.mode.reason === "other" && !note) { S.mode.err = "Say why in the note."; return render(); }
+  }
+  const before = snapshot(it);
+  if (it.kind === "blend") {
+    const t = blendTargets(it)[S.focus];
+    if (t.type === "split") it.forms[t.fi].split = "rejected"; else it.forms[t.fi].takes[t.ti].status = "rejected";
+    S.mode = null; S.focus = 0;
+    if (!blendTargets(it).length) { it.state = "rejected"; advance(); }
+    record(it, before, `${t.type === "split" ? "Split" : "Take"} rejected`);
+    return render();
+  }
+  it.state = "rejected"; it.reason = note || (S.mode.reason ? PHRASE_REASONS.find((r) => r[0] === S.mode.reason)?.[1] : ""); it.by = S.role.name; it.at = "just now";
+  record(it, before, `${it.kind === "request" ? "Declined" : "Rejected"}: ${it.latin ? esc(it.ar) : ar(it.ar)}`);
+  advance(); render();
+}
+function notePseudo() {
+  const it = cur(); if (!it || it.kind !== "spelling" || it.state !== "todo") return;
+  const before = snapshot(it); it.state = "pseudo";
+  record(it, before, `Noted as not a real word: ${ar(it.ar)}`); advance(); render();
+}
+function startFix() {
+  const it = cur(); if (!it || it.kind !== "spelling" || it.state !== "todo") return;
+  S.mode = { type: "fix", value: it.ar }; render();
+  setTimeout(() => { const i = document.getElementById("fixin"); if (i) { i.focus(); i.select(); } }, 0);
+}
+const skel = (s) => s.replace(/[ً-ْٰـ]/g, "");
+function saveFix() {
+  const it = cur(); const v = document.getElementById("fixin").value.trim();
+  if (!v) S.mode.err = "Type the corrected spelling.";
+  else if (v === it.ar) S.mode.err = "The correction is the same as the current spelling.";
+  else if (skel(v) !== skel(it.ar)) S.mode.err = "A correction only changes the harakat; the letters must stay the same.";
+  else { const before = snapshot(it); it.state = "wrong"; it.fix = v; S.mode = null; record(it, before, `Noted: respell ${ar(before.ar)} as ${ar(v)}`); advance(); }
+  S.mode && (S.mode.value = v);
+  render();
+}
+function undo() {
+  const h = S.history.pop(); if (!h) return;
+  const i = S.items.findIndex((x) => x.key === h.key);
+  S.items[i] = h.before; S.sel = h.key; S.mode = null; S.focus = 0;
+  document.getElementById("toast-root").innerHTML = "";
+  if (S.status === "todo" && !needsDecision(h.before)) S.status = "all";
+  render();
+}
+function bulkApprove() {
+  const vis = visible().filter((i) => S.checked.has(i.key) && bulkSafe(i));
+  if (!vis.length) return;
+  for (const it of vis) { S.history.push({ key: it.key, before: snapshot(it) }); it.state = "approved"; it.mine = true; it.by = S.role.name; it.at = "just now"; }
+  S.checked.clear();
+  toast(`Approved ${vis.length} spellings`, true);
+  advance(); render();
+}
+
+let playTimer = null;
+function togglePlay(id) {
+  if (S.playing && S.playing.id === id) { S.playing = null; clearInterval(playTimer); return render(); }
+  S.playing = { id, t: 0 }; clearInterval(playTimer);
+  playTimer = setInterval(() => { if (!S.playing) return clearInterval(playTimer); S.playing.t += 0.04; if (S.playing.t >= 1) { S.playing = null; clearInterval(playTimer); } renderDetail(); }, 60);
+  render();
+}
+function playCurrent(alt) {
+  const it = cur(); if (!it) return;
+  if (it.kind === "recording") { if (alt && it.served) return togglePlay(it.served.id); if (it.take.status === "needs_review") return togglePlay(it.take.id); }
+  if (it.kind === "blend") { const t = blendTargets(it)[S.focus]; const tk = t && t.type === "take" ? it.forms[t.fi].takes[t.ti] : it.forms.flatMap((f) => f.takes).find((x) => x.dur); if (tk) togglePlay(tk.id); }
+  if (it.kind === "letter" && it.status !== "broken") togglePlay(it.key);
+}
+
+/* ===================================================================
+   Render all + events
+   =================================================================== */
+function render() {
+  document.documentElement.style.setProperty("--demo-h", document.getElementById("demo").offsetHeight + "px");
+  const c = counts();
+  const gated = S.items.filter((i) => needsDecision(i) && !can(KINDS[i.kind].gate) && !(S.scenario === "partial" && i.kind === "draft")).length;
+  document.getElementById("hsub").textContent = S.scenario === "loading" ? "Loading every queue..." : c.all ? `${c.all} decisions waiting${gated ? `, ${c.all - gated} yours, ${gated} for another role` : ""}` : "Nothing waits for a decision";
+  document.getElementById("rolechip").textContent = S.role.label;
+  document.getElementById("avatar").textContent = S.role.initials;
+  renderNav(); renderRail(); renderList(); renderDetail();
+  const row = document.getElementById("row-" + S.sel);
+  if (row) row.scrollIntoView({ block: "nearest" });
+}
+function select(key) { S.sel = key; S.sub = null; S.mode = null; S.focus = 0; S.showDetailMobile = true; render(); }
+function move(d) {
+  if (S.lens.startsWith("lib-")) return;
+  const vis = visible(); if (!vis.length) return;
+  const i = vis.findIndex((x) => x.key === S.sel);
+  const n = i < 0 ? 0 : Math.max(0, Math.min(vis.length - 1, i + d));
+  select(vis[n].key);
+}
+function setLens(l) { S.lens = l; S.sub = null; S.checked.clear(); S.mode = null; if (!l.startsWith("lib-")) { const v = visible(); if (!v.find((x) => x.key === S.sel)) S.sel = v[0]?.key ?? null; } render(); }
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-lens],[data-status],[data-key],[data-check],[data-act],[data-play],[data-reason],[data-pick],[data-fulfil],[data-family],[data-concept],[data-goto]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.check !== undefined) { e.stopPropagation(); if (t.disabled) return; S.checked.has(d.check) ? S.checked.delete(d.check) : S.checked.add(d.check); return render(); }
+  if (d.lens) return setLens(d.lens);
+  if (d.status) { S.status = d.status; return render(); }
+  if (d.play) return togglePlay(d.play);
+  if (d.reason) { S.mode.reason = d.reason; S.mode.err = null; S.mode.note = document.getElementById("rnote")?.value || ""; return render(); }
+  if (d.pick) { S.mode = { type: "pick", i: +d.pick }; return render(); }
+  if (d.fulfil) { const it = cur(); const before = snapshot(it); it.state = "approved"; it.fulfilled = d.fulfil; record(it, before, `Request fulfilled with ${ar(W[d.fulfil].ar)}`); advance(); return render(); }
+  if (d.family) { S.sub = { type: "family", id: d.family }; S.showDetailMobile = true; return render(); }
+  if (d.concept) { S.sub = { type: "concept", slug: d.concept }; S.showDetailMobile = true; return render(); }
+  if (d.goto) { S.status = "all"; S.lens = "all"; return select(d.goto); }
+  if (d.key) return select(d.key);
+  const a = d.act;
+  if (a === "approve") return approve();
+  if (a === "reject") return startReject();
+  if (a === "confirm-reject") return confirmReject();
+  if (a === "cancel") { S.mode = null; return render(); }
+  if (a === "pseudo") return notePseudo();
+  if (a === "fix") return startFix();
+  if (a === "save-fix") return saveFix();
+  if (a === "undo") return undo();
+  if (a === "bulk-approve") return bulkApprove();
+  if (a === "bulk-clear") { S.checked.clear(); return render(); }
+  if (a === "withdraw" || a === "clear-note" || a === "undo-read") { const it = cur(); const b = snapshot(it); it.state = "todo"; delete it.by; record(it, b, a === "withdraw" ? "Approval withdrawn" : "Cleared"); return render(); }
+  if (a === "sub-back") { S.sub = null; return render(); }
+  if (a === "back") { S.showDetailMobile = false; S.sub = null; return render(); }
+  if (a === "clear-q") { S.q = ""; return render(); }
+  if (a === "retry") { S.scenario = "normal"; document.getElementById("scenario").value = "normal"; return render(); }
+  if (a === "goto-word") { S.lens = "spelling"; S.status = "all"; return select("s-bab"); }
+  if (a === "join-family") { S.sub = { type: "family", id: "book" }; return render(); }
+  if (a === "link-concept") { S.sub = { type: "concept", slug: "book" }; return render(); }
+  if (a === "new-family" || a === "new-concept") return toast(`Opens the New ${a === "new-family" ? "family" : "concept"} dialog (same fields as today)`);
+  if (a === "open-builder") return toast("Opens the activity in the builder, in a new tab");
+  if (a === "export") return toast("Downloads word-review-decisions.csv (same columns as today)");
+  if (a === "ai-batch") return toast("Checked the listed words: the AI flags show on each word");
+  if (a === "request-draft") return toast("Pick a node and a type, then the draft appears here when the save checks pass");
+  if (a === "refresh") return toast("Every source read again");
+  if (a === "regen") return toast(S.scenario === "recoff" ? "Recording is switched off until the owner turns it on." : "A new take is being made. The list looks again every 5 seconds.");
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "q") { S.q = e.target.value; const pos = e.target.selectionStart; renderList(); renderRail(); const q = document.getElementById("q"); q.focus(); q.setSelectionRange(pos, pos); }
+  if (e.target.id === "fixin") { const p = document.getElementById("fixprev"); if (p) p.innerHTML = ar(e.target.value, "unit sm"); }
+});
+document.addEventListener("change", (e) => {
+  const id = e.target.id, v = e.target.value;
+  if (id === "sort") { S.sort = v; render(); }
+  if (id === "kindsel") setLens(v);
+  if (id === "role") { S.role = ROLES[v]; S.mode = null; render(); }
+  if (id === "scenario") {
+    S.scenario = v; S.mode = null; S.items = seedItems(); S.history = [];
+    if (v === "empty") S.items.forEach((i) => { if (needsDecision(i)) { i.state = "approved"; i.by = "Partner"; i.at = "today"; } });
+    if (v === "recoff") { S.lens = "recording"; S.status = "all"; S.sel = "rc-hadhihi"; }
+    if (v === "partial") { S.lens = "all"; S.status = "todo"; }
+    if (v === "empty") { S.lens = "all"; S.status = "todo"; S.sel = null; }
+    render();
+  }
+  if (id === "theme") document.documentElement.classList.toggle("dark", v === "dark");
+  if (id === "face") document.documentElement.classList.toggle("naskh", v === "naskh");
+});
+
+const KEYMAP = [
+  ["Move", [["Next item", ["j"]], ["Previous item", ["k"]], ["Next decision on this item (blend)", ["tab"]], ["Search", ["/"]], ["Select for bulk", ["x"]], ["Status: to decide, decided, all", ["t"]], ["Jump to a kind", ["1", "-", "8"]], ["Everything", ["0"]], ["Back, cancel, close", ["esc"]]]],
+  ["Decide", [["Approve, confirm, fulfil", ["a"]], ["Reject, decline (opens reasons)", ["r"]], ["Pick a reason or a candidate", ["1", "-", "9"]], ["Confirm the reason", ["enter"]], ["Not a real word (spelling)", ["p"]], ["Wrong harakat (spelling)", ["h"]], ["Approve every selected", ["shift", "a"]], ["Undo the last decision", ["u"]]]],
+  ["Listen and context", [["Play or pause", ["space"]], ["Play the served take to compare", ["shift", "space"]], ["Regenerate (recording)", ["g"]], ["Open the family", ["f"]], ["Open the concept", ["c"]], ["Open in the builder (draft)", ["o"]], ["This sheet", ["?"]]]],
+];
+function showKeys() {
+  document.getElementById("overlay-root").innerHTML = `<div class="overlay" data-act="close-keys"><div class="sheet" role="dialog" aria-label="Keyboard shortcuts" onclick="event.stopPropagation()"><h2>Keyboard</h2><p class="muted" style="margin:0">Everything works with the mouse too. Keys are off while you type in a field.</p><div class="keys">${KEYMAP.map(([g, rows]) => `<h6>${g}</h6>` + rows.map(([l, ks]) => `<div><span>${l}</span><span>${ks.map((k) => k === "-" ? "to" : `<kbd>${k}</kbd>`).join(" ")}</span></div>`).join("")).join("")}</div></div></div>`;
+}
+document.getElementById("overlay-root").addEventListener("click", (e) => { if (e.target.closest("[data-act=close-keys]")) e.currentTarget.innerHTML = ""; });
+
+document.addEventListener("keydown", (e) => {
+  const typing = e.target.matches("input, textarea, select");
+  if (e.key === "Escape") {
+    if (document.getElementById("overlay-root").innerHTML) { document.getElementById("overlay-root").innerHTML = ""; return; }
+    if (typing) { e.target.blur(); if (!S.mode) return; }
+    if (S.mode) { S.mode = null; return render(); }
+    if (S.sub) { S.sub = null; return render(); }
+    if (S.showDetailMobile) { S.showDetailMobile = false; return render(); }
+    return;
+  }
+  if (e.key === "Enter" && S.mode) {
+    if (S.mode.type === "fix") { e.preventDefault(); return saveFix(); }
+    if (["reject", "split-reject"].includes(S.mode.type)) { e.preventDefault(); return confirmReject(); }
+  }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  const it = cur();
+  if (S.mode && /^[0-9]$/.test(e.key)) {
+    const n = e.key === "0" ? 10 : +e.key;
+    if (S.mode.type === "reject" && (it.kind === "recording" || it.kind === "blend")) {
+      const list = it.kind === "recording" ? PHRASE_REASONS : TAKE_REASONS;
+      if (list[n - 1]) { S.mode.reason = list[n - 1][0]; S.mode.err = null; render(); if (list[n - 1][0] === "other") document.getElementById("rnote")?.focus(); }
+      return;
+    }
+    if (S.mode.type === "fulfil") { const pool = ["kitab", "tin", "tamru"]; const k = pool[n - 1]; if (k) document.querySelector(`[data-fulfil="${k}"]`)?.click(); return; }
+  }
+  if (it && it.kind === "reading" && /^[1-9]$/.test(e.key) && it.candidates[+e.key - 1]) { S.mode = { type: "pick", i: +e.key - 1 }; return render(); }
+  switch (e.key) {
+    case "j": case "ArrowDown": e.preventDefault(); return move(1);
+    case "k": case "ArrowUp": e.preventDefault(); return move(-1);
+    case "/": e.preventDefault(); return document.getElementById("q")?.focus();
+    case "?": return showKeys();
+    case "a": return approve();
+    case "A": return bulkApprove();
+    case "r": return startReject();
+    case "p": return notePseudo();
+    case "h": return startFix();
+    case "u": return undo();
+    case "x": if (it && bulkSafe(it)) { S.checked.has(it.key) ? S.checked.delete(it.key) : S.checked.add(it.key); render(); } return;
+    case "t": S.status = { todo: "done", done: "all", all: "todo" }[S.status]; return render();
+    case " ": e.preventDefault(); return playCurrent(e.shiftKey);
+    case "g": if (it && it.kind === "recording") document.querySelector("[data-act=regen]")?.click(); return;
+    case "o": if (it && it.kind === "draft") toast("Opens the activity in the builder, in a new tab"); return;
+    case "f": { const fid = it && (it.w ? W[it.w].family : it.family); if (fid) { S.sub = { type: "family", id: fid }; render(); } return; }
+    case "c": { const fid = it && (it.w ? W[it.w].family : it.family); const slug = fid && FAMILIES[fid].concept; if (slug) { S.sub = { type: "concept", slug }; render(); } return; }
+    case "Tab": if (it && it.kind === "blend" && !S.mode) { e.preventDefault(); const n = blendTargets(it).length; if (n) { S.focus = (S.focus + (e.shiftKey ? n - 1 : 1)) % n; render(); } } return;
+  }
+  if (/^[0-8]$/.test(e.key) && !S.mode) { const k = e.key === "0" ? "all" : KIND_ORDER[+e.key - 1]; if (k) setLens(k); }
+});
+
+window.addEventListener("resize", () => document.documentElement.style.setProperty("--demo-h", document.getElementById("demo").offsetHeight + "px"));
+S.sel = visible()[0]?.key ?? null;
+render();
+</script>
+</body>
+</html>

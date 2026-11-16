@@ -17,6 +17,9 @@
 import { normaliseSpelling, spellingKey, type SpellingIssue } from "@kalam/curriculum-schemas";
 
 export const WORD_SPELLING_INVALID = "WORD_SPELLING_INVALID";
+/** The backend refuses a new word that is one letter (CM-B10c, 400). */
+export const WORD_IS_A_LETTER = "WORD_IS_A_LETTER";
+export const WORD_IS_A_LETTER_MESSAGE = "This is a single letter. Letters live in the alphabet, not the word bank.";
 
 /** The fields of a library row the preview reads. */
 export interface SpellingWord {
@@ -96,11 +99,15 @@ export interface WordSpellingError {
 
 /**
  * The parts of a `WORD_SPELLING_INVALID` refusal (400, details
- * `{ arabic, spelling, issues }`); null when the error is something else.
+ * `{ arabic, spelling, issues }`) or a `WORD_IS_A_LETTER` refusal; null when the error is something else.
  */
 export function parseWordSpellingError(
   error: { code?: string; details?: unknown } | null | undefined,
 ): WordSpellingError | null {
+  if (error?.code === WORD_IS_A_LETTER) {
+    const d = (error.details && typeof error.details === "object" ? error.details : {}) as { arabic?: unknown };
+    return { arabic: typeof d.arabic === "string" ? d.arabic : null, spelling: null, messages: [WORD_IS_A_LETTER_MESSAGE] };
+  }
   if (!error || error.code !== WORD_SPELLING_INVALID) return null;
   const d = (error.details && typeof error.details === "object" ? error.details : {}) as {
     arabic?: unknown;

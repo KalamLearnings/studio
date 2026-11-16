@@ -100,3 +100,22 @@ export function spellingKey(raw: string): string | null {
   const result = normaliseSpelling(raw);
   return result.ok ? result.spelling : null;
 }
+
+/**
+ * True when the text, once harakat, tatweel and whitespace are removed, is
+ * exactly one Arabic letter (CM-B10c). Letters live in the alphabet
+ * (`letters`), not the word bank.
+ */
+export function isSingleLetter(raw: string): boolean {
+  const bare = (typeof raw === 'string' ? raw : '')
+    .normalize('NFKC')
+    .replace(TATWEEL, '')
+    .replace(INVISIBLE, '')
+    .replace(/\s+/g, '');
+  const chars = Array.from(bare).filter((ch) => !isArabicMark(ch));
+  return chars.length === 1 && isArabicLetter(chars[0]);
+}
+
+export const WORD_IS_A_LETTER = 'WORD_IS_A_LETTER';
+export const WORD_IS_A_LETTER_MESSAGE =
+  'This is a single letter. Letters live in the alphabet, not the word bank.';

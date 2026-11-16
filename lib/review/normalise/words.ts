@@ -12,6 +12,7 @@ import { awaitsReadsAs, needsReading, readsAsCandidates } from "../../words/fami
 import { skeleton } from "../../words/review/arabicText";
 import { buildReviewQueue, FLAG_LABELS, type QueueRow, type QueueWord, type ReviewNote } from "../../words/review/queue";
 import type { InboxItem, ItemState } from "../inbox";
+import { checksByWord, type WordCheckSummary } from "../wordChecks";
 
 /**
  * A `GET /words` row. The endpoint answers every curation column; the queue's
@@ -30,6 +31,8 @@ export interface SpellingData {
   note: ReviewNote | null;
   /** How many rows the queue has (the "rank N of M" line). */
   queueSize: number;
+  /** The automatic checks of this word (CM-AIPRE), when any checker looked at it. Advice only. */
+  check: WordCheckSummary | null;
 }
 
 export type SpellingItem = InboxItem<"spelling", SpellingData>;
@@ -55,14 +58,21 @@ const used = (n: number) => `used by ${n}`;
 /** Arabic inside a Latin line, wrapped in Unicode isolates so it never reorders the text around it. */
 export const isolate = (ar: string) => `\u2068${ar}\u2069`;
 
-export function spellingItems(words: readonly BankWord[], notes: readonly ReviewNote[]): SpellingItem[] {
+export function spellingItems(
+  words: readonly BankWord[],
+  notes: readonly ReviewNote[],
+  checks: readonly WordCheckSummary[] = [],
+): SpellingItem[] {
   const rows = buildReviewQueue(words);
   const noteById = new Map(notes.map((n) => [n.wordId, n]));
+  const checkById = checksByWord(checks);
   return rows.map((row) => {
     const w = row.word as BankWord;
     const note = noteById.get(w.id) ?? null;
     const state = spellingState(row, note);
     const flags = row.flags.map((f) => FLAG_LABELS[f]);
+    const check = checkById.get(w.id) ?? null;
+    const checkFlagged = !!check?.flagged;
     return {
       key: `spelling:${w.id}`,
       kind: "spelling",
@@ -70,16 +80,23 @@ export function spellingItems(words: readonly BankWord[], notes: readonly Review
       title: w.arabic,
       titleScript: "ar",
       state,
-      context: [CLASS_LABELS[row.class] ?? row.class, used(w.usage_count), ...(flags.length ? [flags.join(", ")] : [])].join(" · "),
+      context: [
+        CLASS_LABELS[row.class] ?? row.class,
+        used(w.usage_count),
+        ...(flags.length ? [flags.join(", ")] : []),
+        ...(checkFlagged ? ["flagged by check"] : []),
+      ].join(" · "),
       usage: w.usage_count,
       waitingSince: w.created_at,
       decidedAt: row.reviewed ? (w.reviewed_at ?? null) : null,
       decidedBy: row.reviewed ? (w.reviewed_by ?? null) : null,
       searchText: [w.english ?? "", w.family_id ?? "", row.reason ?? ""].join(" "),
       // Answer 8: bulk approve only covers unflagged, fully vowelled spellings with no note.
-      bulkSafe: state === "todo" && row.class === "real_full" && row.flags.length === 0,
+      // A spelling the automatic check flags needs a person to look at it (CM-AIPRE).
+      bulkSafe: state === "todo" && row.class === "real_full" && row.flags.length === 0 && !checkFlagged,
+      checkFlagged,
       familyId: w.family_id ?? null,
-      data: { row, note, queueSize: rows.length },
+      data: { row, note, queueSize: rows.length, check },
     };
   });
 }
@@ -134,8 +151,12 @@ export function readingItems(words: readonly BankWord[], spellingIds: ReadonlySe
 }
 
 /** Spellings and Readings together, with Readings kept clear of the spelling queue. */
-export function wordItems(words: readonly BankWord[], notes: readonly ReviewNote[]): (SpellingItem | ReadingItem)[] {
-  const spellings = spellingItems(words, notes);
+export function wordItems(
+  words: readonly BankWord[],
+  notes: readonly ReviewNote[],
+  checks: readonly WordCheckSummary[] = [],
+): (SpellingItem | ReadingItem)[] {
+  const spellings = spellingItems(words, notes, checks);
   const ids = new Set(spellings.map((s) => s.id));
   return [...spellings, ...readingItems(words, ids)];
 }

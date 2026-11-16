@@ -19,6 +19,7 @@ import {
   INBOX_KINDS,
   decidedCount,
   inLens,
+  inStatus,
   isKindLens,
   moveSelection,
   nextAfterDecision,
@@ -165,6 +166,8 @@ export function ReviewWorkspace({
     () => ({
       "v-mine": inbox.items.filter((i) => inLens(i, "v-mine", "all", lensCtx)).length,
       "v-failed": inbox.items.filter((i) => inLens(i, "v-failed", "all", lensCtx)).length,
+      // Flagged spellings that still wait for a person.
+      "v-check": inbox.items.filter((i) => inLens(i, "v-check", "todo", lensCtx) && inStatus(i, "todo")).length,
     }),
     [inbox.items, lensCtx],
   );

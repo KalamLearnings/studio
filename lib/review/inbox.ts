@@ -126,6 +126,8 @@ export interface InboxItem<K extends InboxKind = InboxKind, D = unknown> {
   familyId: string | null;
   /** The source's own order, the last tie-break of every sort (letter sounds: alphabet order). */
   order?: number;
+  /** An automatic word check flags it (CM-AIPRE; spellings only). Advice: a person still decides. */
+  checkFlagged?: boolean;
   data: D;
 }
 
@@ -230,12 +232,14 @@ export function matchesSearch(item: InboxItem, query: string): boolean {
 // ---------------------------------------------------------------------------
 
 /** Saved views across kinds (the rail's Views group). */
-export const INBOX_VIEWS = ["v-ai", "v-failed", "v-mine"] as const;
+export const INBOX_VIEWS = ["v-ai", "v-failed", "v-check", "v-mine"] as const;
 export type InboxView = (typeof INBOX_VIEWS)[number];
 
 export const VIEW_META: Record<InboxView, { label: string; kinds: readonly InboxKind[] | null }> = {
   "v-ai": { label: "From the AI", kinds: ["draft", "request", "blend"] },
   "v-failed": { label: "Failed audio", kinds: ["blend", "recording", "letter"] },
+  // Spellings an automatic word check flags (CM-AIPRE).
+  "v-check": { label: "Flagged by check", kinds: ["spelling"] },
   // Any kind: what you decided.
   "v-mine": { label: "Decided by me", kinds: null },
 };
@@ -288,6 +292,8 @@ export function inLens(item: InboxItem, lens: Lens, status: StatusFilter, ctx: L
       return VIEW_META["v-ai"].kinds!.includes(item.kind);
     case "v-failed":
       return item.state === "failed" || (item.kind === "letter" && item.failedLabel !== undefined);
+    case "v-check":
+      return !!item.checkFlagged;
     case "v-mine":
       return ctx.decidedHere.has(item.key) || (!!ctx.userId && item.decidedBy === ctx.userId && !needsDecision(item));
     case "lib-families":
@@ -307,9 +313,10 @@ export function inStatus(item: InboxItem, status: StatusFilter): boolean {
 // Sorting
 // ---------------------------------------------------------------------------
 
-export type SortKey = "usage" | "oldest" | "newest" | "kind";
+export type SortKey = "usage" | "check" | "oldest" | "newest" | "kind";
 export const SORTS: { value: SortKey; label: string }[] = [
   { value: "usage", label: "Most used first" },
+  { value: "check", label: "Flagged by check first" },
   { value: "oldest", label: "Waiting longest" },
   { value: "newest", label: "Newest" },
   { value: "kind", label: "By kind" },
@@ -329,6 +336,8 @@ function byWaiting(a: InboxItem, b: InboxItem): number {
 export function sortItems(items: readonly InboxItem[], sort: SortKey): InboxItem[] {
   const primary: Record<SortKey, (a: InboxItem, b: InboxItem) => number> = {
     usage: (a, b) => b.usage - a.usage || byWaiting(a, b),
+    // Flagged spellings first (CM-AIPRE), then most used.
+    check: (a, b) => Number(!!b.checkFlagged) - Number(!!a.checkFlagged) || b.usage - a.usage || byWaiting(a, b),
     oldest: byWaiting,
     newest: (a, b) => {
       if (!a.waitingSince && !b.waitingSince) return 0;

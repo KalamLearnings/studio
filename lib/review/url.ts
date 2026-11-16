@@ -30,7 +30,7 @@ export const DEFAULT_URL_STATE: ReviewUrlState = {
 };
 
 const STATUSES: readonly StatusFilter[] = ["todo", "done", "all"];
-const SORT_KEYS: readonly SortKey[] = ["usage", "oldest", "newest", "kind"];
+const SORT_KEYS: readonly SortKey[] = ["usage", "check", "oldest", "newest", "kind"];
 
 type Params = Pick<URLSearchParams, "get">;
 

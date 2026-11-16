@@ -4,6 +4,8 @@
  * The Spelling pane (CW-5): one spelling of the word-bank review queue.
  * Approve (`a`), Not a real word (`p`), Wrong harakat (`h`, a correction with
  * the same letters: a note for a used word, a respelling for an unused one).
+ * The Automatic check card (CM-AIPRE) shows what automatic checkers said; its
+ * "Use this" only fills the Wrong harakat field, which the reviewer still saves.
  */
 
 import * as React from "react";
@@ -28,16 +30,20 @@ import { UsageCard } from "../../context/UsageCard";
 import { DecisionBar, Hero, NextHint, PaneFrame } from "../../PaneFrame";
 import { Ar, Chip, ContextCard, KBD_ON_BUTTON, Kbd, PaneCard, Say } from "../../parts";
 import type { PaneProps } from "../types";
+import { sourceLabel } from "@/lib/review/wordChecks";
+import { AutomaticCheckCard } from "./AutomaticCheckCard";
 
 interface FixState {
   value: string;
   error: string | null;
+  /** The automatic checker whose suggestion filled the field, if one did. */
+  fromCheck?: string;
 }
 
 export function SpellingPane(props: PaneProps) {
   const { roles, userId, bank, wordCache, decide, error, clearError, busy, openFamily, openConcept, now } = props;
   const item = props.item as SpellingItem;
-  const { row, note, queueSize } = item.data;
+  const { row, note, queueSize, check } = item.data;
   const word = row.word;
   const unused = word.usage_count === 0;
   const [fix, setFix] = React.useState<FixState | null>(null);
@@ -57,6 +63,9 @@ export function SpellingPane(props: PaneProps) {
   const approve = () => todo && decide(approveSpelling(item, wordCache));
   const notReal = () => todo && decide(noteNotReal(item, wordCache));
   const openFix = () => todo && setFix({ value: word.arabic, error: null });
+  // A suggestion only fills the field; nothing is saved until the reviewer saves it.
+  const useSuggestion = (suggested: string, source: string) =>
+    todo && setFix({ value: suggested, error: null, fromCheck: source });
   const saveFix = () => {
     if (!fix) return;
     const corrected = fix.value.trim();
@@ -140,6 +149,10 @@ export function SpellingPane(props: PaneProps) {
         )}
       </Hero>
 
+      {check && check.checks.length > 0 && (
+        <AutomaticCheckCard check={check} stored={word.arabic} canUse={todo && !busy} onUse={useSuggestion} />
+      )}
+
       {fix && (
         <PaneCard title="Correct the harakat" aside={<span className="text-xs font-normal text-muted-foreground">the letters stay the same</span>}>
           <div className="grid gap-2">
@@ -151,7 +164,7 @@ export function SpellingPane(props: PaneProps) {
               aria-invalid={!!fix.error}
               aria-describedby="fix-help"
               value={fix.value}
-              onChange={(e) => setFix({ value: e.target.value, error: null })}
+              onChange={(e) => setFix({ ...fix, value: e.target.value, error: null })}
               className="h-12 w-full rounded-md border border-input bg-background px-3 text-right font-naskh text-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <div className="grid grid-cols-[74px_1fr] items-center gap-x-2.5 gap-y-1.5 text-xs">
@@ -170,6 +183,7 @@ export function SpellingPane(props: PaneProps) {
               </p>
             )}
             <p id="fix-help" className="text-xs text-muted-foreground">
+              {fix.fromCheck && `Filled from the automatic check (${sourceLabel(fix.fromCheck)}). Check it before saving. `}
               {unused
                 ? "No activity uses this spelling, so it is respelled now. Its review starts again."
                 : "Activities use this spelling, so the bank is not changed here: the correction is saved as a shared note for the clean-up run."}

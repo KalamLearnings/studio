@@ -13,6 +13,7 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { listWordChecks } from "@/lib/api/wordChecks";
 import { listWordFamilies } from "@/lib/api/wordFamilies";
 import { useBlendReviewQueue } from "@/lib/hooks/useBlendReview";
 import { useLetterSoundSources } from "@/lib/hooks/useLetterSoundReview";
@@ -43,6 +44,8 @@ import {
 
 export const WORD_NOTES_KEY = ["word-review-notes"] as const;
 export const WORD_FAMILIES_KEY = ["word-families"] as const;
+/** Automatic word-check suggestions (CM-AIPRE). */
+export const WORD_CHECKS_KEY = ["review", "word-checks"] as const;
 
 /** Sources are read again on window focus when older than this. */
 const FOCUS_REFETCH_AFTER_MS = 30_000;
@@ -128,6 +131,8 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
   const { query: wordsQuery } = useWordReviewQueue();
   const notesQuery = useQuery({ queryKey: WORD_NOTES_KEY, queryFn: loadNotes, enabled: wantsWords, staleTime: 60_000 });
   const familiesQuery = useQuery({ queryKey: WORD_FAMILIES_KEY, queryFn: listWordFamilies, enabled: wantsWords, staleTime: 5 * 60_000 });
+  // Advice only: a failed read leaves every spelling reviewable, without the Automatic check card.
+  const checksQuery = useQuery({ queryKey: WORD_CHECKS_KEY, queryFn: listWordChecks, enabled: wants("spelling"), staleTime: 5 * 60_000 });
   const blendQuery = useBlendReviewQueue(wants("blend"));
   const letterSounds = useLetterSoundSources(wants("letter"));
   // CW-7 and CW-8: drafts, word requests, phrases and recordings.
@@ -144,6 +149,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       out.push(sourceState("words", "Spellings and readings", wordsQuery));
       out.push(sourceState("notes", "Word notes", notesQuery));
     }
+    if (wants("spelling")) out.push(sourceState("word-checks", "Automatic word checks", checksQuery));
     if (wants("blend")) out.push(sourceState("blend", "Blend splits", blendQuery));
     if (wants("letter")) {
       out.push(sourceState("letter-files", "Letter sound files", letterSounds.files));
@@ -157,6 +163,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     wantsWords,
     wordsQuery.status, wordsQuery.dataUpdatedAt, wordsQuery.error,
     notesQuery.status, notesQuery.dataUpdatedAt, notesQuery.error,
+    checksQuery.status, checksQuery.dataUpdatedAt, checksQuery.error,
     blendQuery.status, blendQuery.dataUpdatedAt, blendQuery.error,
     letterSounds.files.status, letterSounds.files.dataUpdatedAt, letterSounds.files.error,
     letterSounds.flags.status, letterSounds.flags.dataUpdatedAt, letterSounds.flags.error,
@@ -168,7 +175,9 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
   const sourceItems = React.useMemo<InboxItem[]>(() => {
     const out: InboxItem[] = [];
     if (wantsWords && wordsQuery.data) {
-      for (const it of wordItems(wordsQuery.data as BankWord[], notesQuery.data ?? [])) if (wants(it.kind)) out.push(it);
+      for (const it of wordItems(wordsQuery.data as BankWord[], notesQuery.data ?? [], checksQuery.data ?? [])) {
+        if (wants(it.kind)) out.push(it);
+      }
     }
     if (wants("blend") && blendQuery.data) out.push(...blendItems(blendQuery.data.items ?? []));
     // A failed flag list leaves every file listenable; its strip says the flags are missing.
@@ -179,7 +188,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    wordsQuery.data, notesQuery.data, wantsWords, kindsKey, draftPhrase.items,
+    wordsQuery.data, notesQuery.data, checksQuery.data, wantsWords, kindsKey, draftPhrase.items,
     blendQuery.data, letterSounds.files.data, letterSounds.flags.data, letterSounds.letters,
   ]);
 
@@ -282,6 +291,7 @@ export function useReviewInbox(kinds: readonly InboxKind[]): ReviewInbox {
       void notesQuery.refetch();
       void familiesQuery.refetch();
     }
+    if (wants("spelling")) void checksQuery.refetch();
     if (wants("blend")) void blendQuery.refetch();
     if (wants("letter")) {
       void letterSounds.files.refetch();

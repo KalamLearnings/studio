@@ -235,6 +235,7 @@ export function ReviewList(p: ReviewListProps) {
                 {p.counts.byKind[k] ? ` (${p.counts.byKind[k]})` : ""}
               </option>
             ))}
+            {p.kinds.includes("spelling") && <option value="v-check">{VIEW_META["v-check"].label}</option>}
             <option value="v-mine">{VIEW_META["v-mine"].label}</option>
             <option value="lib-families">Families</option>
             <option value="lib-concepts">Concepts</option>

@@ -27,6 +27,9 @@ import {
 import { letterBlendTarget, toLetterBlendRef, withLetterBlend } from "@/lib/soundBlend/letterMode";
 import { BlendWordSection } from "./blendWord/BlendWordSection";
 import { BlendSettingsFields } from "./soundBlend/BlendSettingsFields";
+import { isBlendV2 } from "@/lib/blendWord/config";
+import { legacySoundBlendWord } from "@/lib/backend/legacyShapes";
+import { useBackendCapabilities } from "@/lib/backend/useBackendCapabilities";
 import type { BaseActivityFormProps, LetterReference } from "./types";
 
 const DURATION_LABELS: Record<SoundDuration, { label: string; icon: string; color: string }> = {
@@ -57,6 +60,10 @@ export function SoundBlendActivityForm({
   saveError,
 }: BaseActivityFormProps<SoundBlendConfig>) {
   const { letters } = useLetters();
+  // PROD's backend has no blend word model: the save writes v1's word and
+  // segments itself (`toLegacySoundBlend`), and the word-model settings
+  // (ending, stages, the split override, word audio) are not offered.
+  const { blendWordModel } = useBackendCapabilities();
 
   const cfg = React.useMemo<SoundBlendConfig>(() => config ?? {}, [config]);
   const contentType: BlendContentType = cfg.contentType || "word";
@@ -80,11 +87,13 @@ export function SoundBlendActivityForm({
   const stages = resolveStages(cfg);
   const stageProblems = cfg.stages ? validateStages(cfg.stages) : [];
 
-  // v1 preview only: derived from the splitter for v2 rows, never saved.
-  const segments: SoundSegment[] = React.useMemo(
-    () => (contentType === "word" ? previewV1Segments(cfg, preview) : cfg.segments || []),
-    [contentType, cfg, preview]
-  );
+  // v1 preview only: derived from the splitter for v2 rows, never saved (on
+  // PROD: what the save writes).
+  const segments: SoundSegment[] = React.useMemo(() => {
+    if (contentType !== "word") return cfg.segments || [];
+    if (!blendWordModel && isBlendV2(cfg)) return legacySoundBlendWord(blend.sourceText, cfg.speed)?.segments ?? [];
+    return previewV1Segments(cfg, preview);
+  }, [contentType, cfg, preview, blendWordModel, blend.sourceText]);
 
   const updateConfig = React.useCallback(
     (updates: Partial<SoundBlendConfig>) => {
@@ -201,10 +210,11 @@ export function SoundBlendActivityForm({
             )
           }
           generalErrors={blend.saveErrors?.general ?? []}
+          wordModel={blendWordModel}
         />
       )}
 
-      {contentType === "word" && (
+      {contentType === "word" && blendWordModel && (
         <BlendSettingsFields
           ending={ending}
           stages={stages}
@@ -218,7 +228,11 @@ export function SoundBlendActivityForm({
       {segments.length > 0 && (
         <FormField
           label="v1 slider"
-          hint="What the v1 app will show: stop (sukoon), short, long (madd). Preview only; for a word the server writes these on save."
+          hint={
+            blendWordModel
+              ? "What the v1 app will show: stop (sukoon), short, long (madd). Preview only; for a word the server writes these on save."
+              : "What the v1 app will show: stop (sukoon), short, long (madd). Saved with the word."
+          }
         >
           <div className="flex flex-wrap justify-end gap-2" dir="rtl">
             {segments.map((segment, index) => (

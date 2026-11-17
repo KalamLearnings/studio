@@ -21,6 +21,12 @@ interface BlendWordSectionProps<C extends BlendWordConfig> {
   onWordChange: (value: string, wordData?: Word) => void;
   /** Errors not about one form's split, shown under the syllables. */
   generalErrors: string[];
+  /**
+   * The backend has the blend word model (`BackendCapabilities.blendWordModel`).
+   * False (PROD): only the word is edited; the harakat suggestion, the split
+   * and its override, and the word audio are backend `dev` features.
+   */
+  wordModel?: boolean;
 }
 
 /**
@@ -35,6 +41,7 @@ export function BlendWordSection<C extends BlendWordConfig>({
   onChange,
   onWordChange,
   generalErrors,
+  wordModel = true,
 }: BlendWordSectionProps<C>) {
   const { sourceText, wordEdit, preview, ending, saveErrors, spellingErrors, harakat, harakatReason, showHarakat } = state;
   const wordId = config.wordRef?.wordId;
@@ -50,7 +57,7 @@ export function BlendWordSection<C extends BlendWordConfig>({
         error={spellingErrors ?? undefined}
       />
 
-      {showHarakat && (
+      {wordModel && showHarakat && (
         <HarakatSuggestionPanel
           reason={harakatReason ?? "Ask for the word's harakat."}
           disabledReason={harakat.disabledReason}
@@ -67,7 +74,7 @@ export function BlendWordSection<C extends BlendWordConfig>({
         />
       )}
 
-      {preview && (
+      {wordModel && preview && (
         <FormField
           label="Syllables"
           hint="Split by the shared rules, the same as the server. The server splits again on save."
@@ -87,7 +94,7 @@ export function BlendWordSection<C extends BlendWordConfig>({
         </FormField>
       )}
 
-      {preview && (
+      {wordModel && preview && (
         <FormField
           label="Word audio"
           hint="Generated takes for both forms. Approve, reject or regenerate them, and fix the syllable marks."

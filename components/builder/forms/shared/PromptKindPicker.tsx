@@ -9,6 +9,7 @@
 import * as React from "react";
 import { PROMPT_KIND_OPTIONS, type PromptKind } from "@/lib/activityConfig/contentItems";
 import { FormField } from "./FormField";
+import { useBackendCapabilities } from "@/lib/backend/useBackendCapabilities";
 
 interface PromptKindPickerProps {
   value: PromptKind | undefined;
@@ -24,6 +25,9 @@ export function PromptKindPicker({
   hint = "What the activity asks: the skill it practises",
 }: PromptKindPickerProps) {
   const selected = PROMPT_KIND_OPTIONS.find((o) => o.value === value);
+  // PROD's backend and v1 do not read `prompt` (lib/backend/capabilities.ts); the save drops it.
+  const { answerSetRefs } = useBackendCapabilities();
+  if (!answerSetRefs) return null;
   return (
     <FormField label="Asks" hint={selected?.hint ?? hint} required={required} errorPath="prompt">
       <select

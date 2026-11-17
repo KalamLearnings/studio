@@ -20,12 +20,14 @@ import {
   type ActivityConfig,
   type TopicContext,
 } from "./forms";
-import { openForEdit, toSaveConfig } from "@/lib/activityConfig/canonical";
+import { openForEdit } from "@/lib/activityConfig/canonical";
+import { prepareActivitySave } from "@/lib/backend/legacyShapes";
+import { BackendCapabilitiesProvider, currentBackendCapabilities } from "@/lib/backend/useBackendCapabilities";
 import { isConfigSaveError, parseConfigSaveError } from "@/lib/activityConfig/saveErrors";
 import { findingsToFieldErrors } from "@/lib/activityConfig/saveFindings";
 import { getActivitySaveFindings } from "@/lib/api/saveFindings";
 import { SaveErrorsProvider } from "./forms/shared/SaveErrors";
-import { isBlendActivityType, toBlendSaveParts } from "@/lib/blendWord/config";
+import { isBlendActivityType } from "@/lib/blendWord/config";
 import { BLEND_INVALID } from "@/lib/blendWord/saveErrors";
 import { WORD_SPELLING_INVALID } from "@/lib/words/spelling";
 import { ConditionalAudioSection } from "./forms/shared/ConditionalAudioSection";
@@ -77,7 +79,14 @@ export function ActivityForm({
   // with the server's own read schema; other types go through the shim.
   // A row that opens through the shim saves exactly as before (`canonical`
   // false), so v1 keeps every field it reads (CM-B31).
-  const [opened] = React.useState(() => openForEdit(activityType, config));
+  //
+  // What the environment's backend can store (`lib/backend/capabilities.ts`),
+  // read once so the fields and the save agree: on PROD every row opens
+  // through the shim and saves in v1's shape.
+  const [backendCaps] = React.useState(() => currentBackendCapabilities());
+  const [opened] = React.useState(() =>
+    openForEdit(activityType, config, { canonical: backendCaps.canonicalConfigs }),
+  );
   const [localConfig, setLocalConfig] = React.useState<ActivityConfig>(opened.config);
   const [instruction, setInstruction] = React.useState(initialInstruction);
   // Initialize to the activity's saved voice, falling back to the default
@@ -167,12 +176,13 @@ export function ActivityForm({
     if (isSaving) return;
     setIsSaving(true);
     try {
-      // Blend v2 (sound_blend, word_split_blend): the word-level edit leaves config for the body's top level.
-      // Converted types send references only, no derived or legacy fields (CM-S3).
-      const { config: configToSave, wordBlendEdit } = toBlendSaveParts(
-        activityType,
-        toSaveConfig(activityType, localConfig, opened.canonical),
-      );
+      // Converted types send references only, no derived or legacy fields (CM-S3);
+      // blend v2's word-level edit leaves config for the body's top level; and
+      // the config takes the shape the environment's backend can store (PROD: v1's).
+      const { config: configToSave, wordBlendEdit } = prepareActivitySave(activityType, localConfig, {
+        canonical: opened.canonical,
+        caps: backendCaps,
+      });
       setSaveError(null);
       const saved = await onSave?.({
         config: configToSave,
@@ -320,15 +330,17 @@ export function ActivityForm({
           {/* Activity-specific form */}
           {FormComponent && (
             <div className="pt-4 border-t">
-              <SaveErrorsProvider errors={configErrors} warnings={configWarnings} notes={configNotes}>
-                <FormComponent
-                  config={localConfig}
-                  onChange={handleConfigChange}
-                  topic={topic}
-                  saveError={saveError}
-                  nodeId={nodeId}
-                />
-              </SaveErrorsProvider>
+              <BackendCapabilitiesProvider value={backendCaps}>
+                <SaveErrorsProvider errors={configErrors} warnings={configWarnings} notes={configNotes}>
+                  <FormComponent
+                    config={localConfig}
+                    onChange={handleConfigChange}
+                    topic={topic}
+                    saveError={saveError}
+                    nodeId={nodeId}
+                  />
+                </SaveErrorsProvider>
+              </BackendCapabilitiesProvider>
             </div>
           )}
 

@@ -284,6 +284,24 @@ describe('answer sets on PROD (MCQ, cards, match pairs)', () => {
     });
   });
 
+  it('a match_pairs row with a URL-only clip saves its URL, with no asset id, in PROD and dev', () => {
+    const stored = {
+      pairs: [
+        { left: { kind: 'letter', letter: { letterId: 'ba', form: 'isolated' } }, right: { kind: 'audio', audio: { url: 'https://x/ba.mp3' } } },
+        { left: { kind: 'letter', letter: { letterId: 'ta', form: 'isolated' } }, right: { kind: 'audio', audio: { url: 'https://x/ta.mp3' } } },
+      ],
+    };
+    for (const caps of [PROD, DEV]) {
+      const { config } = openAndSave('match_pairs', stored, same, caps);
+      const rights = (config.pairs as Config[]).map((p) => p.right);
+      expect(rights).toEqual([
+        { type: 'audio', value: 'https://x/ba.mp3', audioUrl: 'https://x/ba.mp3' },
+        { type: 'audio', value: 'https://x/ta.mp3', audioUrl: 'https://x/ta.mp3' },
+      ]);
+      expect(JSON.stringify(config)).not.toContain('assetId');
+    }
+  });
+
   it('a PROD MCQ row (v1 shape) saves back unchanged', () => {
     const stored = {
       mode: 'letter',

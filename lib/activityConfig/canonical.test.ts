@@ -568,6 +568,35 @@ describe("match_pairs (R2: the server writes every side's type, value and audioU
     expect(((opened.config.pairs as Config[])[0].right as Config).audio).toEqual({ assetId: "au-1", url: "https://x/bi.mp3" });
   });
 
+  it("a migrated row with a URL-only clip (no asset id) opens and saves, keeping the URL", () => {
+    const stored = {
+      pairs: [
+        { left: { kind: "letter", letter: { letterId: "ba", form: "isolated" } }, right: { kind: "audio", audio: { url: "https://x/ba.mp3" } } },
+        { left: { kind: "letter", letter: { letterId: "ta", form: "isolated" } }, right: { kind: "audio", audio: { url: "https://x/ta.mp3" }, label: "ta" } },
+      ],
+      shuffleItems: true,
+    };
+    const opened = openForEdit("match_pairs", stored);
+    const sides = (opened.config.pairs as Config[]).map((p) => p.right);
+    expect(sides).toEqual([
+      { type: "audio", value: "https://x/ba.mp3", audioUrl: "https://x/ba.mp3" },
+      { type: "audio", value: "https://x/ta.mp3", audioUrl: "https://x/ta.mp3", label: "ta" },
+    ]);
+    const saved = toSaveConfig("match_pairs", { ...opened.config, shuffleItems: false }, opened.canonical);
+    expect(saved.shuffleItems).toBe(false);
+    expect(JSON.stringify(saved)).not.toContain("assetId");
+    expect(JSON.stringify(saved)).not.toContain('"audio":{');
+    // a stored row that still holds the kinded URL clip is converted by the save too
+    expect(toSaveConfig("match_pairs", stored, false).pairs).toEqual(
+      toSaveConfig("match_pairs", opened.config, false).pairs,
+    );
+  });
+
+  it("a clip with an asset id stays a reference", () => {
+    const row = { pairs: [{ left: { kind: "letter", letter: { letterId: "ba", form: "isolated" } }, right: { kind: "audio", audio: { assetId: "au-1", url: "https://x/a.mp3" } } }] };
+    expect(toSaveConfig("match_pairs", row, false)).toBe(row);
+  });
+
   it("its writer gives the write schema's shape", () => {
     const written = CANONICAL_FORM_TYPES.match_pairs.write({
       prompt: { kind: "symbol_to_sound" },

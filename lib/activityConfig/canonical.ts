@@ -576,9 +576,17 @@ export function isCanonicalFormType(type: string | undefined): boolean {
  * read cannot map, or one in a mode v1 still reads from display strings, opens
  * through the shim (`canonical: false`) and saves exactly as before. A new
  * activity (empty config) is canonical. Other types go through the shim.
+ * `canonical: false` (a backend without canonical configs) opens every row
+ * through the shim.
  */
-export function openForEdit(type: string | undefined, stored: Config): { config: Config; canonical: boolean } {
+export function openForEdit(
+  type: string | undefined,
+  stored: Config,
+  options: { canonical?: boolean } = {},
+): { config: Config; canonical: boolean } {
   const legacy = () => ({ config: normalizeActivityConfig(type, stored), canonical: false });
+  // A backend that does not write v1's fields from references (PROD, `lib/backend/capabilities.ts`): every row on the shim.
+  if (options.canonical === false) return legacy();
   if (!type || !stored || !isCanonicalFormType(type)) return legacy();
   if (Object.keys(stored).length === 0) return { config: stored, canonical: true };
   const entry = CANONICAL_FORM_TYPES[type];

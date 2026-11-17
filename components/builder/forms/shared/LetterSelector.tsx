@@ -19,6 +19,7 @@ import {
 } from "@/lib/hooks/useLetters";
 import { LetterFormHarakaPicker } from "@/components/builder/letter-picker";
 import { hasMadd } from "@/lib/utils/letterMadd";
+import { useBackendCapabilities } from "@/lib/backend/useBackendCapabilities";
 import { HARAKA_META } from "@kalam/curriculum-schemas";
 import type {
   LetterForm,
@@ -102,6 +103,7 @@ export function LetterSelector(props: LetterSelectorProps) {
   } = props;
 
   const { letters, getLetter } = useLetters();
+  const { letterMadd } = useBackendCapabilities();
   const [showModal, setShowModal] = useState(false);
   // Draft edited inside the modal; committed to the consumer on confirm.
   const [draft, setDraft] = useState<LetterReference[]>([]);
@@ -249,7 +251,8 @@ export function LetterSelector(props: LetterSelectorProps) {
               onChange={setDraft}
               showFormSelector={showFormSelector}
               showHarakaSelector={showHarakaSelector}
-              showMaddToggle={showMaddToggle}
+              // PROD's backend and v1 do not read `madd` (lib/backend/capabilities.ts)
+              showMaddToggle={letterMadd ? showMaddToggle : false}
               disabledLetterIds={disabledLetterIds}
               disabledTooltip={disabledTooltip}
               letterFilter={letterFilter}

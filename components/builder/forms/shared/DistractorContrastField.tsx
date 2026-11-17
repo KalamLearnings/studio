@@ -17,6 +17,7 @@ import {
 } from "@/lib/activityConfig/contrast";
 import { FormField, Select } from "./FormField";
 import type { LetterReference } from "../types";
+import { useBackendCapabilities } from "@/lib/backend/useBackendCapabilities";
 
 type Distractor = LetterReference & { contrast?: string };
 
@@ -34,7 +35,9 @@ export function DistractorContrastField({
   errorPath?: string;
 }) {
   const { getLetter } = useLetters();
-  if (!contrastPickerEnabled(activityType)) return null;
+  // PROD's backend stores no picked contrast (lib/backend/capabilities.ts).
+  const { distractorContrast } = useBackendCapabilities();
+  if (!distractorContrast || !contrastPickerEnabled(activityType)) return null;
   const need = distractorsNeedingContrast(targets, distractors);
   if (need.length === 0) return null;
 

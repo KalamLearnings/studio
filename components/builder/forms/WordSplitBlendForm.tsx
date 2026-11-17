@@ -16,6 +16,7 @@ import {
 import { WordSplitBlendV2Form } from "./wordSplitBlend/WordSplitBlendV2Form";
 import { UseWordModelAction } from "./wordSplitBlend/UseWordModelAction";
 import type { BaseActivityFormProps } from "./types";
+import { useBackendCapabilities } from "@/lib/backend/useBackendCapabilities";
 
 const MIN_CHUNKS = 2;
 const MAX_CHUNKS = 6;
@@ -35,17 +36,24 @@ const EMPTY_CHUNKS: Chunk[] = [{ text: "" }, { text: "" }, { text: "" }];
  * form, whose chunks are the server's and read-only; it never opens in the
  * hand-made chunk editor. A legacy row keeps that editor and saves as before,
  * unless the author converts it with "Use the word model".
+ *
+ * A backend without the blend word model (PROD, `lib/backend/capabilities.ts`)
+ * always gets the hand-made chunk editor, with no "Use the word model"; a v2
+ * row opens there with its reference's text, and saves in v1's shape.
  */
 export function WordSplitBlendForm(props: BaseActivityFormProps<WordSplitBlendFormConfig>) {
-  if (isBlendV2(props.config)) return <WordSplitBlendV2Form {...props} />;
-  return <LegacyWordSplitBlendForm {...props} />;
+  const { blendWordModel } = useBackendCapabilities();
+  if (blendWordModel && isBlendV2(props.config)) return <WordSplitBlendV2Form {...props} />;
+  return <LegacyWordSplitBlendForm {...props} wordModel={blendWordModel} />;
 }
 
 function LegacyWordSplitBlendForm({
   config,
   onChange,
-}: BaseActivityFormProps<WordSplitBlendFormConfig>) {
-  const word = config?.word || "";
+  wordModel,
+}: BaseActivityFormProps<WordSplitBlendFormConfig> & { wordModel: boolean }) {
+  // A v2 row opened without the word model (PROD) shows its reference's text.
+  const word = config?.word || config?.wordRef?.text || "";
   const chunks = config?.chunks?.length ? config.chunks : EMPTY_CHUNKS;
 
   const updateConfig = (updates: Partial<WordSplitBlendFormConfig>) => {
@@ -91,10 +99,12 @@ function LegacyWordSplitBlendForm({
 
   return (
     <div className="space-y-6">
-      <UseWordModelAction
-        hasHandMadeChunks={hasHandMadeChunks(config ?? {})}
-        onConvert={() => onChange(convertToWordModel(config ?? {}))}
-      />
+      {wordModel && (
+        <UseWordModelAction
+          hasHandMadeChunks={hasHandMadeChunks(config ?? {})}
+          onConvert={() => onChange(convertToWordModel(config ?? {}))}
+        />
+      )}
 
       <WordSelector
         value={word}

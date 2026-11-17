@@ -50,6 +50,7 @@ import {
   promptKind,
   toContentItemWrite,
   toContentRefWrite,
+  withV1UrlClips,
   writePrompt,
   type EditorItem,
 } from "./contentItems";
@@ -584,7 +585,10 @@ export function openForEdit(
   stored: Config,
   options: { canonical?: boolean } = {},
 ): { config: Config; canonical: boolean } {
-  const legacy = () => ({ config: normalizeActivityConfig(type, stored), canonical: false });
+  const legacy = () => {
+    const shimmed = normalizeActivityConfig(type, stored);
+    return { config: type === "match_pairs" ? withV1UrlClips(shimmed) : shimmed, canonical: false };
+  };
   // A backend that does not write v1's fields from references (PROD, `lib/backend/capabilities.ts`): every row on the shim.
   if (options.canonical === false) return legacy();
   if (!type || !stored || !isCanonicalFormType(type)) return legacy();
@@ -611,6 +615,8 @@ export function readConfigForEdit(type: string | undefined, stored: Config): Con
  * sent as the form built it, as before CM-S3.
  */
 export function toSaveConfig(type: string | undefined, config: Config, canonical = true): Config {
+  // A URL-only clip has no asset id for the write schema; it goes out in v1's shape on every path.
+  if (type === "match_pairs") config = withV1UrlClips(config);
   if (!canonical || !type || !isCanonicalFormType(type)) return config;
   const entry = CANONICAL_FORM_TYPES[type];
   if (entry.canonicalOk && !entry.canonicalOk(config)) return config;

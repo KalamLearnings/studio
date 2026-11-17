@@ -459,6 +459,40 @@ export function pairSideFromItem(item: EditorItem, glyphOf: (letter: EditorLette
   }
 }
 
+/**
+ * A pair side that is an audio clip kept by URL alone (`kind: "audio"`,
+ * `audio: { url }`, no asset id), as v1's side shape: `type`, `value`,
+ * `audioUrl`. The write schema's audio reference needs an `assetId` (backend
+ * `AssetRefWriteSchema`, strict), so such a side cannot go out canonically;
+ * the URL is kept and no id is invented. Any other side is returned as is.
+ */
+function urlClipSideToV1(side: unknown): unknown {
+  if (!isRecord(side) || side.kind !== "audio" || !isRecord(side.audio)) return side;
+  const url = filled(side.audio.url);
+  if (!url || filled(side.audio.assetId)) return side;
+  return {
+    type: "audio",
+    value: url,
+    audioUrl: url,
+    ...(typeof side.label === "string" && side.label ? { label: side.label } : {}),
+  };
+}
+
+/** match_pairs config with every URL-only clip side in v1's shape (idempotent). */
+export function withV1UrlClips(config: Config): Config {
+  if (!Array.isArray(config.pairs)) return config;
+  let changed = false;
+  const pairs = config.pairs.map((p) => {
+    if (!isRecord(p)) return p;
+    const left = urlClipSideToV1(p.left);
+    const right = urlClipSideToV1(p.right);
+    if (left === p.left && right === p.right) return p;
+    changed = true;
+    return { ...p, left, right };
+  });
+  return changed ? { ...config, pairs } : config;
+}
+
 // ---------------------------------------------------------------------------
 // answer-set problems (a mirror of the backend's save blocks, CM-P1)
 // ---------------------------------------------------------------------------

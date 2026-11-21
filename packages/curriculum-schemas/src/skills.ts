@@ -347,6 +347,9 @@ export const ACTIVITY_SKILL_MAP: Readonly<Record<string, ActivitySkillEntry>> = 
     },
   },
   word_split_blend: exposure(['blend']),
+  // madd: the child holds the long vowel and feels it is longer than the short one. No
+  // right answer is graded yet (the stretch is a held gesture), so exposure, on the madd rule.
+  stretch_madd: { ...exposure(['recognize']), units: ['rule'] },
   // structured prompts
   multiple_choice_question: { ...graded(['recognize'], 'select'), kindFromPrompt: true },
   match_pairs: { ...graded(['recognize'], 'select'), kindFromPrompt: true },

@@ -348,6 +348,7 @@ export const ActivityTypeSchema = z.enum([
   'sound_sort',
   'drive_to_sukoon',
   'drive_to_shadda',
+  'stretch_madd',
   'match_pairs',
   'camel_narration',
 ]);
@@ -408,6 +409,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   sound_sort: 'Sound Sort (Baskets)',
   drive_to_sukoon: 'Drive to Sukoon',
   drive_to_shadda: 'Shadda Racetrack',
+  stretch_madd: 'Stretch the Madd',
   match_pairs: 'Match Pairs (Draw Lines)',
   camel_narration: 'Camel Mascot Narration',
 };

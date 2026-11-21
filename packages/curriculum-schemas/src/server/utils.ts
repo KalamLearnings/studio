@@ -509,6 +509,11 @@ export function createDefaultConfig(type: ActivityType): Record<string, any> {
       word: { text: 'مُحَمَّد' },
       holdMs: 1000,
     },
+    stretch_madd: {
+      word: { text: 'قَالَ' },
+      requiredSlides: 1,
+      beatMs: 600,
+    },
     sound_blend: {
       word: 'جَمَل',
       segments: [

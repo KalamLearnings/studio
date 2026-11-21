@@ -280,6 +280,16 @@ export {
   type MaddHaraka,
 } from './madd';
 
+// Madd detection on a word's text (stretch_madd; copy of the backend's madd-detect.ts)
+export {
+  countMadd,
+  type DetectedMadd,
+  detectMadds,
+  MADD_COUNTS_BY_KIND,
+  MADD_KINDS,
+  type MaddKind,
+} from './madd-detect';
+
 // ============================================================================
 // ACTIVITY SCHEMAS & TYPES
 // ============================================================================

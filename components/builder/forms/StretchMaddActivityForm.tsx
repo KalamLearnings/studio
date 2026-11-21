@@ -4,12 +4,15 @@ import * as React from "react";
 import { FormField, Select, WordSelector } from "./shared";
 import { V2OnlyNote } from "./shared/V2OnlyNote";
 import type { BaseActivityFormProps } from "./types";
-import type { StretchMaddConfig } from "@/lib/types/activity-configs";
+import type { StretchMaddConfig as StretchMaddSavedConfig } from "@/lib/types/activity-configs";
 import {
   describeMadd,
   effectiveCounts,
   MADD_COUNTS_OPTIONS,
 } from "@/lib/stretchMadd/describeMadd";
+
+/** A new activity starts empty, so every field is optional while editing. */
+type StretchMaddConfig = Partial<StretchMaddSavedConfig>;
 
 const AUTO = "auto";
 

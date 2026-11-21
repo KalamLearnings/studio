@@ -29,6 +29,7 @@ import { SoundBlendActivityForm } from "./SoundBlendActivityForm";
 import { WordSplitBlendForm } from "./WordSplitBlendForm";
 import { DriveToSukoonActivityForm } from './DriveToSukoonActivityForm';
 import { DriveToShaddaActivityForm } from './DriveToShaddaActivityForm';
+import { StretchMaddActivityForm } from './StretchMaddActivityForm';
 import { ContentWithCardsActivityForm } from "./ContentWithCardsActivityForm";
 import { MatchPairsActivityForm } from "./MatchPairsActivityForm";
 import { ReadAndMatchActivityForm } from "./ReadAndMatchActivityForm";
@@ -285,6 +286,7 @@ const activityFormComponents: Partial<Record<ActivityType, FormComponent>> = {
   word_split_blend: WordSplitBlendForm,
   drive_to_sukoon: DriveToSukoonActivityForm,
   drive_to_shadda: DriveToShaddaActivityForm,
+  stretch_madd: StretchMaddActivityForm,
   match_pairs: MatchPairsActivityForm,
 
   // Reading types (CM-S12, backend CM-B35): v2 only

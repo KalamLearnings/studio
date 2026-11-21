@@ -136,6 +136,7 @@ export const ActivityTypeSchema = z.enum([
   'word_split_blend',
   'drive_to_sukoon',
   'drive_to_shadda',
+  'stretch_madd',
   'match_pairs',
   'camel_narration',
   // Reading beyond the word (CM-B35, ADR 0002); v2 only (`visibility.ts`)
@@ -197,6 +198,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   word_split_blend: 'Word Split & Blend',
   drive_to_sukoon: 'Drive to Sukoon',
   drive_to_shadda: 'Shadda Racetrack',
+  stretch_madd: 'Stretch the Madd',
   match_pairs: 'Match Pairs (Draw Lines)',
   camel_narration: 'Camel Mascot Narration',
   read_and_match: 'Read and Match (Phrase or Sentence)',

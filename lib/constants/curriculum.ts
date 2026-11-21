@@ -102,7 +102,6 @@ export const ACTIVITY_TYPE_CATEGORIES: Record<ActivityTypeString, ActivityCatego
   word_split_blend: 'learning',
   drive_to_sukoon: 'learning',
   drive_to_shadda: 'learning',
-  stretch_madd: 'learning',
   match_pairs: 'drag',
 
   // Reading types (CM-B35): v2 only
@@ -180,7 +179,6 @@ export const ACTIVITY_TYPES: { value: string; label: string }[] = [
   { value: 'word_split_blend', label: 'Word Split & Blend' },
   { value: 'drive_to_sukoon', label: 'Drive to Sukoon' },
   { value: 'drive_to_shadda', label: 'Shadda Racetrack' },
-  { value: 'stretch_madd', label: 'Stretch the Madd' },
   { value: 'match_pairs', label: 'Match Pairs (Draw Lines)' },
   { value: 'camel_narration', label: 'Camel Mascot Narration' },
   { value: 'read_and_match', label: 'Read and Match (Phrase or Sentence)' },
@@ -238,7 +236,6 @@ export const ACTIVITY_ICONS: Record<string, string> = {
   word_split_blend: '🧩',
   drive_to_sukoon: '🚗',
   drive_to_shadda: '🚦',
-  stretch_madd: '🦒',
   match_pairs: '🔗',
   camel_narration: '🐪',
   read_and_match: '📖',

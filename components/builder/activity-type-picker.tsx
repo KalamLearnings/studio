@@ -72,7 +72,6 @@ const IMPLEMENTED_ACTIVITIES: string[] = [
   "word_split_blend",
   "drive_to_sukoon",
   "drive_to_shadda",
-  "stretch_madd",
   "match_pairs",
   "camel_narration",
   "read_and_match",

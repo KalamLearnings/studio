@@ -50,7 +50,6 @@ export * from './sound_blend';
 export * from './word_split_blend';
 export * from './drive_to_sukoon';
 export * from './drive_to_shadda';
-export * from './stretch_madd';
 export * from './drag_haraka_to_word';
 export * from './camel_narration';
 
@@ -80,7 +79,6 @@ import { SoundBlendActivitySchema } from './sound_blend';
 import { WordSplitBlendActivitySchema } from './word_split_blend';
 import { DriveToSukoonActivitySchema } from './drive_to_sukoon';
 import { DriveToShaddaActivitySchema } from './drive_to_shadda';
-import { StretchMaddActivitySchema } from './stretch_madd';
 import { DragHarakaToWordActivitySchema } from './drag_haraka_to_word';
 import { CamelNarrationActivitySchema } from './camel_narration';
 
@@ -110,7 +108,6 @@ import { SoundBlendConfigSchema } from './sound_blend';
 import { WordSplitBlendConfigSchema } from './word_split_blend';
 import { DriveToSukoonConfigSchema } from './drive_to_sukoon';
 import { DriveToShaddaConfigSchema } from './drive_to_shadda';
-import { StretchMaddConfigSchema } from './stretch_madd';
 import { DragHarakaToWordConfigSchema } from './drag_haraka_to_word';
 import { CamelNarrationConfigSchema } from './camel_narration';
 
@@ -156,7 +153,6 @@ export const ActivitySchema = z.discriminatedUnion('type', [
   WordSplitBlendActivitySchema,
   DriveToSukoonActivitySchema,
   DriveToShaddaActivitySchema,
-  StretchMaddActivitySchema,
   DragHarakaToWordActivitySchema,
   CamelNarrationActivitySchema,
 ]);
@@ -192,7 +188,6 @@ const ACTIVITY_CONFIG_SCHEMAS = {
   word_split_blend: WordSplitBlendConfigSchema,
   drive_to_sukoon: DriveToSukoonConfigSchema,
   drive_to_shadda: DriveToShaddaConfigSchema,
-  stretch_madd: StretchMaddConfigSchema,
   drag_haraka_to_word: DragHarakaToWordConfigSchema,
   camel_narration: CamelNarrationConfigSchema,
 } as const;

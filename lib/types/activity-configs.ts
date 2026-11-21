@@ -415,21 +415,6 @@ export interface DriveToShaddaConfig {
   holdMs?: number;
 }
 
-export interface StretchMaddConfig {
-  /** The word, as a curriculum_words reference. */
-  word: {
-    wordId?: string;
-    /** The Arabic word, fully vowelled, carrying exactly one madd. */
-    text: string;
-  };
-  /** Beats to hold the madd. Absent: derived from the madd kind (natural 2, muttasil 4, lazim 6). */
-  counts?: number;
-  /** Slides through the word that finish the activity. Default 1. */
-  requiredSlides?: number;
-  /** Length of one count, in milliseconds. Default 600. */
-  beatMs?: number;
-}
-
 export interface DriveToSukoonConfig {
   /** The word, as a curriculum_words reference. */
   word: {
@@ -626,7 +611,6 @@ export type ActivityConfig =
   | WordSplitBlendConfig
   | DriveToSukoonConfig
   | DriveToShaddaConfig
-  | StretchMaddConfig
   | MatchPairsConfig
   | CamelNarrationConfig
   | ReadAndMatchConfig
@@ -663,7 +647,6 @@ export type ActivityConfigMap = {
   word_split_blend: WordSplitBlendConfig;
   drive_to_sukoon: DriveToSukoonConfig;
   drive_to_shadda: DriveToShaddaConfig;
-  stretch_madd: StretchMaddConfig;
   match_pairs: MatchPairsConfig;
   camel_narration: CamelNarrationConfig;
   read_and_match: ReadAndMatchConfig;

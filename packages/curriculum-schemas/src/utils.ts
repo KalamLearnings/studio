@@ -141,7 +141,6 @@ export function isValidActivityType(type: string): type is ActivityType {
     'word_split_blend',
     'drive_to_sukoon',
     'drive_to_shadda',
-    'stretch_madd',
     'drag_haraka_to_word',
     'match_pairs',
     'camel_narration',
@@ -202,7 +201,6 @@ export function getActivityCategory(type: ActivityType): string {
     word_split_blend: 'Phonics',
     drive_to_sukoon: 'Phonics',
     drive_to_shadda: 'Phonics',
-    stretch_madd: 'Phonics',
     drag_haraka_to_word: 'Phonics',
     match_pairs: 'Recognition',
     camel_narration: 'Introduction',
@@ -266,7 +264,6 @@ export function getEstimatedDuration(type: ActivityType): number {
     word_split_blend: 45,
     drive_to_sukoon: 45,
     drive_to_shadda: 45,
-    stretch_madd: 45,
     drag_haraka_to_word: 45,
     match_pairs: 45,
     camel_narration: 30,
@@ -469,11 +466,6 @@ export function createDefaultConfig(type: ActivityType): Record<string, any> {
     drive_to_shadda: {
       word: { text: 'مُحَمَّد' },
       holdMs: 1000,
-    },
-    stretch_madd: {
-      word: { text: 'قَالَ' },
-      requiredSlides: 1,
-      beatMs: 600,
     },
     drag_haraka_to_word: {
       word: { text: 'مَرْيَم' },

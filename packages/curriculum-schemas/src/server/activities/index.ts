@@ -32,7 +32,6 @@ export * from './sound_blend.ts';
 export * from './word_split_blend.ts';
 export * from './drive_to_sukoon.ts';
 export * from './drive_to_shadda.ts';
-export * from './stretch_madd.ts';
 export * from './match_pairs.ts';
 
 export * from './animation_intro.ts';
@@ -115,11 +114,6 @@ import { SoundBlendActivitySchema, SoundBlendConfigSchema } from './sound_blend.
 import { WordSplitBlendActivitySchema, WordSplitBlendConfigSchema } from './word_split_blend.ts';
 import { DriveToSukoonActivitySchema, DriveToSukoonConfigSchema } from './drive_to_sukoon.ts';
 import { DriveToShaddaActivitySchema, DriveToShaddaConfigSchema } from './drive_to_shadda.ts';
-import {
-  StretchMaddActivitySchema,
-  StretchMaddConfigSchema,
-  StretchMaddReadSchema,
-} from './stretch_madd.ts';
 import { MatchPairsActivitySchema, MatchPairsConfigSchema } from './match_pairs.ts';
 
 import {
@@ -237,7 +231,6 @@ export const ActivitySchema = z.discriminatedUnion('type', [
   WordSplitBlendActivitySchema,
   DriveToSukoonActivitySchema,
   DriveToShaddaActivitySchema,
-  StretchMaddActivitySchema,
   MatchPairsActivitySchema,
   ContentWithCardsActivitySchema,
   SpeechPracticeActivitySchema,
@@ -290,7 +283,6 @@ const ACTIVITY_CONFIG_SCHEMAS: Record<ActivityType, z.ZodTypeAny> = {
   word_split_blend: WordSplitBlendConfigSchema,
   drive_to_sukoon: DriveToSukoonConfigSchema,
   drive_to_shadda: DriveToShaddaConfigSchema,
-  stretch_madd: StretchMaddConfigSchema,
   match_pairs: MatchPairsConfigSchema,
   camel_narration: CamelNarrationConfigSchema,
   read_and_match: ReadAndMatchConfigSchema,
@@ -361,7 +353,6 @@ const ACTIVITY_READ_SCHEMAS: Record<ActivityType, z.ZodTypeAny> = {
   word_split_blend: WordSplitBlendReadSchema,
   drive_to_sukoon: DriveToSukoonReadSchema,
   drive_to_shadda: DriveToShaddaReadSchema,
-  stretch_madd: StretchMaddReadSchema,
   match_pairs: MatchPairsReadSchema,
   camel_narration: CamelNarrationReadSchema,
   read_and_match: ReadAndMatchReadSchema,
